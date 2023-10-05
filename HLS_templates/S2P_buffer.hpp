@@ -9,6 +9,28 @@ using namespace hls;
 #include "stream_tools.h"
 
 
+/*
+Description for this Simple Dual Ports (S2P) buffer.
+This buffer works as a reshape buffer between two consecutive convolution layers to adjust parallelism factors of the dataflow
+
+Parameter explaination
+K: kernel size of the convolution, K*K
+IN_W: the number of columns of input feature maps
+IN_H: the number of rows of input feature maps
+IN_CH: the number of input channels of input feature maps
+IN_BIT: the bit-width of input feature maps
+SIMD: the channel-wise parallel factor of input feature maps after reshape
+PE: the parallel factor of convolution kernels (output-channel-wise)
+OUTPENUM: OUT_CH / PE, buffer will repeat the same data row OUTPENUM times
+Np: the number of activations supposed to be packed on DSPs
+ROW_LEN: ceil((IN_W + K - 1)/Np), including padding
+
+Dataflow
+Input:  IN_PE * IN_BIT ---> Np ---> ROW_LEN ---> IN_CH / IN_PE ---> IN_H
+Output: SIMD * Np * IN_BIT ---> IN_CH / SIMD ---> K ---> ROW_LEN ---> OUTPENUM ---> IN_H
+*/
+
+
 //-----------------------------------------------------------------------padding and sliding window--------------------------------------------------------------------
 template <unsigned K, unsigned IN_W, unsigned IN_CH, unsigned IN_BIT, unsigned IN_PE,
           unsigned SIMD, unsigned Np, unsigned ROW_LEN>
@@ -89,7 +111,7 @@ void stream_out_rows_SIMD_INPE(
   ap_uint<14> mem_offset = 0;
 
   for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++) {
-    for (unsigned cycle = 0; cycle < ROW_LEN * K * SIMDNUM; cycle++) {
+    for (unsigned w_counter = 0; w_counter < ROW_LEN * K * SIMDNUM; w_counter++) {
 #pragma HLS pipeline
 
       ap_uint<SIMD * IN_BIT * Np> write_data;
@@ -259,7 +281,7 @@ void stream_out_rows_INPE_SIMD(
   ap_uint<14> mem_offset = 0;
 
   for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++) {
-    for (unsigned cycle = 0; cycle < ROW_LEN * K * SIMDNUM; cycle++) {
+    for (unsigned w_counter = 0; w_counter < ROW_LEN * K * SIMDNUM; w_counter++) {
 #pragma HLS pipeline
 
       ap_uint<SIMD * IN_BIT * Np> write_data;
