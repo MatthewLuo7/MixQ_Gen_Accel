@@ -57,7 +57,7 @@ void stream_in_row_SIMD_INPE(
       reg = reg >> (IN_PE * IN_BIT);
 
       ap_uint<IN_PE * IN_BIT> data;
-      if ((w_counter < PAD_LEN) || (w_counter >= (PAD_LEN + IN_W))) {
+      if ((w_counter < PAD_LEN) || (w_counter > (PAD_LEN + IN_W - 1))) {
         data = 0;
       } else {
         data = in.read();

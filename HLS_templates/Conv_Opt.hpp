@@ -16,7 +16,7 @@ void Conv_Pack_ACT(ap_uint<Np * SIMD * IN_BIT> in_data, ap_uint<IPACK_BIT> ipack
 
   for(unsigned i = 0; i < SIMD; i++){
     ap_uint<IPACK_BIT> temp = 0;
-    for(int j = 0; j < Np; j++){
+    for(unsigned j = 0; j < Np; j++){
       temp(j*PROD_BIT + IN_BIT - 1, j*PROD_BIT) = in_data(j*SIMD*IN_BIT + i*IN_BIT + IN_BIT - 1, j*SIMD*IN_BIT + i*IN_BIT);
     }
     ipacks[i] = temp;
@@ -32,7 +32,7 @@ void Conv_Pack_W(ap_uint<Kp * SIMD * W_BIT> in_weights, ap_int<WPACK_BIT> wpacks
     wpacks[i] = 0;
     for(unsigned j = 0; j < Kp; j++){
       ap_int<W_BIT> w_seg = in_weights(j*SIMD*W_BIT + i*W_BIT + W_BIT - 1, j*SIMD*W_BIT + i*W_BIT);
-      wpacks[i] += (w_seg * (1 << (PROD_BIT * (Kp - j - 1))));
+      wpacks[i] += (w_seg * (1 << (PROD_BIT * j)));
     }
   }
 }
@@ -46,6 +46,9 @@ void Conv_Comp_SIMD(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SI
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
   
   ap_int<W_BIT + IN_BIT + SIMD_BIT + PA_BIT> rtemp[Kp + Np - 1];
+  for(unsigned i = 0; i < (Kp + Np - 1); i++){
+    rtemp[i] = 0;
+  }
 
   for(unsigned i = 0; i < SIMD; i += CASCADE) {
     ap_int<PROD_BIT * (Kp + Np - 1)> dspres = 0;
@@ -89,7 +92,7 @@ void Conv_Array_Cascade(
   const unsigned IPACK_BIT = PROD_BIT * (Np - 1) + IN_BIT;
   const unsigned OUTPENUM = OUT_CH / PE;
   const unsigned INFOLD = K * IN_CH / SIMD;
-  const unsigned KNUM = (K - 1) / Np;        //ceil(K / Kp) 
+  const unsigned KNUM = (K - 1) / Kp + 1;        //ceil(K / Kp) 
 
 #pragma HLS ARRAY_PARTITION variable = weights complete dim = 1
 
@@ -110,8 +113,9 @@ void Conv_Array_Cascade(
 
   //counters
   ap_uint<3> k_counter = 0;
-  ap_uint<11> infold_counter = 0;
-  ap_uint<8> res_offset = 0;
+  ap_uint<12> infold_counter = 0;
+  ap_uint<5> res_offset = 0;
+  ap_uint<16> add_offset = 0;       //peIdx * INFOLD
 
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
@@ -120,7 +124,7 @@ void Conv_Array_Cascade(
 
         //flags for input, result reset, and output
         bool flag_in = (k_counter == 0);
-        bool flag_res_reset = ((infold_counter == 0) && (k_counter == 0));
+        bool flag_res_reset = (infold_counter == 0);
         bool flag_out = ((infold_counter == (INFOLD - 1)) && (k_counter == (KNUM - 1)));
 
         //input new activations and load weights
@@ -128,7 +132,19 @@ void Conv_Array_Cascade(
           in_data = in.read();
           Conv_Pack_ACT<IN_BIT, SIMD, Np, PROD_BIT, IPACK_BIT>(in_data, ipacks);
           for(unsigned p = 0; p < PE; p++){
-            cur_weights[p] = weights[p][peIdx * INFOLD + infold_counter];
+            cur_weights[p] = weights[p][add_offset + infold_counter];
+          }
+
+          //shift and reset partial result accumulators
+          for(unsigned p = 0; p < PE; p++){
+            if(flag_res_reset){
+              for(unsigned i = 0; i < (K - 1); i++){
+                PartialRes[p][i] = PartialRes[p][i + Np];
+              }
+              for(unsigned j = (K - 1); j < (K + Np - 1); j++){
+                PartialRes[p][j] = 0;
+              }
+            }
           }
         }
 
@@ -136,23 +152,13 @@ void Conv_Array_Cascade(
         for(unsigned p = 0; p < PE; p++){
           //extract Kp weights
           ap_uint<Kp * SIMD * W_BIT> in_weights = cur_weights[p](Kp * SIMD * W_BIT - 1, 0);
-          cur_weights[p] = cur_weights[p] >> (SIMD * W_BIT);
+          cur_weights[p] = cur_weights[p] >> (Kp * SIMD * W_BIT);
           Conv_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks[p]);
 
           //SIMD computing array
           ap_int<W_BIT + IN_BIT + SIMD_BIT + PA_BIT> DSP_PartialRes[Kp + Np - 1];
           #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
           Conv_Comp_SIMD<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, PA_BIT, WPACK_BIT, IPACK_BIT>(wpacks[p], ipacks, DSP_PartialRes);
-
-          //shift and reset partial result accumulators
-          if(flag_res_reset){
-            for(unsigned i = 0; i < (K - 1); i++){
-              PartialRes[p][i] = PartialRes[p][i + Np];
-            }
-            for(unsigned j = (K - 1); j < (K + Np - 1); j++){
-              PartialRes[p][j] = 0;
-            }
-          }
 
           //accumulate partial results
           for(unsigned i = 0; (i < (Kp + Np - 1)) && (i < (K + Np - 1 - res_offset)); i++){
@@ -173,13 +179,20 @@ void Conv_Array_Cascade(
 
         //counters
         k_counter++;
-        res_offset += Np;
+        res_offset += Kp;
         if(k_counter == KNUM){
           k_counter = 0;
           res_offset = 0;
           infold_counter++;
           if(infold_counter == INFOLD){
             infold_counter = 0;
+          }
+        }
+
+        if(cycle == (KNUM * INFOLD * ROW_LEN - 1)){
+          add_offset += INFOLD;
+          if(add_offset == OUTPENUM * INFOLD){
+            add_offset = 0;
           }
         }
       }
@@ -205,13 +218,13 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
 
   ap_uint<8> ACTP_NUM_counter = 0;
   ap_uint<10> w_counter = 0;
-  ap_uint<8> add_offset = 0;
+  ap_uint<8> add_offset = 0;            //peIdx*ACTP_NUM
   for(unsigned h = 0; h < IN_H; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){
       #pragma HLS pipeline
 
-        bool flag_out = ((w_counter >= (K - 1)) && (w_counter <= (K - 1 + IN_W - 1)));
+        bool flag_out = ((w_counter > (K - 1 - 1)) && (w_counter < (K - 1 + IN_W)));
 
         ap_int<ACTP * M_BIT> in_data;
         in_data = in.read();
@@ -220,7 +233,7 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
           ap_uint<ACTP * OUT_BIT> out_data;
           for(unsigned i = 0; i < ACTP; i++){
             out_data((i + 1) * OUT_BIT - 1, i * OUT_BIT) = bn_qurelu_fixed<M_BIT, OUT_BIT, INC_BIT, BIAS_BIT, IN_BIT, W_BIT, L_SHIFT>
-            (in_data((i + 1) * M_BIT - 1, i * M_BIT), inc[i][ACTP_NUM_counter + peIdx*ACTP_NUM], bias[i][ACTP_NUM_counter + peIdx*ACTP_NUM]);
+            (in_data((i + 1) * M_BIT - 1, i * M_BIT), inc[i][ACTP_NUM_counter + add_offset], bias[i][ACTP_NUM_counter + add_offset]);
           }
           out.write(out_data);
         }
@@ -233,7 +246,7 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
           if(w_counter == CONV_OUT_W){
             w_counter = 0;
             add_offset += ACTP_NUM;
-            if(add_offset == (OUT_CH / ACTP)){
+            if(add_offset == OUTPENUM * ACTP_NUM){
               add_offset = 0;
             }
           }
