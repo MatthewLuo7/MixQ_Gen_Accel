@@ -72,7 +72,6 @@ void stream_in_row_SIMD_INPE(
         row_buffer[simd_ipe_c][rowBufferIdx][mem_offset + ch_simd_c] = reg;
         mem_offset += (IN_CH / SIMD);
         if(mem_offset == ROW_LEN * IN_CH / SIMD){
-          // rl_c = 0;
           mem_offset = 0;
           simd_ipe_c++;
           if(simd_ipe_c == (SIMD / IN_PE)){
