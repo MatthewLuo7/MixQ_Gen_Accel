@@ -46,6 +46,7 @@ void Conv_Comp_SIMD(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SI
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
   
   ap_int<W_BIT + IN_BIT + SIMD_BIT + PA_BIT> rtemp[Kp + Np - 1];
+#pragma HLS ARRAY_PARTITION variable = rtemp complete
   for(unsigned i = 0; i < (Kp + Np - 1); i++){
     rtemp[i] = 0;
   }
@@ -103,7 +104,7 @@ void Conv_Array_Cascade(
   ap_uint<IPACK_BIT> ipacks[SIMD];
 #pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
 
-  ap_int<M_BIT> PartialRes[PE][K + Np - 1];
+  ap_int<M_BIT> PartialRes[PE][Kp * KNUM + Np - 1];
 #pragma HLS ARRAY_PARTITION variable = PartialRes complete dim = 1
 #pragma HLS ARRAY_PARTITION variable = PartialRes complete dim = 2
 
@@ -120,11 +121,11 @@ void Conv_Array_Cascade(
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for(unsigned cycle = 0; cycle < KNUM * INFOLD * ROW_LEN; cycle++){
-#pragma HLS pipeline
+#pragma HLS pipeline II = 1
 
         //flags for input, result reset, and output
         bool flag_in = (k_counter == 0);
-        bool flag_res_reset = (infold_counter == 0);
+        bool flag_res_reset = (infold_counter == 0) && flag_in;
         bool flag_out = ((infold_counter == (INFOLD - 1)) && (k_counter == (KNUM - 1)));
 
         //input new activations and load weights
@@ -134,16 +135,16 @@ void Conv_Array_Cascade(
           for(unsigned p = 0; p < PE; p++){
             cur_weights[p] = weights[p][add_offset + infold_counter];
           }
+        }
 
-          //shift and reset partial result accumulators
+        //shift and reset partial result accumulators
+        if(flag_res_reset){
           for(unsigned p = 0; p < PE; p++){
-            if(flag_res_reset){
-              for(unsigned i = 0; i < (K - 1); i++){
-                PartialRes[p][i] = PartialRes[p][i + Np];
-              }
-              for(unsigned j = (K - 1); j < (K + Np - 1); j++){
-                PartialRes[p][j] = 0;
-              }
+            for(unsigned i = 0; i < (K - 1); i++){
+              PartialRes[p][i] = PartialRes[p][i + Np];
+            }
+            for(unsigned j = (K - 1); j < (K + Np - 1); j++){
+              PartialRes[p][j] = 0;
             }
           }
         }
@@ -160,8 +161,7 @@ void Conv_Array_Cascade(
           #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
           Conv_Comp_SIMD<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, PA_BIT, WPACK_BIT, IPACK_BIT>(wpacks[p], ipacks, DSP_PartialRes);
 
-          //accumulate partial results
-          for(unsigned i = 0; (i < (Kp + Np - 1)) && (i < (K + Np - 1 - res_offset)); i++){
+          for(unsigned i = 0; i < (Kp + Np - 1); i++){
             PartialRes[p][res_offset + i] += DSP_PartialRes[i];
           }
         }
@@ -219,7 +219,7 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
   ap_uint<8> ACTP_NUM_counter = 0;
   ap_uint<10> w_counter = 0;
   ap_uint<8> add_offset = 0;            //peIdx*ACTP_NUM
-  for(unsigned h = 0; h < IN_H; h++){
+  for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){
       #pragma HLS pipeline

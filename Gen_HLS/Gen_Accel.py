@@ -12,6 +12,16 @@ sys.path.append('..')
 
 
 
+def find_CASCADE(gb, kp, np, simd):
+    cascade = 1
+    upper = min((2**gb) // min(kp, np), simd)
+    for factor in range(1, int(upper) + 1):
+        if upper%factor == 0:
+            cascade = factor
+
+    return cascade
+
+
 def gen_conv_para(conv):
     content = f'''//--------------------Conv {conv.n}: Parameters--------------------
 const unsigned CONV_{conv.n}_M_BIT = CONV_{conv.n}_IN_BIT + CONV_{conv.n}_W_BIT + {math.ceil(math.log2(conv.k * conv.k * conv.ich))};
@@ -26,6 +36,11 @@ const unsigned CONV_{conv.n}_adW_BIT = 1;
 
 
 def gen_reshape_buffer(conv):
+#     content = f'''//--------------------Conv {conv.n}: Reshape and Padding Buffer--------------------
+# stream<ap_uint<CONV_{conv.n}_Np * CONV_{conv.n}_SIMD * CONV_{conv.n}_IN_BIT> > conv_{conv.n}_padding_out("conv_{conv.n}_padding_out");
+# reshape_buffer_SIMD_INPE<CONV_{conv.n}_K, CONV_{conv.n}_IN_H, CONV_{conv.n}_IN_W, CONV_{conv.n}_IN_CH, CONV_{conv.n}_OUT_CH / CONV_{conv.n}_PE,
+#                          CONV_{conv.n}_Np, CONV_{conv.n}_IN_BIT, CONV_{conv.n}_IN_PE, CONV_{conv.n}_SIMD>(conv_{conv.n-1}_out, conv_{conv.n}_padding_out, reps);
+#     '''
     if conv.simd >= conv.in_pe:
         content = f'''//--------------------Conv {conv.n}: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_{conv.n}_Np * CONV_{conv.n}_SIMD * CONV_{conv.n}_IN_BIT> > conv_{conv.n}_padding_out("conv_{conv.n}_padding_out");
@@ -70,10 +85,22 @@ CONV_{conv.n}_L_SHIFT, CONV_{conv.n}_PE, CONV_{conv.n}_ACTP, CONV_{conv.n}_Np, C
     return content
 
 def gen_increase_bw(conv):
+#     content = f'''//--------------------Conv {conv.n}: Increase Bit-width--------------------
+# const unsigned CONV_{conv.n}_INC_BW_NUM = CONV_{conv.n}_IN_H * (CONV_{conv.n}_OUT_CH / CONV_{conv.n}_PE) * CONV_{conv.n}_IN_W * (CONV_{conv.n}_PE / CONV_{conv.n}_ACTP);
+# stream<ap_uint<CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT> > conv_{conv.n}_out("conv_{conv.n}_out");
+# StreamingDataWidthConverter_Batch<CONV_{conv.n}_ACTP * CONV_{conv.n}_OUT_BIT, CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT, CONV_{conv.n}_INC_BW_NUM>(conv_{conv.n}_act_out, conv_{conv.n}_out, reps);
+
+# #ifdef DEBUG
+# cout << "conv_{conv.n}_out size " << conv_{conv.n}_out.size() << endl;
+# print_mavu_DSPopt_stream_through<CONV_{conv.n}_IN_H, CONV_{conv.n}_IN_W, CONV_{conv.n}_OUT_CH, CONV_{conv.n}_PE,
+#                                  CONV_{conv.n+1}_IN_BIT>(conv_{conv.n}_out, output_path+"conv_{conv.n}_out.txt", reps);
+# #endif
+# '''
     if conv.max_pool:
         content = f'''//--------------------Conv {conv.n}: Increase Bit-width--------------------
 const unsigned CONV_{conv.n}_INC_BW_NUM = CONV_{conv.n}_IN_H * (CONV_{conv.n}_OUT_CH / CONV_{conv.n}_PE) * CONV_{conv.n}_IN_W * (CONV_{conv.n}_PE / CONV_{conv.n}_ACTP);
 stream<ap_uint<2 * CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT> > conv_{conv.n}_conv_out("conv_{conv.n}_conv_out");
+#pragma HLS STREAM variable = conv_{conv.n}_conv_out depth = {math.ceil(conv.icol * conv.och / conv.pe)}
 StreamingDataWidthConverter_Batch<CONV_{conv.n}_ACTP * CONV_{conv.n}_OUT_BIT, 2 * CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT, CONV_{conv.n}_INC_BW_NUM>(conv_{conv.n}_act_out, conv_{conv.n}_conv_out, reps);
 
 #ifdef DEBUG
@@ -84,7 +111,7 @@ print_mavu_DSPopt_stream_through<CONV_{conv.n}_IN_H, CONV_{conv.n}_IN_W, CONV_{c
 
 //--------------------Pooling--------------------
 hls::stream<ap_uint<CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT> > conv_{conv.n}_layer_out("pool_{conv.n}_layer_out");
-#pragma HLS STREAM variable = pool_{conv.n}_layer_out depth = 512
+#pragma HLS STREAM variable = conv_{conv.n}_layer_out depth = {math.ceil(conv.icol * conv.och / (conv.pe * 2))}
 max_pool2x2<CONV_{conv.n}_IN_H, CONV_{conv.n}_IN_W, CONV_{conv.n}_OUT_CH, CONV_{conv.n}_OUT_BIT,
             CONV_{conv.n}_PE>(conv_{conv.n}_conv_out, conv_{conv.n}_layer_out, reps);
 #ifdef DEBUG
@@ -97,6 +124,7 @@ print_mavu_DSPopt_stream_through<CONV_{conv.n}_IN_H / 2, CONV_{conv.n}_IN_W / 2,
         content = f'''//--------------------Conv {conv.n}: Increase Bit-width--------------------
 const unsigned CONV_{conv.n}_INC_BW_NUM = CONV_{conv.n}_IN_H * (CONV_{conv.n}_OUT_CH / CONV_{conv.n}_PE) * CONV_{conv.n}_IN_W * (CONV_{conv.n}_PE / CONV_{conv.n}_ACTP);
 stream<ap_uint<CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT> > conv_{conv.n}_layer_out("conv_{conv.n}_conv_out");
+#pragma HLS STREAM variable = conv_{conv.n}_layer_out depth = {math.ceil(conv.icol * conv.och / conv.pe)}
 StreamingDataWidthConverter_Batch<CONV_{conv.n}_ACTP * CONV_{conv.n}_OUT_BIT, CONV_{conv.n}_PE * CONV_{conv.n}_OUT_BIT, CONV_{conv.n}_INC_BW_NUM>(conv_{conv.n}_act_out, conv_{conv.n}_layer_out, reps);
 
 #ifdef DEBUG
@@ -105,5 +133,3 @@ print_mavu_DSPopt_stream_through<CONV_{conv.n}_IN_H, CONV_{conv.n}_IN_W, CONV_{c
                                  CONV_{conv.n+1}_IN_BIT>(conv_{conv.n}_layer_out, output_path+"conv_{conv.n}_conv_out.txt", reps);
 #endif
 '''
-
-    return content

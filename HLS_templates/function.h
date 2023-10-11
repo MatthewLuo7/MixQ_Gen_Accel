@@ -1,9 +1,15 @@
 #pragma once
 #include <ap_int.h>
 #include <hls_stream.h>
+// using namespace hls;
+// #include <iostream>
 using namespace std;
+#include "stream_tools.h"
+#include <assert.h>
 
-template <unsigned IN_BIT, unsigned OUT_BIT, unsigned INC_BIT, unsigned BIAS_BIT,
+template <unsigned IN_BIT, unsigned OUT_BIT, unsigned INC_BIT,
+          unsigned BIAS_BIT,
+
           unsigned DATA_BIT, unsigned W_BIT, unsigned L_SHIFT>
 ap_uint<OUT_BIT> bn_qurelu_fixed(ap_int<IN_BIT> in, ap_int<INC_BIT> inc,
                                  ap_int<BIAS_BIT> bias) {

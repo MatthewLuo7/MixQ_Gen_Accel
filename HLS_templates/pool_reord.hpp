@@ -26,12 +26,11 @@ void max_pool2x2(stream<ap_uint<PE * IN_BIT * 2> > &vec,
                  stream<ap_uint<PE * IN_BIT> > &out,
                  const unsigned reps = 1) {
 
-  ap_uint<PE * IN_BIT> row_store[IN_W / 2 * IN_CH / PE];
+  ap_uint<PE * IN_BIT> row_store[(IN_W / 2) * (IN_CH / PE)];
 
   bool load_flag;
-  // ap_uint<IN_BIT * PE> dataOut0;
-  // ap_uint<IN_BIT * PE> dataOut1;
   ap_uint<IN_BIT * PE> dataOut;
+  ap_uint<16> add_offset = 0;
   for (unsigned h = 0; h < IN_H * reps; h++)
     for (unsigned peIdx = 0; peIdx < IN_CH / PE; peIdx++)
       for (unsigned w = 0; w < IN_W / 2; w++) {
@@ -40,20 +39,19 @@ void max_pool2x2(stream<ap_uint<PE * IN_BIT * 2> > &vec,
         ap_uint<IN_BIT * PE> data1;
         (data1, data0) = vec.read();
         ap_uint<IN_BIT *PE> dataMax2 = max2_PE<IN_BIT, PE>(data0, data1);
-        int addr = w * (IN_CH / PE) + peIdx;
+        // int addr = w * (IN_CH / PE) + peIdx;
         if (h % 2) {
-          ap_uint<IN_BIT *PE> dataRes = row_store[addr];
+          ap_uint<IN_BIT *PE> dataRes = row_store[add_offset + peIdx];
           // dataOut0 = max2_PE<IN_BIT, PE>(dataMax2, dataRes);
           dataOut = max2_PE<IN_BIT, PE>(dataMax2, dataRes);
           out.write(dataOut);
         } else {
-          row_store[addr] = dataMax2;
+          row_store[add_offset + peIdx] = dataMax2;
         }
-        // if (w % 2 && h % 2) {
-        //   out.write((dataOut0, dataOut1));
 
-        // } else {
-        //   dataOut1 = dataOut0;
-        // }
+        add_offset += (IN_CH / PE);
+        if(add_offset == ((IN_W / 2) * (IN_CH / PE))){
+          add_offset = 0;
+        }
       }
 }
