@@ -1,0 +1,3802 @@
+{
+    "FP_0": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 3,
+            "W_BIT": 4,
+            "OUT_BIT": 2,
+            "IN_PE": 4,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 4,
+            "T_mul": 5.0,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 7219,
+                "FF": 7436,
+                "DSP": 77,
+                "BRAM": 39,
+                "SRL": 44
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.533
+            }
+        }
+    },
+    "FP_1": {
+        "Config": {
+            "K": 7,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 5,
+            "W_BIT": 7,
+            "OUT_BIT": 4,
+            "IN_PE": 2,
+            "SIMD": 1,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 9226,
+                "FF": 9393,
+                "DSP": 23,
+                "BRAM": 45,
+                "SRL": 21
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.988
+            }
+        }
+    },
+    "FP_2": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 3,
+            "OUT_BIT": 2,
+            "IN_PE": 32,
+            "SIMD": 32,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 11027,
+                "FF": 10710,
+                "DSP": 133,
+                "BRAM": 59,
+                "SRL": 20
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.692
+            }
+        }
+    },
+    "FP_3": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 2,
+            "W_BIT": 8,
+            "OUT_BIT": 8,
+            "IN_PE": 32,
+            "SIMD": 2,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 8388,
+                "FF": 8969,
+                "DSP": 35,
+                "BRAM": 52,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.693
+            }
+        }
+    },
+    "FP_4": {
+        "Config": {
+            "K": 7,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 3,
+            "W_BIT": 6,
+            "OUT_BIT": 5,
+            "IN_PE": 16,
+            "SIMD": 16,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 2,
+            "T_mul": 5.25,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4031,
+                "FF": 4742,
+                "DSP": 29,
+                "BRAM": 50,
+                "SRL": 10
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.748
+            }
+        }
+    },
+    "FP_5": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 6,
+            "OUT_BIT": 4,
+            "IN_PE": 2,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 9118,
+                "FF": 11070,
+                "DSP": 69,
+                "BRAM": 73,
+                "SRL": 65
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.639
+            }
+        }
+    },
+    "FP_6": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 8,
+            "OUT_BIT": 3,
+            "IN_PE": 1,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6331,
+                "FF": 6769,
+                "DSP": 12,
+                "BRAM": 103,
+                "SRL": 37
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.855
+            }
+        }
+    },
+    "FP_7": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 6,
+            "W_BIT": 6,
+            "OUT_BIT": 6,
+            "IN_PE": 4,
+            "SIMD": 4,
+            "PE": 16,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 17500,
+                "FF": 20331,
+                "DSP": 69,
+                "BRAM": 103,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.764
+            }
+        }
+    },
+    "FP_8": {
+        "Config": {
+            "K": 5,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 7,
+            "OUT_BIT": 6,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4673,
+                "FF": 7828,
+                "DSP": 18,
+                "BRAM": 49,
+                "SRL": 24
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.88
+            }
+        }
+    },
+    "FP_9": {
+        "Config": {
+            "K": 3,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 6,
+            "OUT_BIT": 2,
+            "IN_PE": 4,
+            "SIMD": 4,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5553,
+                "FF": 7470,
+                "DSP": 17,
+                "BRAM": 22,
+                "SRL": 32
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.135
+            }
+        }
+    },
+    "FP_10": {
+        "Config": {
+            "K": 7,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 2,
+            "OUT_BIT": 7,
+            "IN_PE": 2,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.5,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4566,
+                "FF": 4703,
+                "DSP": 17,
+                "BRAM": 14,
+                "SRL": 32
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.086
+            }
+        }
+    },
+    "FP_11": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 7,
+            "W_BIT": 8,
+            "OUT_BIT": 4,
+            "IN_PE": 16,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 2.0,
+            "INC_BIT": 21,
+            "BIAS_BIT": 30,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5432,
+                "FF": 8106,
+                "DSP": 66,
+                "BRAM": 51,
+                "SRL": 36
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.792
+            }
+        }
+    },
+    "FP_12": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 7,
+            "W_BIT": 5,
+            "OUT_BIT": 8,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 16,
+            "ACTP": 8,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 22868,
+                "FF": 25910,
+                "DSP": 137,
+                "BRAM": 180,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.011
+            }
+        }
+    },
+    "FP_13": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 5,
+            "W_BIT": 7,
+            "OUT_BIT": 6,
+            "IN_PE": 4,
+            "SIMD": 1,
+            "PE": 16,
+            "ACTP": 4,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 17541,
+                "FF": 18119,
+                "DSP": 21,
+                "BRAM": 74,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.977
+            }
+        }
+    },
+    "FP_14": {
+        "Config": {
+            "K": 5,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 7,
+            "OUT_BIT": 3,
+            "IN_PE": 32,
+            "SIMD": 8,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 21,
+            "BIAS_BIT": 30,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4026,
+                "FF": 6243,
+                "DSP": 17,
+                "BRAM": 38,
+                "SRL": 17
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.765
+            }
+        }
+    },
+    "FP_15": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 5,
+            "OUT_BIT": 4,
+            "IN_PE": 2,
+            "SIMD": 4,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.0,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4422,
+                "FF": 4813,
+                "DSP": 21,
+                "BRAM": 14,
+                "SRL": 56
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.899
+            }
+        }
+    },
+    "FP_16": {
+        "Config": {
+            "K": 3,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 2,
+            "OUT_BIT": 6,
+            "IN_PE": 8,
+            "SIMD": 4,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 6.0,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5722,
+                "FF": 6342,
+                "DSP": 21,
+                "BRAM": 34,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.457
+            }
+        }
+    },
+    "FP_17": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 3,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 8,
+            "SIMD": 8,
+            "PE": 16,
+            "ACTP": 16,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 20225,
+                "FF": 24049,
+                "DSP": 145,
+                "BRAM": 36,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.779
+            }
+        }
+    },
+    "FP_18": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 3,
+            "W_BIT": 8,
+            "OUT_BIT": 2,
+            "IN_PE": 2,
+            "SIMD": 1,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6851,
+                "FF": 7348,
+                "DSP": 27,
+                "BRAM": 38,
+                "SRL": 44
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.745
+            }
+        }
+    },
+    "FP_19": {
+        "Config": {
+            "K": 5,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 4,
+            "SIMD": 8,
+            "PE": 16,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 24682,
+                "FF": 21509,
+                "DSP": 131,
+                "BRAM": 24,
+                "SRL": 35
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.77
+            }
+        }
+    },
+    "FP_20": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 3,
+            "W_BIT": 5,
+            "OUT_BIT": 7,
+            "IN_PE": 1,
+            "SIMD": 16,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 3,
+            "T_mul": 5.25,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3377,
+                "FF": 3847,
+                "DSP": 18,
+                "BRAM": 67,
+                "SRL": 20
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.303
+            }
+        }
+    },
+    "FP_21": {
+        "Config": {
+            "K": 5,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 6,
+            "W_BIT": 7,
+            "OUT_BIT": 5,
+            "IN_PE": 1,
+            "SIMD": 8,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 10346,
+                "FF": 11046,
+                "DSP": 72,
+                "BRAM": 71,
+                "SRL": 17
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.803
+            }
+        }
+    },
+    "FP_22": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 6,
+            "OUT_BIT": 6,
+            "IN_PE": 32,
+            "SIMD": 2,
+            "PE": 16,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 14694,
+                "FF": 16631,
+                "DSP": 38,
+                "BRAM": 107,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.91
+            }
+        }
+    },
+    "FP_23": {
+        "Config": {
+            "K": 3,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 5,
+            "W_BIT": 5,
+            "OUT_BIT": 5,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.0,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 2333,
+                "FF": 3005,
+                "DSP": 11,
+                "BRAM": 16,
+                "SRL": 11
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.078
+            }
+        }
+    },
+    "FP_24": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 8,
+            "OUT_BIT": 3,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 7167,
+                "FF": 7094,
+                "DSP": 43,
+                "BRAM": 64,
+                "SRL": 28
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.049
+            }
+        }
+    },
+    "FP_25": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 4,
+            "W_BIT": 5,
+            "OUT_BIT": 4,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 2,
+            "T_mul": 5.25,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 13741,
+                "FF": 11273,
+                "DSP": 68,
+                "BRAM": 71,
+                "SRL": 37
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.69
+            }
+        }
+    },
+    "FP_26": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 5,
+            "W_BIT": 3,
+            "OUT_BIT": 6,
+            "IN_PE": 8,
+            "SIMD": 2,
+            "PE": 8,
+            "ACTP": 1,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 5.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 10387,
+                "FF": 7911,
+                "DSP": 27,
+                "BRAM": 48,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.573
+            }
+        }
+    },
+    "FP_27": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 7,
+            "W_BIT": 5,
+            "OUT_BIT": 8,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4409,
+                "FF": 5699,
+                "DSP": 27,
+                "BRAM": 58,
+                "SRL": 37
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.843
+            }
+        }
+    },
+    "FP_28": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 2,
+            "W_BIT": 6,
+            "OUT_BIT": 4,
+            "IN_PE": 16,
+            "SIMD": 1,
+            "PE": 16,
+            "ACTP": 8,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 6.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 8818,
+                "FF": 9177,
+                "DSP": 25,
+                "BRAM": 51,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.65
+            }
+        }
+    },
+    "FP_29": {
+        "Config": {
+            "K": 5,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 4,
+            "W_BIT": 8,
+            "OUT_BIT": 8,
+            "IN_PE": 16,
+            "SIMD": 1,
+            "PE": 16,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 14036,
+                "FF": 14650,
+                "DSP": 24,
+                "BRAM": 58,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.89
+            }
+        }
+    },
+    "FP_30": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 3,
+            "OUT_BIT": 4,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 8,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 4,
+            "T_mul": 5.25,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 15588,
+                "FF": 14210,
+                "DSP": 130,
+                "BRAM": 73,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.757
+            }
+        }
+    },
+    "FP_31": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 4,
+            "W_BIT": 2,
+            "OUT_BIT": 7,
+            "IN_PE": 16,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 4,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 7.0,
+            "INC_BIT": 12,
+            "BIAS_BIT": 21,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5496,
+                "FF": 5973,
+                "DSP": 21,
+                "BRAM": 10,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.894
+            }
+        }
+    },
+    "FP_32": {
+        "Config": {
+            "K": 3,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 16,
+            "SIMD": 2,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 1891,
+                "FF": 3219,
+                "DSP": 14,
+                "BRAM": 38,
+                "SRL": 16
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.9
+            }
+        }
+    },
+    "FP_33": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 2,
+            "W_BIT": 8,
+            "OUT_BIT": 5,
+            "IN_PE": 1,
+            "SIMD": 4,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5040,
+                "FF": 5248,
+                "DSP": 23,
+                "BRAM": 21,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.544
+            }
+        }
+    },
+    "FP_34": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 6,
+            "W_BIT": 5,
+            "OUT_BIT": 6,
+            "IN_PE": 8,
+            "SIMD": 4,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.0,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4773,
+                "FF": 5816,
+                "DSP": 13,
+                "BRAM": 17,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.895
+            }
+        }
+    },
+    "FP_35": {
+        "Config": {
+            "K": 7,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 4,
+            "W_BIT": 3,
+            "OUT_BIT": 2,
+            "IN_PE": 32,
+            "SIMD": 8,
+            "PE": 2,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 4,
+            "T_mul": 5.25,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4360,
+                "FF": 5332,
+                "DSP": 26,
+                "BRAM": 27,
+                "SRL": 9
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.393
+            }
+        }
+    },
+    "FP_36": {
+        "Config": {
+            "K": 3,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 2,
+            "W_BIT": 7,
+            "OUT_BIT": 2,
+            "IN_PE": 8,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 1,
+            "T_mul": 4.5,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 8859,
+                "FF": 6660,
+                "DSP": 77,
+                "BRAM": 38,
+                "SRL": 52
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.888
+            }
+        }
+    },
+    "FP_37": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 5,
+            "W_BIT": 3,
+            "OUT_BIT": 6,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 5.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 12287,
+                "FF": 9341,
+                "DSP": 69,
+                "BRAM": 35,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.172
+            }
+        }
+    },
+    "FP_38": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 8,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 2,
+            "SIMD": 1,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 21,
+            "BIAS_BIT": 30,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 12445,
+                "FF": 12617,
+                "DSP": 18,
+                "BRAM": 96,
+                "SRL": 33
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.867
+            }
+        }
+    },
+    "FP_39": {
+        "Config": {
+            "K": 5,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 5,
+            "W_BIT": 8,
+            "OUT_BIT": 3,
+            "IN_PE": 4,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4650,
+                "FF": 7408,
+                "DSP": 13,
+                "BRAM": 41,
+                "SRL": 24
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.916
+            }
+        }
+    },
+    "FP_40": {
+        "Config": {
+            "K": 3,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 5,
+            "W_BIT": 2,
+            "OUT_BIT": 4,
+            "IN_PE": 8,
+            "SIMD": 32,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 5,
+            "T_mul": 6.0,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3929,
+                "FF": 5142,
+                "DSP": 43,
+                "BRAM": 27,
+                "SRL": 36
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.447
+            }
+        }
+    },
+    "FP_41": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 3,
+            "W_BIT": 5,
+            "OUT_BIT": 6,
+            "IN_PE": 4,
+            "SIMD": 2,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 2,
+            "T_mul": 5.25,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3898,
+                "FF": 3726,
+                "DSP": 9,
+                "BRAM": 22,
+                "SRL": 48
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.433
+            }
+        }
+    },
+    "FP_42": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 7,
+            "OUT_BIT": 7,
+            "IN_PE": 32,
+            "SIMD": 1,
+            "PE": 8,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5429,
+                "FF": 7843,
+                "DSP": 9,
+                "BRAM": 49,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.593
+            }
+        }
+    },
+    "FP_43": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 5,
+            "W_BIT": 8,
+            "OUT_BIT": 4,
+            "IN_PE": 16,
+            "SIMD": 1,
+            "PE": 16,
+            "ACTP": 16,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 13819,
+                "FF": 13382,
+                "DSP": 43,
+                "BRAM": 74,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.014
+            }
+        }
+    },
+    "FP_44": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 5,
+            "W_BIT": 3,
+            "OUT_BIT": 6,
+            "IN_PE": 2,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 5.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 7144,
+                "FF": 5792,
+                "DSP": 37,
+                "BRAM": 25,
+                "SRL": 25
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.952
+            }
+        }
+    },
+    "FP_45": {
+        "Config": {
+            "K": 5,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 2,
+            "W_BIT": 4,
+            "OUT_BIT": 6,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 4,
+            "GUARD_BIT": 2,
+            "T_mul": 6.666666666666667,
+            "INC_BIT": 12,
+            "BIAS_BIT": 21,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 20004,
+                "FF": 14124,
+                "DSP": 137,
+                "BRAM": 68,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.769
+            }
+        }
+    },
+    "FP_46": {
+        "Config": {
+            "K": 3,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 7,
+            "OUT_BIT": 2,
+            "IN_PE": 4,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.0,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3525,
+                "FF": 3841,
+                "DSP": 13,
+                "BRAM": 6,
+                "SRL": 48
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.858
+            }
+        }
+    },
+    "FP_47": {
+        "Config": {
+            "K": 7,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 4,
+            "W_BIT": 2,
+            "OUT_BIT": 3,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 4,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 7.0,
+            "INC_BIT": 12,
+            "BIAS_BIT": 21,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5523,
+                "FF": 6047,
+                "DSP": 29,
+                "BRAM": 50,
+                "SRL": 28
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.809
+            }
+        }
+    },
+    "FP_48": {
+        "Config": {
+            "K": 3,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 6,
+            "W_BIT": 7,
+            "OUT_BIT": 2,
+            "IN_PE": 8,
+            "SIMD": 8,
+            "PE": 8,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6186,
+                "FF": 7861,
+                "DSP": 71,
+                "BRAM": 40,
+                "SRL": 36
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.702
+            }
+        }
+    },
+    "FP_49": {
+        "Config": {
+            "K": 7,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 2,
+            "OUT_BIT": 6,
+            "IN_PE": 1,
+            "SIMD": 32,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 4,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 7.0,
+            "INC_BIT": 12,
+            "BIAS_BIT": 21,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6221,
+                "FF": 5506,
+                "DSP": 45,
+                "BRAM": 65,
+                "SRL": 12
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.727
+            }
+        }
+    },
+    "FP_50": {
+        "Config": {
+            "K": 3,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 6,
+            "OUT_BIT": 7,
+            "IN_PE": 8,
+            "SIMD": 4,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4139,
+                "FF": 5221,
+                "DSP": 21,
+                "BRAM": 20,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.892
+            }
+        }
+    },
+    "FP_51": {
+        "Config": {
+            "K": 7,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 6,
+            "OUT_BIT": 5,
+            "IN_PE": 16,
+            "SIMD": 2,
+            "PE": 16,
+            "ACTP": 8,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 17840,
+                "FF": 18148,
+                "DSP": 49,
+                "BRAM": 82,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.473
+            }
+        }
+    },
+    "FP_52": {
+        "Config": {
+            "K": 7,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 5,
+            "W_BIT": 2,
+            "OUT_BIT": 2,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 4,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 7.0,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4266,
+                "FF": 5075,
+                "DSP": 19,
+                "BRAM": 13,
+                "SRL": 18
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.82
+            }
+        }
+    },
+    "FP_53": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 4,
+            "W_BIT": 4,
+            "OUT_BIT": 6,
+            "IN_PE": 4,
+            "SIMD": 16,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 3,
+            "T_mul": 5.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 2975,
+                "FF": 3730,
+                "DSP": 27,
+                "BRAM": 31,
+                "SRL": 45
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.708
+            }
+        }
+    },
+    "FP_54": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 3,
+            "OUT_BIT": 6,
+            "IN_PE": 8,
+            "SIMD": 2,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 2,
+            "T_mul": 5.25,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 10524,
+                "FF": 9426,
+                "DSP": 24,
+                "BRAM": 15,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.744
+            }
+        }
+    },
+    "FP_55": {
+        "Config": {
+            "K": 7,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 5,
+            "W_BIT": 5,
+            "OUT_BIT": 4,
+            "IN_PE": 1,
+            "SIMD": 2,
+            "PE": 8,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.5,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 8969,
+                "FF": 8618,
+                "DSP": 29,
+                "BRAM": 31,
+                "SRL": 11
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.118
+            }
+        }
+    },
+    "FP_56": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 4,
+            "W_BIT": 3,
+            "OUT_BIT": 4,
+            "IN_PE": 2,
+            "SIMD": 2,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 2,
+            "T_mul": 5.25,
+            "INC_BIT": 13,
+            "BIAS_BIT": 22,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 11804,
+                "FF": 10407,
+                "DSP": 20,
+                "BRAM": 42,
+                "SRL": 17
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.702
+            }
+        }
+    },
+    "FP_57": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 3,
+            "OUT_BIT": 3,
+            "IN_PE": 4,
+            "SIMD": 2,
+            "PE": 16,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.0,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 10119,
+                "FF": 11712,
+                "DSP": 41,
+                "BRAM": 33,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.852
+            }
+        }
+    },
+    "FP_58": {
+        "Config": {
+            "K": 5,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 6,
+            "W_BIT": 3,
+            "OUT_BIT": 2,
+            "IN_PE": 8,
+            "SIMD": 8,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 5.0,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 14977,
+                "FF": 9168,
+                "DSP": 69,
+                "BRAM": 29,
+                "SRL": 34
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.165
+            }
+        }
+    },
+    "FP_59": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 3,
+            "W_BIT": 5,
+            "OUT_BIT": 4,
+            "IN_PE": 4,
+            "SIMD": 8,
+            "PE": 16,
+            "ACTP": 16,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 6.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 17493,
+                "FF": 10470,
+                "DSP": 145,
+                "BRAM": 6,
+                "SRL": 28
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.455
+            }
+        }
+    },
+    "FP_60": {
+        "Config": {
+            "K": 5,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 2,
+            "W_BIT": 8,
+            "OUT_BIT": 8,
+            "IN_PE": 32,
+            "SIMD": 8,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3682,
+                "FF": 4547,
+                "DSP": 19,
+                "BRAM": 38,
+                "SRL": 36
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.107
+            }
+        }
+    },
+    "FP_61": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 3,
+            "W_BIT": 7,
+            "OUT_BIT": 3,
+            "IN_PE": 2,
+            "SIMD": 2,
+            "PE": 16,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.5,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 18160,
+                "FF": 16995,
+                "DSP": 36,
+                "BRAM": 73,
+                "SRL": 13
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.269
+            }
+        }
+    },
+    "FP_62": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 3,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 4,
+            "SIMD": 8,
+            "PE": 16,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 3.5,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 24108,
+                "FF": 26437,
+                "DSP": 137,
+                "BRAM": 199,
+                "SRL": 29
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.352
+            }
+        }
+    },
+    "FP_63": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 6,
+            "OUT_BIT": 3,
+            "IN_PE": 16,
+            "SIMD": 1,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3376,
+                "FF": 4946,
+                "DSP": 9,
+                "BRAM": 25,
+                "SRL": 24
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.603
+            }
+        }
+    },
+    "FP_64": {
+        "Config": {
+            "K": 3,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 8,
+            "OUT_BIT": 3,
+            "IN_PE": 32,
+            "SIMD": 32,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 2.0,
+            "INC_BIT": 22,
+            "BIAS_BIT": 31,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 9530,
+                "FF": 12407,
+                "DSP": 133,
+                "BRAM": 99,
+                "SRL": 28
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.765
+            }
+        }
+    },
+    "FP_65": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 7,
+            "W_BIT": 8,
+            "OUT_BIT": 8,
+            "IN_PE": 2,
+            "SIMD": 1,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 21,
+            "BIAS_BIT": 30,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3304,
+                "FF": 3877,
+                "DSP": 12,
+                "BRAM": 32,
+                "SRL": 61
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.744
+            }
+        }
+    },
+    "FP_66": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 4,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 4,
+            "SIMD": 1,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 2866,
+                "FF": 3640,
+                "DSP": 11,
+                "BRAM": 43,
+                "SRL": 64
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.542
+            }
+        }
+    },
+    "FP_67": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 5,
+            "W_BIT": 5,
+            "OUT_BIT": 8,
+            "IN_PE": 32,
+            "SIMD": 1,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.0,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3300,
+                "FF": 5001,
+                "DSP": 8,
+                "BRAM": 46,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.984
+            }
+        }
+    },
+    "FP_68": {
+        "Config": {
+            "K": 7,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 5,
+            "OUT_BIT": 8,
+            "IN_PE": 8,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5958,
+                "FF": 7954,
+                "DSP": 13,
+                "BRAM": 50,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.874
+            }
+        }
+    },
+    "FP_69": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 7,
+            "W_BIT": 7,
+            "OUT_BIT": 6,
+            "IN_PE": 16,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 5746,
+                "FF": 6828,
+                "DSP": 10,
+                "BRAM": 25,
+                "SRL": 1
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.752
+            }
+        }
+    },
+    "FP_70": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 6,
+            "W_BIT": 5,
+            "OUT_BIT": 5,
+            "IN_PE": 8,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.5,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 8242,
+                "FF": 8096,
+                "DSP": 35,
+                "BRAM": 45,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.233
+            }
+        }
+    },
+    "FP_71": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 3,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 1,
+            "SIMD": 4,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 3.0,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6514,
+                "FF": 7354,
+                "DSP": 45,
+                "BRAM": 26,
+                "SRL": 10
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.825
+            }
+        }
+    },
+    "FP_72": {
+        "Config": {
+            "K": 5,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 5,
+            "W_BIT": 6,
+            "OUT_BIT": 5,
+            "IN_PE": 2,
+            "SIMD": 4,
+            "PE": 16,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 16325,
+                "FF": 16567,
+                "DSP": 71,
+                "BRAM": 89,
+                "SRL": 21
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.021
+            }
+        }
+    },
+    "FP_73": {
+        "Config": {
+            "K": 3,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 2,
+            "W_BIT": 8,
+            "OUT_BIT": 8,
+            "IN_PE": 32,
+            "SIMD": 1,
+            "PE": 16,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.0,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 9755,
+                "FF": 12878,
+                "DSP": 30,
+                "BRAM": 125,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.018
+            }
+        }
+    },
+    "FP_74": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 2,
+            "W_BIT": 7,
+            "OUT_BIT": 8,
+            "IN_PE": 4,
+            "SIMD": 4,
+            "PE": 16,
+            "ACTP": 8,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 1,
+            "T_mul": 5.0,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 19050,
+                "FF": 17679,
+                "DSP": 81,
+                "BRAM": 98,
+                "SRL": 17
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.101
+            }
+        }
+    },
+    "FP_75": {
+        "Config": {
+            "K": 3,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 7,
+            "W_BIT": 3,
+            "OUT_BIT": 8,
+            "IN_PE": 16,
+            "SIMD": 4,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 3.0,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6652,
+                "FF": 8639,
+                "DSP": 45,
+                "BRAM": 61,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.0
+            }
+        }
+    },
+    "FP_76": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 2,
+            "W_BIT": 6,
+            "OUT_BIT": 7,
+            "IN_PE": 16,
+            "SIMD": 4,
+            "PE": 8,
+            "ACTP": 1,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 6.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 6925,
+                "FF": 6530,
+                "DSP": 35,
+                "BRAM": 30,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.384
+            }
+        }
+    },
+    "FP_77": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 6,
+            "OUT_BIT": 4,
+            "IN_PE": 1,
+            "SIMD": 8,
+            "PE": 2,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3138,
+                "FF": 3609,
+                "DSP": 29,
+                "BRAM": 27,
+                "SRL": 31
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.748
+            }
+        }
+    },
+    "FP_78": {
+        "Config": {
+            "K": 3,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 3,
+            "W_BIT": 6,
+            "OUT_BIT": 2,
+            "IN_PE": 1,
+            "SIMD": 8,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 6.0,
+            "INC_BIT": 15,
+            "BIAS_BIT": 24,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 8898,
+                "FF": 6461,
+                "DSP": 69,
+                "BRAM": 40,
+                "SRL": 42
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.39
+            }
+        }
+    },
+    "FP_79": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 2,
+            "OUT_BIT": 2,
+            "IN_PE": 16,
+            "SIMD": 1,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 5.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 1702,
+                "FF": 2087,
+                "DSP": 12,
+                "BRAM": 1,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.748
+            }
+        }
+    },
+    "FP_80": {
+        "Config": {
+            "K": 3,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 64,
+            "OUT_CH": 64,
+            "IN_BIT": 4,
+            "W_BIT": 4,
+            "OUT_BIT": 6,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 6.0,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4452,
+                "FF": 4712,
+                "DSP": 37,
+                "BRAM": 15,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.431
+            }
+        }
+    },
+    "FP_81": {
+        "Config": {
+            "K": 3,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 6,
+            "W_BIT": 7,
+            "OUT_BIT": 6,
+            "IN_PE": 1,
+            "SIMD": 1,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 0,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3158,
+                "FF": 3704,
+                "DSP": 11,
+                "BRAM": 8,
+                "SRL": 12
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.702
+            }
+        }
+    },
+    "FP_82": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 8,
+            "W_BIT": 8,
+            "OUT_BIT": 2,
+            "IN_PE": 1,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 22,
+            "BIAS_BIT": 31,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4600,
+                "FF": 5358,
+                "DSP": 17,
+                "BRAM": 18,
+                "SRL": 33
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.765
+            }
+        }
+    },
+    "FP_83": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 64,
+            "OUT_CH": 32,
+            "IN_BIT": 8,
+            "W_BIT": 4,
+            "OUT_BIT": 2,
+            "IN_PE": 1,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.5,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 10949,
+                "FF": 9322,
+                "DSP": 69,
+                "BRAM": 57,
+                "SRL": 37
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.291
+            }
+        }
+    },
+    "FP_84": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 6,
+            "OUT_BIT": 2,
+            "IN_PE": 1,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3803,
+                "FF": 4454,
+                "DSP": 20,
+                "BRAM": 64,
+                "SRL": 31
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.896
+            }
+        }
+    },
+    "FP_85": {
+        "Config": {
+            "K": 5,
+            "IN_W": 320,
+            "IN_H": 160,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 7,
+            "OUT_BIT": 6,
+            "IN_PE": 1,
+            "SIMD": 2,
+            "PE": 8,
+            "ACTP": 8,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 7684,
+                "FF": 7546,
+                "DSP": 35,
+                "BRAM": 30,
+                "SRL": 13
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.089
+            }
+        }
+    },
+    "FP_86": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 2,
+            "W_BIT": 8,
+            "OUT_BIT": 4,
+            "IN_PE": 1,
+            "SIMD": 1,
+            "PE": 2,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 3.5,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3516,
+                "FF": 3301,
+                "DSP": 8,
+                "BRAM": 28,
+                "SRL": 20
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.215
+            }
+        }
+    },
+    "FP_87": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 4,
+            "W_BIT": 7,
+            "OUT_BIT": 4,
+            "IN_PE": 32,
+            "SIMD": 2,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.3333333333333335,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 4439,
+                "FF": 5713,
+                "DSP": 17,
+                "BRAM": 36,
+                "SRL": 33
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.596
+            }
+        }
+    },
+    "FP_88": {
+        "Config": {
+            "K": 7,
+            "IN_W": 20,
+            "IN_H": 10,
+            "IN_CH": 16,
+            "OUT_CH": 16,
+            "IN_BIT": 7,
+            "W_BIT": 6,
+            "OUT_BIT": 8,
+            "IN_PE": 16,
+            "SIMD": 8,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 2989,
+                "FF": 4185,
+                "DSP": 11,
+                "BRAM": 20,
+                "SRL": 21
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.612
+            }
+        }
+    },
+    "FP_89": {
+        "Config": {
+            "K": 3,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 3,
+            "W_BIT": 2,
+            "OUT_BIT": 6,
+            "IN_PE": 1,
+            "SIMD": 1,
+            "PE": 4,
+            "ACTP": 4,
+            "Kp": 3,
+            "Np": 4,
+            "GUARD_BIT": 2,
+            "T_mul": 12.0,
+            "INC_BIT": 11,
+            "BIAS_BIT": 20,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3601,
+                "FF": 4578,
+                "DSP": 4,
+                "BRAM": 9,
+                "SRL": 0
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.568
+            }
+        }
+    },
+    "FP_90": {
+        "Config": {
+            "K": 7,
+            "IN_W": 40,
+            "IN_H": 20,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 2,
+            "OUT_BIT": 7,
+            "IN_PE": 1,
+            "SIMD": 4,
+            "PE": 16,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 3,
+            "GUARD_BIT": 2,
+            "T_mul": 5.25,
+            "INC_BIT": 14,
+            "BIAS_BIT": 23,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 22210,
+                "FF": 16863,
+                "DSP": 66,
+                "BRAM": 35,
+                "SRL": 13
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.957
+            }
+        }
+    },
+    "FP_91": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 7,
+            "W_BIT": 7,
+            "OUT_BIT": 5,
+            "IN_PE": 1,
+            "SIMD": 4,
+            "PE": 4,
+            "ACTP": 2,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 3517,
+                "FF": 4373,
+                "DSP": 27,
+                "BRAM": 25,
+                "SRL": 15
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.748
+            }
+        }
+    },
+    "FP_92": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 32,
+            "IN_BIT": 4,
+            "W_BIT": 7,
+            "OUT_BIT": 7,
+            "IN_PE": 8,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 3.0,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 7746,
+                "FF": 6095,
+                "DSP": 73,
+                "BRAM": 38,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.908
+            }
+        }
+    },
+    "FP_93": {
+        "Config": {
+            "K": 3,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 4,
+            "W_BIT": 2,
+            "OUT_BIT": 3,
+            "IN_PE": 1,
+            "SIMD": 4,
+            "PE": 16,
+            "ACTP": 16,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 6.0,
+            "INC_BIT": 12,
+            "BIAS_BIT": 21,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 7990,
+                "FF": 7805,
+                "DSP": 23,
+                "BRAM": 18,
+                "SRL": 12
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.378
+            }
+        }
+    },
+    "FP_94": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 32,
+            "OUT_CH": 16,
+            "IN_BIT": 5,
+            "W_BIT": 7,
+            "OUT_BIT": 4,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 2.0,
+            "INC_BIT": 18,
+            "BIAS_BIT": 27,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 2803,
+                "FF": 4623,
+                "DSP": 25,
+                "BRAM": 29,
+                "SRL": 13
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.752
+            }
+        }
+    },
+    "FP_95": {
+        "Config": {
+            "K": 7,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 64,
+            "OUT_CH": 16,
+            "IN_BIT": 6,
+            "W_BIT": 7,
+            "OUT_BIT": 5,
+            "IN_PE": 32,
+            "SIMD": 16,
+            "PE": 4,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 9832,
+                "FF": 13009,
+                "DSP": 71,
+                "BRAM": 131,
+                "SRL": 5
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 3.702
+            }
+        }
+    },
+    "FP_96": {
+        "Config": {
+            "K": 3,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 8,
+            "W_BIT": 6,
+            "OUT_BIT": 8,
+            "IN_PE": 4,
+            "SIMD": 4,
+            "PE": 1,
+            "ACTP": 1,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 2,
+            "T_mul": 2.0,
+            "INC_BIT": 20,
+            "BIAS_BIT": 29,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 2117,
+                "FF": 3055,
+                "DSP": 14,
+                "BRAM": 29,
+                "SRL": 17
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.892
+            }
+        }
+    },
+    "FP_97": {
+        "Config": {
+            "K": 7,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 32,
+            "IN_BIT": 3,
+            "W_BIT": 8,
+            "OUT_BIT": 3,
+            "IN_PE": 1,
+            "SIMD": 4,
+            "PE": 16,
+            "ACTP": 1,
+            "Kp": 2,
+            "Np": 2,
+            "GUARD_BIT": 3,
+            "T_mul": 3.5,
+            "INC_BIT": 17,
+            "BIAS_BIT": 26,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 20226,
+                "FF": 20362,
+                "DSP": 73,
+                "BRAM": 126,
+                "SRL": 11
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 4.434
+            }
+        }
+    },
+    "FP_98": {
+        "Config": {
+            "K": 3,
+            "IN_W": 80,
+            "IN_H": 40,
+            "IN_CH": 32,
+            "OUT_CH": 64,
+            "IN_BIT": 5,
+            "W_BIT": 8,
+            "OUT_BIT": 3,
+            "IN_PE": 8,
+            "SIMD": 16,
+            "PE": 8,
+            "ACTP": 4,
+            "Kp": 1,
+            "Np": 2,
+            "GUARD_BIT": 4,
+            "T_mul": 2.0,
+            "INC_BIT": 19,
+            "BIAS_BIT": 28,
+            "L_SHIFT": 8,
+            "MAX_POOL": false
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 9133,
+                "FF": 11983,
+                "DSP": 133,
+                "BRAM": 89,
+                "SRL": 4
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 2.798
+            }
+        }
+    },
+    "FP_99": {
+        "Config": {
+            "K": 5,
+            "IN_W": 160,
+            "IN_H": 80,
+            "IN_CH": 16,
+            "OUT_CH": 64,
+            "IN_BIT": 6,
+            "W_BIT": 4,
+            "OUT_BIT": 4,
+            "IN_PE": 1,
+            "SIMD": 1,
+            "PE": 8,
+            "ACTP": 2,
+            "Kp": 3,
+            "Np": 2,
+            "GUARD_BIT": 1,
+            "T_mul": 5.0,
+            "INC_BIT": 16,
+            "BIAS_BIT": 25,
+            "L_SHIFT": 8,
+            "MAX_POOL": true
+        },
+        "Syn_Res": {
+            "resources": {
+                "SLICE": 0,
+                "LUT": 10223,
+                "FF": 7772,
+                "DSP": 21,
+                "BRAM": 25,
+                "SRL": 12
+            },
+            "timing": {
+                "TargetClockPeriod": 4.0,
+                "AchievedClockPeriod": 5.619
+            }
+        }
+    }
+}
