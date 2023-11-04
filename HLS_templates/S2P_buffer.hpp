@@ -284,7 +284,7 @@ void reshape_buffer_SIMD_INPE_KRowPartition(stream<ap_uint<IN_PE * IN_BIT> > &in
 
   ap_uint<IN_PE * IN_BIT * Np> row_buffer[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
 #pragma HLS ARRAY_PARTITION variable = row_buffer dim = 1 complete
-#pragma HLS ARRAY_PARTITION variable = row_buffer dim = 1 complete
+#pragma HLS ARRAY_PARTITION variable = row_buffer dim = 2 complete
 #pragma HLS RESOURCE variable = row_buffer core = RAM_S2P_BRAM
 
   ap_uint<3> storeBufferIdx = 0;
@@ -580,5 +580,246 @@ void reshape_buffer_INPE_SIMD_KRowPartition(stream<ap_uint<IN_PE * IN_BIT> > &in
     }
   }
 }
+
+
+template <unsigned K, unsigned IN_H, unsigned IN_W, unsigned IN_CH, unsigned OUTPENUM,
+          unsigned Np, unsigned IN_BIT, unsigned IN_PE, unsigned SIMD>
+void reshape_buffer_KRowP(stream<ap_uint<IN_PE * IN_BIT> > &in,
+                         stream<ap_uint<K * SIMD * IN_BIT * Np> > &out,
+                         const unsigned reps = 1) {
+  const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+
+  ap_uint<3> storeBufferIdx = 0;
+  ap_uint<3> loadBufferIdx = 1;
+  ap_int<10> rowIdx = - (K - 1);
+
+  if (SIMD >= IN_PE){
+    ap_uint<IN_PE * IN_BIT * Np> row_buffer_SIMD_INPE_KRow[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
+#pragma HLS ARRAY_PARTITION variable = row_buffer_SIMD_INPE_KRow dim = 1 complete
+#pragma HLS ARRAY_PARTITION variable = row_buffer_SIMD_INPE_KRow dim = 2 complete
+#pragma HLS RESOURCE variable = row_buffer_SIMD_INPE_KRow core = RAM_S2P_BRAM
+
+    for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+#pragma HLS dependence intra false variable = row_buffer_SIMD_INPE_KRow
+      stream_in_row_SIMD_INPE<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_SIMD_INPE_KRow, (rep >= reps * IN_H), storeBufferIdx);
+      stream_out_rows_SIMD_INPE_KRowPartition<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_SIMD_INPE_KRow, (rep < (K - 1)), rowIdx, loadBufferIdx);
+      loadBufferIdx++;
+      if (loadBufferIdx == (K + 1)){
+        loadBufferIdx -= (K + 1);
+      }
+      storeBufferIdx++;
+      if (storeBufferIdx == (K + 1)){
+        storeBufferIdx -= (K + 1);
+      }
+  
+      if (rowIdx == IN_H - 1) {
+        rowIdx = 0;
+      } else {
+        rowIdx++;
+      }
+    }
+  }else{
+    ap_uint<SIMD * IN_BIT * Np> row_buffer_INPE_SIMD_KRow[IN_PE / SIMD][K + 1][ROW_LEN * (IN_CH / IN_PE)];
+#pragma HLS ARRAY_PARTITION variable = row_buffer_INPE_SIMD_KRow dim = 1 complete
+#pragma HLS ARRAY_PARTITION variable = row_buffer_INPE_SIMD_KRow dim = 2 complete
+#pragma HLS RESOURCE variable = row_buffer_INPE_SIMD_KRow core = RAM_S2P_BRAM
+
+    for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+#pragma HLS dependence intra false variable = row_buffer_INPE_SIMD_KRow
+      stream_in_row_INPE_SIMD<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_INPE_SIMD_KRow, (rep >= reps * IN_H), storeBufferIdx);
+      stream_out_rows_INPE_SIMD_KRowPartition<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_INPE_SIMD_KRow, (rep < (K - 1)), rowIdx, loadBufferIdx);
+      loadBufferIdx++;
+      if (loadBufferIdx == (K + 1)){
+        loadBufferIdx -= (K + 1);
+      }
+      storeBufferIdx++;
+      if (storeBufferIdx == (K + 1)){
+        storeBufferIdx -= (K + 1);
+      }
+  
+      if (rowIdx == IN_H - 1) {
+        rowIdx = 0;
+      } else {
+        rowIdx++;
+      }
+    }
+  }
+}
+
+
+template <unsigned K, unsigned IN_H, unsigned IN_W, unsigned IN_CH, unsigned OUTPENUM,
+          unsigned Np, unsigned IN_BIT, unsigned IN_PE, unsigned SIMD>
+void reshape_buffer_Normal(stream<ap_uint<IN_PE * IN_BIT> > &in,
+                    stream<ap_uint<SIMD * IN_BIT * Np> > &out,
+                    const unsigned reps = 1) {
+  const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+
+  ap_uint<3> storeBufferIdx = 0;
+  ap_uint<3> loadBufferIdx = 1;
+  ap_int<10> rowIdx = - (K - 1);
+
+  if (SIMD >= IN_PE){
+    ap_uint<IN_PE * IN_BIT * Np> row_buffer_SIMD_INPE[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
+#pragma HLS ARRAY_PARTITION variable = row_buffer_SIMD_INPE dim = 1 complete
+#pragma HLS RESOURCE variable = row_buffer_SIMD_INPE core = RAM_S2P_BRAM
+
+    for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+#pragma HLS dependence intra false variable = row_buffer_SIMD_INPE
+      stream_in_row_SIMD_INPE<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_SIMD_INPE, (rep >= reps * IN_H), storeBufferIdx);
+      stream_out_rows_SIMD_INPE<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_SIMD_INPE, (rep < (K - 1)), rowIdx, loadBufferIdx);
+      loadBufferIdx++;
+      if (loadBufferIdx == (K + 1)){
+        loadBufferIdx -= (K + 1);
+      }
+      storeBufferIdx++;
+      if (storeBufferIdx == (K + 1)){
+        storeBufferIdx -= (K + 1);
+      }
+  
+      if (rowIdx == IN_H - 1) {
+        rowIdx = 0;
+      } else {
+        rowIdx++;
+      }
+    }
+  }else{
+    ap_uint<SIMD * IN_BIT * Np> row_buffer_INPE_SIMD[IN_PE / SIMD][K + 1][ROW_LEN * (IN_CH / IN_PE)];
+#pragma HLS ARRAY_PARTITION variable = row_buffer_INPE_SIMD dim = 1 complete
+#pragma HLS RESOURCE variable = row_buffer_INPE_SIMD core = RAM_S2P_BRAM
+
+    for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+#pragma HLS dependence intra false variable = row_buffer_INPE_SIMD
+      stream_in_row_INPE_SIMD<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_INPE_SIMD, (rep >= reps * IN_H), storeBufferIdx);
+      stream_out_rows_INPE_SIMD<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_INPE_SIMD, (rep < (K - 1)), rowIdx, loadBufferIdx);
+      loadBufferIdx++;
+      if (loadBufferIdx == (K + 1)){
+        loadBufferIdx -= (K + 1);
+      }
+      storeBufferIdx++;
+      if (storeBufferIdx == (K + 1)){
+        storeBufferIdx -= (K + 1);
+      }
+  
+      if (rowIdx == IN_H - 1) {
+        rowIdx = 0;
+      } else {
+        rowIdx++;
+      }
+    }
+  }
+}
+
+
+// template <unsigned K, unsigned IN_H, unsigned IN_W, unsigned IN_CH, unsigned OUTPENUM,
+//           unsigned Np, unsigned IN_BIT, unsigned IN_PE, unsigned SIMD, unsigned KRF>
+// void reshape_buffer(stream<ap_uint<IN_PE * IN_BIT> > &in,
+//                     stream<ap_uint<KRF * SIMD * IN_BIT * Np> > &out,
+//                     const unsigned reps = 1) {
+//   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+
+//   ap_uint<3> storeBufferIdx = 0;
+//   ap_uint<3> loadBufferIdx = 1;
+//   ap_int<10> rowIdx = - (K - 1);
+
+//   if ((SIMD >= IN_PE) && (KRF == 1)){
+//     ap_uint<IN_PE * IN_BIT * Np> row_buffer_SIMD_INPE[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
+// #pragma HLS ARRAY_PARTITION variable = row_buffer_SIMD_INPE dim = 1 complete
+// #pragma HLS RESOURCE variable = row_buffer_SIMD_INPE core = RAM_S2P_BRAM
+
+//     for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+// #pragma HLS dependence intra false variable = row_buffer_SIMD_INPE
+//       stream_in_row_SIMD_INPE<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_SIMD_INPE, (rep >= reps * IN_H), storeBufferIdx);
+//       stream_out_rows_SIMD_INPE<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_SIMD_INPE, (rep < (K - 1)), rowIdx, loadBufferIdx);
+//       loadBufferIdx++;
+//       if (loadBufferIdx == (K + 1)){
+//         loadBufferIdx -= (K + 1);
+//       }
+//       storeBufferIdx++;
+//       if (storeBufferIdx == (K + 1)){
+//         storeBufferIdx -= (K + 1);
+//       }
+  
+//       if (rowIdx == IN_H - 1) {
+//         rowIdx = 0;
+//       } else {
+//         rowIdx++;
+//       }
+//     }
+//   }else if((SIMD >= IN_PE) && (KRF == K)){
+//     ap_uint<IN_PE * IN_BIT * Np> row_buffer_SIMD_INPE_KRow[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
+// #pragma HLS ARRAY_PARTITION variable = row_buffer_SIMD_INPE_KRow dim = 1 complete
+// #pragma HLS ARRAY_PARTITION variable = row_buffer_SIMD_INPE_KRow dim = 2 complete
+// #pragma HLS RESOURCE variable = row_buffer_SIMD_INPE_KRow core = RAM_S2P_BRAM
+
+//     for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+// #pragma HLS dependence intra false variable = row_buffer_SIMD_INPE_KRow
+//       stream_in_row_SIMD_INPE<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_SIMD_INPE_KRow, (rep >= reps * IN_H), storeBufferIdx);
+//       stream_out_rows_SIMD_INPE_KRowPartition<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_SIMD_INPE_KRow, (rep < (K - 1)), rowIdx, loadBufferIdx);
+//       loadBufferIdx++;
+//       if (loadBufferIdx == (K + 1)){
+//         loadBufferIdx -= (K + 1);
+//       }
+//       storeBufferIdx++;
+//       if (storeBufferIdx == (K + 1)){
+//         storeBufferIdx -= (K + 1);
+//       }
+  
+//       if (rowIdx == IN_H - 1) {
+//         rowIdx = 0;
+//       } else {
+//         rowIdx++;
+//       }
+//     }
+//   }else if((SIMD < IN_PE) && (KRF == 1)){
+//     ap_uint<SIMD * IN_BIT * Np> row_buffer_INPE_SIMD[IN_PE / SIMD][K + 1][ROW_LEN * (IN_CH / IN_PE)];
+// #pragma HLS ARRAY_PARTITION variable = row_buffer_INPE_SIMD dim = 1 complete
+// #pragma HLS RESOURCE variable = row_buffer_INPE_SIMD core = RAM_S2P_BRAM
+
+//     for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+// #pragma HLS dependence intra false variable = row_buffer_INPE_SIMD
+//       stream_in_row_INPE_SIMD<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_INPE_SIMD, (rep >= reps * IN_H), storeBufferIdx);
+//       stream_out_rows_INPE_SIMD<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_INPE_SIMD, (rep < (K - 1)), rowIdx, loadBufferIdx);
+//       loadBufferIdx++;
+//       if (loadBufferIdx == (K + 1)){
+//         loadBufferIdx -= (K + 1);
+//       }
+//       storeBufferIdx++;
+//       if (storeBufferIdx == (K + 1)){
+//         storeBufferIdx -= (K + 1);
+//       }
+  
+//       if (rowIdx == IN_H - 1) {
+//         rowIdx = 0;
+//       } else {
+//         rowIdx++;
+//       }
+//     }
+//   }else if((SIMD < IN_PE) && (KRF == K)){
+//     ap_uint<SIMD * IN_BIT * Np> row_buffer_INPE_SIMD_KRow[IN_PE / SIMD][K + 1][ROW_LEN * (IN_CH / IN_PE)];
+// #pragma HLS ARRAY_PARTITION variable = row_buffer_INPE_SIMD_KRow dim = 1 complete
+// #pragma HLS ARRAY_PARTITION variable = row_buffer_INPE_SIMD_KRow dim = 2 complete
+// #pragma HLS RESOURCE variable = row_buffer_INPE_SIMD_KRow core = RAM_S2P_BRAM
+
+//     for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+// #pragma HLS dependence intra false variable = row_buffer_INPE_SIMD_KRow
+//       stream_in_row_INPE_SIMD<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer_INPE_SIMD_KRow, (rep >= reps * IN_H), storeBufferIdx);
+//       stream_out_rows_INPE_SIMD_KRowPartition<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer_INPE_SIMD_KRow, (rep < (K - 1)), rowIdx, loadBufferIdx);
+//       loadBufferIdx++;
+//       if (loadBufferIdx == (K + 1)){
+//         loadBufferIdx -= (K + 1);
+//       }
+//       storeBufferIdx++;
+//       if (storeBufferIdx == (K + 1)){
+//         storeBufferIdx -= (K + 1);
+//       }
+  
+//       if (rowIdx == IN_H - 1) {
+//         rowIdx = 0;
+//       } else {
+//         rowIdx++;
+//       }
+//     }
+//   }
+// }
 //--------------------------------------------------------------------------------------------------------------------------------------------------------
 #endif
