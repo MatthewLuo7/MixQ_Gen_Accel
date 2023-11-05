@@ -1,5 +1,5 @@
-#ifndef __CONV_OPT_HPP__
-#define __CONV_OPT_HPP__
+#ifndef __OPT_FP_HPP__
+#define __OPT_FP_HPP__
 
 #include <ap_int.h>
 #include <hls_stream.h>
@@ -11,7 +11,7 @@ using namespace hls;
 
 
 template <unsigned IN_BIT, unsigned SIMD, unsigned Np, unsigned PROD_BIT, unsigned IPACK_BIT>
-void Conv_Pack_ACT(ap_uint<Np * SIMD * IN_BIT> in_data, ap_uint<IPACK_BIT> ipacks[SIMD]) {
+void FP_Pack_ACT(ap_uint<Np * SIMD * IN_BIT> in_data, ap_uint<IPACK_BIT> ipacks[SIMD]) {
 #pragma HLS array_partition variable = ipacks
 
   for(unsigned i = 0; i < SIMD; i++){
@@ -25,22 +25,23 @@ void Conv_Pack_ACT(ap_uint<Np * SIMD * IN_BIT> in_data, ap_uint<IPACK_BIT> ipack
 
 
 template <unsigned W_BIT, unsigned SIMD, unsigned Kp, unsigned PROD_BIT, unsigned WPACK_BIT>
-void Conv_Pack_W(ap_uint<Kp * SIMD * W_BIT> in_weights, ap_int<WPACK_BIT> wpacks[SIMD]) {
+void FP_Pack_W(ap_uint<Kp * SIMD * W_BIT> in_weights, ap_int<WPACK_BIT> wpacks[SIMD]) {
 #pragma HLS array_partition variable = wpacks
 
   for(unsigned i = 0; i < SIMD; i++) {
-    wpacks[i] = 0;
+    ap_int<WPACK_BIT> wpack_temp = 0;
     for(unsigned j = 0; j < Kp; j++){
       ap_int<W_BIT> w_seg = in_weights(j*SIMD*W_BIT + i*W_BIT + W_BIT - 1, j*SIMD*W_BIT + i*W_BIT);
-      wpacks[i] += (w_seg * (1 << (PROD_BIT * j)));
+      wpack_temp += (w_seg * (1 << (PROD_BIT * j)));
     }
+    wpacks[i] = wpack_temp;
   }
 }
 
 
 template <unsigned Kp, unsigned Np, unsigned W_BIT, unsigned IN_BIT, unsigned PROD_BIT, unsigned SIMD, unsigned CASCADE,
           unsigned SIMD_BIT, unsigned WPACK_BIT, unsigned IPACK_BIT>
-void Conv_Comp_SIMD(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD], ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1]) {
+void FP_Comp_SIMD(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD], ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1]) {
 #pragma HLS ARRAY_PARTITION variable = wpacks complete
 #pragma HLS ARRAY_PARTITION variable = ipacks complete
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
@@ -78,7 +79,7 @@ template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned 
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
           unsigned Kp, unsigned Np, unsigned CASCADE, unsigned GUARD_BIT,
           unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT>
-void Conv_Array_Cascade(
+void FP_Array_Cascade(
     stream<ap_uint<Np * SIMD * IN_BIT> > &in,
     const ap_uint<K * SIMD * W_BIT> weights[PE][(K * IN_CH / SIMD) * (OUT_CH / PE)],
     stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -131,7 +132,7 @@ void Conv_Array_Cascade(
         //input new activations and load weights
         if(flag_in){
           in_data = in.read();
-          Conv_Pack_ACT<IN_BIT, SIMD, Np, PROD_BIT, IPACK_BIT>(in_data, ipacks);
+          FP_Pack_ACT<IN_BIT, SIMD, Np, PROD_BIT, IPACK_BIT>(in_data, ipacks);
           for(unsigned p = 0; p < PE; p++){
             cur_weights[p] = weights[p][add_offset + infold_counter];
           }
@@ -154,12 +155,12 @@ void Conv_Array_Cascade(
           //extract Kp weights
           ap_uint<Kp * SIMD * W_BIT> in_weights = cur_weights[p](Kp * SIMD * W_BIT - 1, 0);
           cur_weights[p] = cur_weights[p] >> (Kp * SIMD * W_BIT);
-          Conv_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks[p]);
+          FP_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks[p]);
 
           //SIMD computing array
           ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1];
           #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
-          Conv_Comp_SIMD<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, WPACK_BIT, IPACK_BIT>(wpacks[p], ipacks, DSP_PartialRes);
+          FP_Comp_SIMD<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, WPACK_BIT, IPACK_BIT>(wpacks[p], ipacks, DSP_PartialRes);
 
           for(unsigned i = 0; i < (Kp + Np - 1); i++){
             PartialRes[p][res_offset + i] += DSP_PartialRes[i];
@@ -320,10 +321,10 @@ void Conv_Opt_Test_Wrapper(
   StreamingDataWidthConverter_Batch<2 * IN_PE * IN_BIT, IN_PE * IN_BIT, convertnum_0>(in, convertnum_out_0, reps);
 
   stream<ap_uint<Np * SIMD * IN_BIT> > padding_out("padding_out");
-  reshape_buffer_SIMD_INPE<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(convertnum_out_0, padding_out, reps);
+  reshape_buffer_Normal<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(convertnum_out_0, padding_out, reps);
 
   stream<ap_uint<Np * PE * M_BIT> > conv_out("conv_out");
-  Conv_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT>(padding_out, weights, conv_out, reps);
+  FP_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT>(padding_out, weights, conv_out, reps);
 
   const unsigned convertnum_1 = IN_H * (OUT_CH / PE) * ROW_LEN;
   stream<ap_uint<ACTP * M_BIT> > convertnum_out("convertnum_out");
