@@ -321,7 +321,7 @@ void Conv_Opt_Test_Wrapper(
   StreamingDataWidthConverter_Batch<2 * IN_PE * IN_BIT, IN_PE * IN_BIT, convertnum_0>(in, convertnum_out_0, reps);
 
   stream<ap_uint<Np * SIMD * IN_BIT> > padding_out("padding_out");
-  reshape_buffer_Normal<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(convertnum_out_0, padding_out, reps);
+  reshape_buffer_S2P<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(convertnum_out_0, padding_out, reps);
 
   stream<ap_uint<Np * PE * M_BIT> > conv_out("conv_out");
   FP_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT>(padding_out, weights, conv_out, reps);

@@ -227,7 +227,7 @@ void Conv_In_Wrapper(stream<ap_uint<IN_BIT * IN_CH> > &in,
   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;
 
   stream<ap_uint<Np * SIMD * IN_BIT> > padding_out("padding_out");
-  reshape_buffer_Normal<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(in, padding_out, reps);
+  reshape_buffer_S2P<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(in, padding_out, reps);
 
   stream<ap_uint<Np * PE * Kp * M_BIT> > conv_out("conv_out");
   KP_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern1>(padding_out, weights, conv_out, reps);
@@ -258,7 +258,7 @@ void Conv_In_Wrapper_KRowP(stream<ap_uint<IN_BIT * IN_CH> > &in,
   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;
 
   stream<ap_uint<Np * K * SIMD * IN_BIT> > padding_out("padding_out");
-  reshape_buffer_KRowP<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(in, padding_out, reps);
+  reshape_buffer_FPT<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(in, padding_out, reps);
 
   stream<ap_uint<Np * PE * Kp * M_BIT> > conv_out("conv_out");
   KP_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD * K, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern1>(padding_out, weights, conv_out, reps);
