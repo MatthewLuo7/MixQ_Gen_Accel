@@ -27,8 +27,8 @@ name_mapping = {
     'lshift': 'L_SHIFT',
     'kpf': 'KPF',
     'max_pool': 'MAX_POOL',
-    'T_mul': 'T_mul'
-    # 'pack_flag': 'PACK_FLAG'
+    'T_mul': 'T_mul',
+    'pack_flag': 'PACK_FLAG'
     }
 
 class ConvParam: ...

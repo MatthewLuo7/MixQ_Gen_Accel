@@ -27,6 +27,17 @@ KP_Array_Cascade<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_I
 
 class KP_Opt_Templates(FP_Opt_Templates):
 
+    ################################################ Complexity ################################################
+    def dsp_operations(self):
+        K = conv.k
+        INFOLD = conv.k * conv.ich / (conv.simd * conv.kpf)
+        ROW_LEN = (conv.icol + conv.k - 2) / conv.np + 1
+        OUTPENUM = conv.och / (conv.pe * conv.kp);
+
+        dsp_operations = K * INFOLD * ROW_LEN * OUTPENUM * self.irow
+
+        return dsp_operations
+
     ################################################ Processing ################################################
     def weight_reorder(self):
         if self.conv.kpf == 1:

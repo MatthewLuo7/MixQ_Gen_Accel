@@ -28,7 +28,8 @@ name_mapping = {
     'biasbit': 'BIAS_BIT',
     'lshift': 'L_SHIFT',
     'kpf': 'KPF',
-    'max_pool': 'MAX_POOL'
+    'max_pool': 'MAX_POOL',
+    'pack_flag': 'PACK_FLAG'
     }
 
 front_temp = Template('''/********************************************************************************

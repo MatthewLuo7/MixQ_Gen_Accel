@@ -122,6 +122,17 @@ class FP_Opt_Templates:
     def __init__(self, conv):
         self.conv = conv
 
+    ################################################ Complexity ################################################
+    def dsp_operations(self):
+        KNUM = (conv.k - 1) / conv.kp + 1
+        INFOLD = conv.k * conv.ich / (conv.simd * conv.kpf)
+        ROW_LEN = (conv.icol + conv.k - 2) / conv.np + 1
+        OUTPENUM = conv.och / conv.pe
+
+        dsp_operations = KNUM * INFOLD * ROW_LEN * OUTPENUM * self.irow
+
+        return dsp_operations
+
     ################################################ Processing ################################################
     def weight_reorder(self):
         if self.conv.kpf == 1:

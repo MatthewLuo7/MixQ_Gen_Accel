@@ -9,6 +9,7 @@ import math
 
 import sys
 sys.path.append('..')
+sys.path.append('../operators')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn
@@ -293,6 +294,7 @@ def gen_opts(model_param, array_config):
     model_opt = []
     for conv, opt_type in zip(model_param, array_config[:, 8]):
         if opt_type == 0:
+            conv.pack_flag = True        # to be modified
             model_opt.append(KP_Opt_Templates(conv))
         elif opt_type == 1:
             model_opt.append(FP_Opt_Templates(conv))
