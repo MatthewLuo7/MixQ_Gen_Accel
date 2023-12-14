@@ -135,7 +135,6 @@ class FP_Opt_Templates:
             w = w[:, :, :, ::-1, :]
             w = w.reshape(self.conv.pe, -1, self.conv.k*self.conv.simd)  # [pe, och/pe*kr*ich/simd, kc*simd]
             self.conv.w = w
-            print(' ->', w.shape)
 
             return f"const ap_uint<{self.conv.k * self.conv.wbit * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
         else:
@@ -149,7 +148,6 @@ class FP_Opt_Templates:
             w = w[:, :, :, ::-1, :, :]
             w = w.reshape(self.conv.pe, -1, self.conv.k*self.conv.k*self.conv.simd)  # [pe, och/pe*ich/simd, kc*kr*simd]
             self.conv.w = w
-            print(' ->', w.shape)
 
             return f"const ap_uint<{self.conv.k * self.conv.wbit * self.conv.k * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 

@@ -10,7 +10,7 @@ const unsigned CONV_${No}_SIMD_BIT = ${SIMD_BIT};
 const unsigned CONV_${No}_CASCADE = ${CASCADE};
 const unsigned CONV_${No}_ROW_LEN = (CONV_${No}_IN_W + CONV_${No}_K - 1 - 1) / CONV_${No}_Np + 1;
 const unsigned CONV_${No}_adW_BIT = 1;
-const bool CONV_${No}_PatternFlag = true;
+const bool CONV_${No}_PatternFlag = ${PatternFlag};
 const unsigned CONV_${No}_OCH_PF = CONV_${No}_PE * CONV_${No}_Kp;
 const unsigned CONV_${No}_DEC_BW_NUM = CONV_${No}_IN_H * (CONV_${No}_OUT_CH / CONV_${No}_OCH_PF) * CONV_${No}_ROW_LEN;
 const unsigned CONV_${No}_INC_BW_NUM = CONV_${No}_IN_H * (CONV_${No}_OUT_CH / CONV_${No}_OCH_PF) * CONV_${No}_IN_W * (CONV_${No}_OCH_PF / CONV_${No}_ACTP);
@@ -39,7 +39,6 @@ class KP_Opt_Templates(FP_Opt_Templates):
             w = w[:, :, :, :, ::-1, :, :]
             w = w.reshape(self.conv.pe, -1, self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * kr * ich/simd * kc, simd * kp]
             self.conv.w = w
-            print(' ->', w.shape)
 
             return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
         else:
@@ -52,7 +51,6 @@ class KP_Opt_Templates(FP_Opt_Templates):
             w = w[:, :, :, ::-1, :, :, :]
             w = w.reshape(self.conv.pe, -1, self.conv.k*self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * ich/simd * kc, kr * simd * kp]
             self.conv.w = w
-            print(' ->', w.shape)
 
             return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd * self.conv.k}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
@@ -70,9 +68,13 @@ class KP_Opt_Templates(FP_Opt_Templates):
                 in_assign = 'conv0_in'
         else:
                 in_assign = f'conv_{self.conv.n-1}_layer_out'
+        if self.conv.pack_flag:
+            PatternFlag = 'true'
+        else:
+            PatternFlag = 'false'
         return KP_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
                                   SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd))),
-                                  CASCADE=str(self.find_CASCADE()))
+                                  CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag)
 
     def gen_conv_array(self):
         return KP_array_cascade.substitute(No=str(self.conv.n))

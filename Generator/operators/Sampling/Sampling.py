@@ -28,6 +28,7 @@ name_mapping = {
     'kpf': 'KPF',
     'max_pool': 'MAX_POOL',
     'T_mul': 'T_mul'
+    # 'pack_flag': 'PACK_FLAG'
     }
 
 class ConvParam: ...
@@ -35,15 +36,6 @@ class ConvParam: ...
 class FP_Opt_Sample:
 	def __init__(self, conv):
 		self.conv = conv
-	
-	# def packing_search(self):
-	# 	po = DSP_Config_Search(27, 18, 8)
-	# 	kp, np, gb, T_mul = po.Filter_Packing(self.conv.k, self.conv.abit, self.conv.wbit, 0)
-	# 	# self.conv.kp = kp
-	# 	setattr(self.conv, 'kp', kp)
-	# 	self.conv.np = np
-	# 	self.conv.gb = gb
-	# 	self.conv.T_mul = T_mul
 
 	def check_attr(self):
 		for k, v in name_mapping.items():
@@ -79,26 +71,18 @@ class FP_Opt_Sample:
 			C12 = self.conv.np * self.conv.pe * mbit <= 1024
 			C13 = self.conv.pe * self.conv.obit <= 1024
 			C14 = self.conv.k * self.conv.simd * self.conv.kpf * self.conv.wbit <= 1024
-			C15 = self.conv.simd * self.conv.pe <= 128
+			C15 = self.conv.simd * self.conv.pe * self.conv.kpf <= 192
+			C16 = self.conv.simd * self.conv.kpf <= 48
 
-			return C1 and C2 and C3 and C4 and C5 and C6 and C7 and C8 and C9 and C10 and C11 and C12 and C13 and C14 and C15 and C15
+			return C1 and C2 and C3 and C4 and C5 and C6 and C7 and C8 and C9 and C10 and C11 and C12 and C13 and C14 and C15 and C15 and C16
 
 		else:
 			return False
 
 class KP_Opt_Sample(FP_Opt_Sample):
-	# def packing_search(self):
-	# 	po = DSP_Config_Search(27, 18, 8)
-	# 	pack_flag, Ep, Dp, self.conv.gb, self.conv.T_mul = po.Kernel_Packing(self.conv.wbit, self.conv.abit, 0)
-	# 	if pack_flag:
-	# 		self.np = Ep
-	# 		self.kp = Dp
-	# 	else:
-	# 		self.kp = Ep
-	# 		self.np = Dp
 
 	def check_constraints(self):
-		if self.check_attr:
+		if self.check_attr():
 			C1 = self.conv.k <= self.conv.icol
 			C2 = self.conv.k <= (self.conv.icol / 2)
 			C3 = self.conv.in_pe <= self.conv.ich
@@ -114,7 +98,8 @@ class KP_Opt_Sample(FP_Opt_Sample):
 			C12 = self.conv.np * self.conv.pe * self.conv.kp * mbit <= 1024
 			C13 = self.conv.pe * self.conv.kp * self.conv.obit <= 1024
 			C14 = self.conv.kp * self.conv.simd * self.conv.kpf * self.conv.wbit <= 1024
-			C15 = self.conv.simd * self.conv.pe <= 128
+			C15 = self.conv.simd * self.conv.pe * self.conv.kpf <= 192
+			C16 = self.conv.simd * self.conv.kpf <= 48
 
 			return C1 and C2 and C3 and C4 and C5 and C6 and C7 and C8 and C9 and C10 and C11 and C12 and C13 and C14 and C15 and C15
 
@@ -124,7 +109,8 @@ class KP_Opt_Sample(FP_Opt_Sample):
 
 class sample_opt:
 	def __init__(self, require_num, attempt_num):
-		self.set_opt_type = ['FP_Opt', 'KP_Opt']
+		# self.set_opt_type = ['FP_Opt', 'KP_Opt']
+		self.set_opt_type = ['FP_Opt']
 		self.set_K = [3]
 		self.set_OPT_ARCH = [(320, 160, 3, 16, True), (160, 80, 16, 32, True), (80, 40, 32, 64, True), (40, 20, 64, 64, True), (20, 10, 64, 64, False)]
 		self.set_PF = [1, 2, 3, 4, 8, 16, 32]      # self.set_PF = [1, 2, 4, 8, 16, 32, 64]
@@ -175,7 +161,7 @@ class sample_opt:
 
 
 	def random_sampling(self):
-		prev_samples_json = './opt_samples_prev.json'
+		prev_samples_json = './opt_samples_4.json'
 		self.load_prev_samples(prev_samples_json)
 		for i in range(self.attempt_num):
 			conv = ConvParam()
@@ -198,21 +184,24 @@ class sample_opt:
 			conv.kpf = choice(self.set_KPF)
 
 			po = DSP_Config_Search(27, 18, 8)
-			conv.incbit = conv.wbit + conv.abit + random.randint(5, 10)
-			conv.biasbit = conv.wbit + conv.abit + random.randint(10, 20)
-			# conv.incbit = conv.wbit + conv.abit + 6
-			# conv.biasbit = conv.wbit + conv.abit + 15
+			# conv.incbit = conv.wbit + conv.abit + random.randint(5, 10)
+			# conv.biasbit = conv.wbit + conv.abit + random.randint(10, 20)
+			conv.incbit = conv.wbit + conv.abit + 6
+			conv.biasbit = conv.wbit + conv.abit + 15
 			if conv.opt_type == 'FP_Opt':
 				conv.kp, conv.np, conv.gb, conv.T_mul = po.Filter_Packing(conv.k, conv.abit, conv.wbit, 0)
+				conv.pack_flag = False
 				opt = FP_Opt_Sample(conv)
 			elif conv.opt_type == 'KP_Opt':
 				pack_flag, Ep, Dp, conv.gb, conv.T_mul = po.Kernel_Packing(conv.wbit, conv.abit, 0)
 				if pack_flag:
 					conv.np = Ep
 					conv.kp = Dp
+					conv.pack_flag = True
 				else:
 					conv.kp = Ep
 					conv.np = Dp
+					conv.pack_flag = False
 				opt = KP_Opt_Sample(conv)
 
 			vec = opt.gen_vec()
@@ -245,7 +234,7 @@ class sample_opt:
 
 			self.sample_dict['OPT_' + str(idx)] = dict_elem
 
-		with open('./opt_samples.json', 'w', encoding='utf-8') as f:
+		with open('./opt_samples_5.json', 'w', encoding='utf-8') as f:
 			json.dump(self.sample_dict, f, indent=4)
 
 		return

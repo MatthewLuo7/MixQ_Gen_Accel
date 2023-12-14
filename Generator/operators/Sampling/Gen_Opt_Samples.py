@@ -137,9 +137,9 @@ def dict_to_conv(sample_dict):
                 raise ValueError(f'There is no key named as {str(v)} in sample dictionary!')
 
     # generate pseudo parameters
-    conv.w = ((2**(conv.wbit-1) - 1) * (np.random.rand(conv.och, conv.ich, conv.k, conv.k)*2 - 1)).astype(np.int32)    # [och, ich, kr, kc]
-    conv.inc = ((2**(conv.incbit-1) - 1) * (np.random.rand(conv.och)*2 - 1)).astype(np.int64)
-    conv.bias = ((2**(conv.biasbit-1) - 1) * (np.random.rand(conv.och)*2 - 1)).astype(np.int64)
+    conv.w = np.round((2**(conv.wbit-1) - 1) * (np.random.rand(conv.och, conv.ich, conv.k, conv.k)*2 - 1)).astype(np.int32)    # [och, ich, kr, kc]
+    conv.inc = np.round((2**(conv.incbit-1) - 1) * (np.random.rand(conv.och)*2 - 1)).astype(np.int64)
+    conv.bias = np.round((2**(conv.biasbit-1) - 1) * (np.random.rand(conv.och)*2 - 1)).astype(np.int64)
 
     return conv, opt_type
 
@@ -225,15 +225,11 @@ def gen_pseudo_opt(path, template_dir, opt_name, sample_dict):
 
 
 if __name__ == '__main__':
-    with open('./opt_samples.json', 'r') as fdict:
+    with open('./opt_samples_5.json', 'r') as fdict:
         opt_dicts = json.load(fdict)
 
-    path = pathlib.Path('E:/Projects/DeepBurning_MixQ/Sampling/3_samp_test/samples')
-    template_dir = pathlib.Path('E:/Projects/DeepBurning_MixQ/Sampling/3_samp_test/templates')
+    path = pathlib.Path('/media/lab_admin/Data/Erjing/Sampling/3_sampFP1000/samples')
+    template_dir = pathlib.Path('/media/lab_admin/Data/Erjing/Sampling/3_sampFP1000/templates')
 
     for k, v in opt_dicts.items():
-        v['KPF'] = 1
-        v['No'] = 0
-        v['Opt_Type'] = 'FP_Opt'
         gen_pseudo_opt(path, template_dir, k, v)
-
