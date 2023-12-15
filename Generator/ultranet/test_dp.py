@@ -327,7 +327,7 @@ if __name__=='__main__':
     process_batchnorm(model_param) # get bn param before write hls config
     model_opt = gen_opts(model_param, array_config)
 
-    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 280)
+    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 300)
     best_Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
     print(f'latency:', best_Lat)
     print(f'SIMD:', SIMD_list)
@@ -344,13 +344,10 @@ if __name__=='__main__':
         model_opt[idx].conv.kpf = KPF_list[idx]
 
         latencies.append(model_opt[idx].dsp_operations() / (SIMD_list[idx] * PE_list[idx] * KPF_list[idx]))
-        total_dsp += SIMD_list[idx] * PE_list[idx] * KPF_list[idx]
+        total_dsp += SIMD_list[idx] * PE_list[idx] * KPF_list[idx] + ACTP_list[idx]
 
     print(f'Lat:', latencies)
     print(f'Total DSPs:', total_dsp)
-
-
-
 
     # torch.save(model_param, dir_output + 'model_param.pkl')
     

@@ -124,14 +124,52 @@ class FP_Opt_Templates:
 
     ################################################ Complexity ################################################
     def dsp_operations(self):
-        KNUM = (self.conv.k - 1) / self.conv.kp + 1
-        INFOLD = self.conv.k * self.conv.ich / (1 * 1)
-        ROW_LEN = (self.conv.icol + self.conv.k - 2) / self.conv.np + 1
-        OUTPENUM = self.conv.och / 1
+        KNUM = (self.conv.k - 1) // self.conv.kp + 1
+        INFOLD = self.conv.k * self.conv.ich // (1 * 1)
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
+        OUTPENUM = self.conv.och // 1
 
         dsp_operations = KNUM * INFOLD * ROW_LEN * OUTPENUM * self.conv.irow
 
         return dsp_operations
+
+    def get_actp(self, simd, pe, kpf):
+        KNUM = (self.conv.k - 1) // self.conv.kp + 1
+        INFOLD = self.conv.k * self.conv.ich // (simd * kpf)
+        OUT_PF = self.conv.np * pe
+        min_actp = OUT_PF // (KNUM * INFOLD)
+
+        valid_flag = False
+        best_actp = OUT_PF
+
+        actp_p_max = math.floor(math.log2(pe))
+        for actp_p in range(0, actp_p_max + 1):
+            actp = 2 ** actp_p
+            if actp >= min_actp:
+                valid_flag = True
+                best_actp = actp
+                break
+
+        return valid_flag, best_actp
+
+    def reshape_buffer_constraints(self, inpe, simd, pe, kpf):
+        if kpf * simd >= inpe:
+            flag = (kpf * simd % inpe == 0)
+            flag = flag and (self.conv.ich * self.conv.k % (kpf * simd) == 0)
+        else:
+            # flag = (inpe % (kpf * simd) == 0)
+            # flag = flag and (self.conv.ich * self.conv.k % inpe == 0)
+            flag = False
+
+        return flag
+
+    def check_constraints(self, inpe, simd, pe, kpf):
+        flag = self.reshape_buffer_constraints(inpe=inpe, simd=simd, pe=pe, kpf=kpf)
+        flag = flag and (self.conv.och % pe == 0)
+
+        return flag
+
+
 
     ################################################ Processing ################################################
     def weight_reorder(self):
