@@ -15,40 +15,49 @@ class Pipeline_Allocation:
 		self.model_opt = model_opt
 		self.n_layers = len(model_opt)
 		self.DSP_max = DSP_max
-		self.DPT = [[[DP_node(Init_Lat) for i in range(2)] for j in range(self.DSP_max)] for k in range(self.n_layers)]
+		self.DPT = [[[DP_node(self.model_opt[k].dsp_operations()) for i in range(2)] for j in range(self.DSP_max + 1)] for k in range(self.n_layers)]
 
 	def translate_kpf(self, kpf_flag, conv):
-		kpf = 1 if kpf_flag == 0 else conv.kpf
+		kpf = 1 if kpf_flag == 0 else conv.k
 		return kpf
 
-	def check_constraint(self, inpe, simd, pe, kpf):
-		if kpf * simd >= inpe:
-			flag = (kpf * simd % inpe == 0)
-		else:
-			flag = (inpe % (kpf * simd) == 0)
+	def check_constraint(self, inpe, simd, pe, kpf, conv):
+		# if kpf * simd >= inpe:
+		# 	flag = (kpf * simd % inpe == 0)
+		# else:
+		# 	flag = (inpe % (kpf * simd) == 0)
+
+		flag = (kpf * simd >= inpe) and (kpf * simd % inpe == 0)
+		flag = flag and (conv.ich % (kpf * simd) == 0) and (conv.och % pe == 0)
 
 		return flag
 
 	def Traverse_Solutions(self, layer, opt, DSP_aval, kpf_flag):
 		conv = opt.conv
-		kpf = translate_kpf(kpf_flag, conv)
-		simd_p_max = math.floor(math.log2(DSP_aval / kpf))
-		pe_p_max = math.floor(math.log2(DSP_aval))
+		kpf = self.translate_kpf(kpf_flag, conv)
+		if DSP_aval == 0:
+			return
+		simd_p_max = math.floor(math.log2(min(DSP_aval, conv.ich) / kpf))
+		pe_p_max = math.floor(math.log2(min(DSP_aval, conv.och)))
+		if (simd_p_max < 0) or (pe_p_max < 0):
+			return
 		for simd_p in range(0, simd_p_max + 1):
 			for pe_p in range(0, pe_p_max + 1):
 
-				simd = kpf * (2 ** simd_p)
+				simd = 2 ** simd_p
 				pe = 2 ** pe_p
 				actp = 0
 
-				cur_dsp = simd * pe + actp
-				cur_Lat = opt.dsp_operations() / (simd * pe)
+				cur_dsp = kpf * simd * pe + actp
+				cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
 
 				cur_Node = self.DPT[layer][DSP_aval][kpf_flag]
 				if (cur_dsp > DSP_aval):
 					continue
 
 				if layer == 0:
+					if not self.check_constraint(3, simd, pe, kpf, conv):
+						continue
 					if cur_Lat < cur_Node.Lat:
 						cur_Node.Lat = cur_Lat
 						cur_Node.SIMD = [simd]
@@ -58,19 +67,27 @@ class Pipeline_Allocation:
 
 				else:
 					for last_kpf_flag in range(2):
-						prev_Node = self.DPT[layer - 1][DSP_aval - cur_dsp][last_kpf]
-						inpe = prev_Node.pe[-1]
-						if self.check_constraint(inpe, simd, pe, kpf) is not True:
+						prev_Node = self.DPT[layer - 1][DSP_aval - cur_dsp][last_kpf_flag]
+						# debug
+						if len(prev_Node.PE) == 0:
+							continue
+							# print(layer, DSP_aval, last_kpf_flag)
+						inpe = prev_Node.PE[-1]
+						if not self.check_constraint(inpe, simd, pe, kpf, conv):
 							continue
 
 						cur_Lat = max(cur_Lat, prev_Node.Lat)
 	
 						if cur_Lat < cur_Node.Lat:
 							cur_Node.Lat = cur_Lat
-							cur_Node.SIMD = (prev_Node.SIMD.copy()).extend(simd)
-							cur_Node.PE = (prev_Node.PE.copy()).extend(pe)
-							cur_Node.ACTP = (prev_Node.ACTP.copy()).extend(actp)
-							cur_Node.KPF = (prev_Node.KPF.copy()).extend(kpf)
+							cur_Node.SIMD = prev_Node.SIMD.copy()
+							cur_Node.SIMD.extend([simd])
+							cur_Node.PE = prev_Node.PE.copy()
+							cur_Node.PE.extend([pe])
+							cur_Node.ACTP = prev_Node.ACTP.copy()
+							cur_Node.ACTP.extend([actp])
+							cur_Node.KPF = prev_Node.KPF.copy()
+							cur_Node.KPF.extend([kpf])
 
 
 	def DP_Search(self):
@@ -82,7 +99,7 @@ class Pipeline_Allocation:
 		best_kpf_flag = None
 		best_Lat = 99999999999
 		for kpf_flag in range(2):
-			cur_Lat = self.DPT[self.n_layers - 1][self.DSP_max][kpf_flag]
+			cur_Lat = self.DPT[self.n_layers - 1][self.DSP_max][kpf_flag].Lat
 
 			if cur_Lat < best_Lat:
 				best_Lat = cur_Lat

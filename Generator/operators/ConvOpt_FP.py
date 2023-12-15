@@ -124,12 +124,12 @@ class FP_Opt_Templates:
 
     ################################################ Complexity ################################################
     def dsp_operations(self):
-        KNUM = (conv.k - 1) / conv.kp + 1
-        INFOLD = conv.k * conv.ich / (conv.simd * conv.kpf)
-        ROW_LEN = (conv.icol + conv.k - 2) / conv.np + 1
-        OUTPENUM = conv.och / conv.pe
+        KNUM = (self.conv.k - 1) / self.conv.kp + 1
+        INFOLD = self.conv.k * self.conv.ich / (1 * 1)
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) / self.conv.np + 1
+        OUTPENUM = self.conv.och / 1
 
-        dsp_operations = KNUM * INFOLD * ROW_LEN * OUTPENUM * self.irow
+        dsp_operations = KNUM * INFOLD * ROW_LEN * OUTPENUM * self.conv.irow
 
         return dsp_operations
 

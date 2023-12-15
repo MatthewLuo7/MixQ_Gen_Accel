@@ -29,12 +29,12 @@ class KP_Opt_Templates(FP_Opt_Templates):
 
     ################################################ Complexity ################################################
     def dsp_operations(self):
-        K = conv.k
-        INFOLD = conv.k * conv.ich / (conv.simd * conv.kpf)
-        ROW_LEN = (conv.icol + conv.k - 2) / conv.np + 1
-        OUTPENUM = conv.och / (conv.pe * conv.kp);
+        K = self.conv.k
+        INFOLD = self.conv.k * self.conv.ich / (1 * 1)
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) / self.conv.np + 1
+        OUTPENUM = self.conv.och / (1 * self.conv.kp);
 
-        dsp_operations = K * INFOLD * ROW_LEN * OUTPENUM * self.irow
+        dsp_operations = K * INFOLD * ROW_LEN * OUTPENUM * self.conv.irow
 
         return dsp_operations
 
@@ -76,9 +76,16 @@ class KP_Opt_Templates(FP_Opt_Templates):
 
     def gen_conv_para(self):
         if self.conv.n == 0:
-                in_assign = 'conv0_in'
+            in_assign = 'conv0_in'
         else:
-                in_assign = f'conv_{self.conv.n-1}_layer_out'
+            in_assign = f'conv_{self.conv.n-1}_layer_out'
+        # if not hasattr(self.conv, 'pack_flag'):
+        #     pack_flag, Ep, Dp, conv.gb, conv.T_mul = po.Kernel_Packing(self.conv.wbit, self.conv.abit, 0)
+        #     if pack_flag:
+        #         setattr(self.conv, 'pack_flag', True)
+        #     else:
+        #         setattr(self.conv, 'pack_flag', False)
+            
         if self.conv.pack_flag:
             PatternFlag = 'true'
         else:
