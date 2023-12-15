@@ -27,7 +27,7 @@ KP_Array_Cascade<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_I
 
 class KP_Opt_Templates(FP_Opt_Templates):
 
-    ################################################ Complexity ################################################
+    ################################################ Search ################################################
     def dsp_operations(self):
         K = self.conv.k
         INFOLD = self.conv.k * self.conv.ich // (1 * 1)

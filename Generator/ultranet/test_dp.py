@@ -10,6 +10,9 @@ import math
 import sys
 sys.path.append('..')
 sys.path.append('../operators')
+sys.path.append('../operators/ConvOpt_KP')
+sys.path.append('../operators/ConvOpt_FP')
+sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn
@@ -327,7 +330,7 @@ if __name__=='__main__':
     process_batchnorm(model_param) # get bn param before write hls config
     model_opt = gen_opts(model_param, array_config)
 
-    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 300)
+    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 296)
     best_Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
     print(f'latency:', best_Lat)
     print(f'SIMD:', SIMD_list)

@@ -122,7 +122,7 @@ class FP_Opt_Templates:
     def __init__(self, conv):
         self.conv = conv
 
-    ################################################ Complexity ################################################
+    ################################################ Search ################################################
     def dsp_operations(self):
         KNUM = (self.conv.k - 1) // self.conv.kp + 1
         INFOLD = self.conv.k * self.conv.ich // (1 * 1)

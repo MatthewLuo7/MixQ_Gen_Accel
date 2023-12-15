@@ -35,21 +35,19 @@ class Pipeline_Allocation:
 		if DSP_aval == 0:
 			return
 
-		for simd in simd_aval:
-			for pe in pe_aval:
-				for kpf in [1, conv.k]:
-
+		for kpf in [1, conv.k]:
+			for simd in simd_aval:
+				for pe in pe_aval:
 					valid_flag, actp = opt.get_actp(simd=simd, pe=pe, kpf=kpf)
 					if not valid_flag:
 						continue
 	
 					cur_dsp = kpf * simd * pe + actp
 					cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
-	
-					cur_Node = self.DPT[layer][DSP_aval]
 					if (cur_dsp > DSP_aval):
 						continue
 	
+					cur_Node = self.DPT[layer][DSP_aval]
 					if layer == 0:
 						if not opt.check_constraints(inpe=3, simd=simd, pe=pe, kpf=kpf):
 							continue
@@ -88,16 +86,6 @@ class Pipeline_Allocation:
 			for DSP_aval in range(0, self.DSP_max + 1):
 				self.Traverse_Solutions(layer, self.model_opt[layer], DSP_aval,
 										simd_aval, pe_aval)
-
-
-		# best_kpf_flag = None
-		# best_Lat = 99999999999
-		# for kpf_flag in range(2):
-		# 	cur_Lat = self.DPT[self.n_layers - 1][self.DSP_max][kpf_flag].Lat
-
-		# 	if cur_Lat < best_Lat:
-		# 		best_Lat = cur_Lat
-		# 		best_kpf_flag = kpf_flag
 
 		best_Node = self.DPT[self.n_layers - 1][self.DSP_max]
 		SIMD_list = best_Node.SIMD
