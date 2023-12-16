@@ -31,7 +31,6 @@ class Pipeline_Allocation:
 
 	def Traverse_Solutions(self, layer, opt, DSP_aval, simd_aval, pe_aval):
 		conv = opt.conv
-		# kpf = self.translate_kpf(kpf_flag, conv)
 		if DSP_aval == 0:
 			return
 
