@@ -11,7 +11,9 @@ import sys
 sys.path.append('..')
 sys.path.append('../operators')
 sys.path.append('../operators/ConvOpt_KP')
+sys.path.append('../operators/ConvOpt_KP/predictors')
 sys.path.append('../operators/ConvOpt_FP')
+sys.path.append('../operators/ConvOpt_FP/predictors')
 sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
@@ -315,6 +317,8 @@ if __name__=='__main__':
     weight = 'ultra_4w4a'
     config_simd_pe = '4w4a_8fl_new'
 
+    
+
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
     dir_output = 'hls/' + weight + '/'
     if not os.path.exists(dir_output): os.makedirs(dir_output)
@@ -330,8 +334,11 @@ if __name__=='__main__':
     process_batchnorm(model_param) # get bn param before write hls config
     model_opt = gen_opts(model_param, array_config)
 
-    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 296)
+    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 320)
+    t1 = time.time()
     best_Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
+    t2 = time.time()
+    print(f'DP search spent {(t2 - t1) / 60} minutes in total.')
     print(f'latency:', best_Lat)
     print(f'SIMD:', SIMD_list)
     print(f'PE:', PE_list)
@@ -339,7 +346,7 @@ if __name__=='__main__':
     print(f'KPF:', KPF_list)
 
     latencies = []
-    total_dsp = 0
+    # total_dsp = 0
     for idx, opt in enumerate(model_opt[:-1]):
         model_opt[idx].conv.simd = SIMD_list[idx]
         model_opt[idx].conv.pe = PE_list[idx]
@@ -347,10 +354,10 @@ if __name__=='__main__':
         model_opt[idx].conv.kpf = KPF_list[idx]
 
         latencies.append(model_opt[idx].dsp_operations() / (SIMD_list[idx] * PE_list[idx] * KPF_list[idx]))
-        total_dsp += SIMD_list[idx] * PE_list[idx] * KPF_list[idx] + ACTP_list[idx]
+        # total_dsp += SIMD_list[idx] * PE_list[idx] * KPF_list[idx] + ACTP_list[idx]
 
     print(f'Lat:', latencies)
-    print(f'Total DSPs:', total_dsp)
+    # print(f'Total DSPs:', total_dsp)
 
     # torch.save(model_param, dir_output + 'model_param.pkl')
     

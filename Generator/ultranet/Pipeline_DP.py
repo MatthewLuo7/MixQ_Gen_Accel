@@ -41,13 +41,21 @@ class Pipeline_Allocation:
 					if not valid_flag:
 						continue
 	
-					cur_dsp = kpf * simd * pe + actp
+					# cur_dsp = kpf * simd * pe + actp
+					cur_dsp = opt.predict(simd, pe, actp, kpf)
 					cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
 					if (cur_dsp > DSP_aval):
 						continue
 	
 					cur_Node = self.DPT[layer][DSP_aval]
 					if layer == 0:
+						# inpe = 3
+						# cur_dsp = kpf * simd * pe + actp
+						# # cur_dsp = opt.predict(inpe, simd, pe, actp, kpf)
+						# cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
+						# if (cur_dsp > DSP_aval):
+						# 	continue
+
 						if not opt.check_constraints(inpe=3, simd=simd, pe=pe, kpf=kpf):
 							continue
 						if cur_Lat < cur_Node.Lat:
@@ -62,6 +70,13 @@ class Pipeline_Allocation:
 						if len(prev_Node.PE) == 0:
 							continue
 						inpe = prev_Node.PE[-1]
+
+						# cur_dsp = kpf * simd * pe + actp
+						# # cur_dsp = opt.predict(inpe, simd, pe, actp, kpf)
+						# cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
+						# if (cur_dsp > DSP_aval):
+						# 	continue
+
 						if not opt.check_constraints(inpe=inpe, simd=simd, pe=pe, kpf=kpf):
 							continue
 	
@@ -82,9 +97,13 @@ class Pipeline_Allocation:
 		for layer in range(self.n_layers):
 			simd_aval = self.get_factors(self.model_opt[layer].conv.ich)
 			pe_aval = self.get_factors(self.model_opt[layer].conv.och)
+			self.model_opt[layer].Load_Model()
+
 			for DSP_aval in range(0, self.DSP_max + 1):
 				self.Traverse_Solutions(layer, self.model_opt[layer], DSP_aval,
 										simd_aval, pe_aval)
+
+			print(f'layer {layer} finished!')
 
 		best_Node = self.DPT[self.n_layers - 1][self.DSP_max]
 		SIMD_list = best_Node.SIMD

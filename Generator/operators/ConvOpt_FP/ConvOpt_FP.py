@@ -1,6 +1,27 @@
 from string import Template
 import math
+import pickle
+import numpy as np
 
+name_mapping_FP = {
+    'simd': 'SIMD',
+    'pe': 'PE',
+    'actp': 'ACTP',
+    'kpf': 'KPF',
+    'icol': 'IN_W',
+    'irow': 'IN_H',
+    'ich': 'IN_CH',
+    'och': 'OUT_CH',
+    'abit': 'IN_BIT',
+    'wbit': 'W_BIT',
+    'obit': 'OUT_BIT',
+    'kp': 'Kp',
+    'np': 'Np',
+    'gb': 'GUARD_BIT',
+    'incbit': 'INC_BIT',
+    'biasbit': 'BIAS_BIT',
+    'max_pool': 'MAX_POOL'
+    }
 
 FP_para = Template('''//--------------------Conv ${No}: Parameters--------------------
 stream<ap_uint<CONV_${No}_IN_PE * CONV_${No}_IN_BIT> > &conv_${No}_in = ${in_assign_last};
@@ -169,7 +190,32 @@ class FP_Opt_Templates:
 
         return flag
 
+    def get_feature(self, simd, pe, actp, kpf):
+        features_list = [simd, pe, actp, kpf]
+        for idx, (k, v) in enumerate(name_mapping_FP.items()):
+            if idx < 4:
+                continue
+            features_list.append(getattr(self.conv, k))
 
+        features_list.append(simd * pe * kpf + actp)
+        float_features = list(map(float, features_list))
+
+        return float_features
+
+    def Load_Model(self):
+        predictor_file = 'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_FP/predictors/BRR_dsp.pkl'
+        with open(predictor_file, 'rb') as file:
+            model_dsp = pickle.load(file)
+        
+        self.model_dsp = model_dsp
+
+    def predict(self, simd, pe, actp, kpf):
+        features = self.get_feature(simd, pe, actp, kpf)
+        # print(len(features))
+        X = np.array(features).reshape(1, -1)
+        y_dsp = int(self.model_dsp.predict(X))
+
+        return y_dsp
 
     ################################################ Processing ################################################
     def weight_reorder(self):

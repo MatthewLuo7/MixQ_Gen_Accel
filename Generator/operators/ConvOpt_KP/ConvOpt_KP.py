@@ -1,7 +1,29 @@
 from string import Template
 from ConvOpt_FP import FP_Opt_Templates
 import math
+import pickle
+import numpy as np
 
+name_mapping_KP = {
+    'simd': 'SIMD',
+    'pe': 'PE',
+    'actp': 'ACTP',
+    'kpf': 'KPF',
+    'icol': 'IN_W',
+    'irow': 'IN_H',
+    'ich': 'IN_CH',
+    'och': 'OUT_CH',
+    'abit': 'IN_BIT',
+    'wbit': 'W_BIT',
+    'obit': 'OUT_BIT',
+    'kp': 'Kp',
+    'np': 'Np',
+    'gb': 'GUARD_BIT',
+    'incbit': 'INC_BIT',
+    'biasbit': 'BIAS_BIT',
+    'max_pool': 'MAX_POOL',
+    'pack_flag': 'PACK_FLAG'
+    }
 
 KP_para = Template('''//--------------------Conv ${No}: Parameters--------------------
 stream<ap_uint<CONV_${No}_IN_PE * CONV_${No}_IN_BIT> > &conv_${No}_in = ${in_assign_last};
@@ -62,6 +84,25 @@ class KP_Opt_Templates(FP_Opt_Templates):
         flag = flag and (self.conv.och % (pe * self.conv.kp) == 0)
 
         return flag
+
+    def get_feature(self, simd, pe, actp, kpf):
+        features_list = [simd, pe, actp, kpf]
+        for idx, (k, v) in enumerate(name_mapping_KP.items()):
+            if idx < 4:
+                continue
+            features_list.append(getattr(self.conv, k))
+
+        features_list.append(simd * pe * kpf + actp)
+        float_features = list(map(float, features_list))
+
+        return float_features
+
+    def Load_Model(self):
+        predictor_file = 'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_KP/predictors/BRR_dsp.pkl'
+        with open(predictor_file, 'rb') as file:
+            model_dsp = pickle.load(file)
+        
+        self.model_dsp = model_dsp
 
 
     ################################################ Processing ################################################
