@@ -49,12 +49,6 @@ class Pipeline_Allocation:
 	
 					cur_Node = self.DPT[layer][DSP_aval]
 					if layer == 0:
-						# inpe = 3
-						# cur_dsp = kpf * simd * pe + actp
-						# # cur_dsp = opt.predict(inpe, simd, pe, actp, kpf)
-						# cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
-						# if (cur_dsp > DSP_aval):
-						# 	continue
 
 						if not opt.check_constraints(inpe=3, simd=simd, pe=pe, kpf=kpf):
 							continue
@@ -70,12 +64,6 @@ class Pipeline_Allocation:
 						if len(prev_Node.PE) == 0:
 							continue
 						inpe = prev_Node.PE[-1]
-
-						# cur_dsp = kpf * simd * pe + actp
-						# # cur_dsp = opt.predict(inpe, simd, pe, actp, kpf)
-						# cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
-						# if (cur_dsp > DSP_aval):
-						# 	continue
 
 						if not opt.check_constraints(inpe=inpe, simd=simd, pe=pe, kpf=kpf):
 							continue

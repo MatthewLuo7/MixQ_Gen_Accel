@@ -98,7 +98,7 @@ class KP_Opt_Templates(FP_Opt_Templates):
         return float_features
 
     def Load_Model(self):
-        predictor_file = 'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_KP/predictors/BRR_dsp.pkl'
+        predictor_file = 'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_KP/predictors/XGB_dsp.pkl'
         with open(predictor_file, 'rb') as file:
             model_dsp = pickle.load(file)
         

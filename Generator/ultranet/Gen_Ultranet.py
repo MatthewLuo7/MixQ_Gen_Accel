@@ -10,6 +10,11 @@ import math
 import sys
 sys.path.append('..')
 sys.path.append('../operators')
+sys.path.append('../operators/ConvOpt_KP')
+sys.path.append('../operators/ConvOpt_KP/predictors')
+sys.path.append('../operators/ConvOpt_FP')
+sys.path.append('../operators/ConvOpt_FP/predictors')
+sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn

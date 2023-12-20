@@ -334,7 +334,7 @@ if __name__=='__main__':
     process_batchnorm(model_param) # get bn param before write hls config
     model_opt = gen_opts(model_param, array_config)
 
-    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 320)
+    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 330)
     t1 = time.time()
     best_Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
     t2 = time.time()
