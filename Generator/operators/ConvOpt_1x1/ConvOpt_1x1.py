@@ -28,7 +28,6 @@ class Conv1x1_Opt_Templates(FP_Opt_Templates):
         w = w.reshape(self.conv.pe, -1, g_ich//self.conv.simd, self.conv.simd) # [pe, och / pe, ich / simd, simd]
         w = w.reshape(self.conv.pe, -1, self.conv.simd)   # hls format [pe, och/pe * ich/simd, simd]
         self.conv.w = w
-        print(' ->', w.shape)
 
         return f"const ap_uint<{self.conv.wbit * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 

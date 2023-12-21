@@ -43,27 +43,29 @@ def get_features(opt_config):
     return float_features
 
 
-def load_dataset(dataset_path, features, R_DSP, R_LUT, R_BRM, T_WNS):
+def load_dataset(dataset_path, features, R_DSP, R_LUT, R_BRM, T_WNS, II_flag, Include_II_violation):
     with open(os.path.normpath(dataset_path), 'r') as file:
         opt_dicts = json.load(file)
     for (opt_name, opt_val) in opt_dicts.items():
-        if int(opt_val['Syn_Res']['timing']['PipelineII']) == 1:
+        if Include_II_violation or int(opt_val['Syn_Res']['timing']['PipelineII']) == 1:
             features.append(get_features(opt_val['Config']))
             R_DSP.append([opt_val['Syn_Res']['resources']['DSP']])
             R_LUT.append([opt_val['Syn_Res']['resources']['LUT']])
             R_BRM.append([opt_val['Syn_Res']['resources']['BRAM']])
             T_WNS.append([opt_val['Syn_Res']['timing']['AchievedClockPeriod']])
+            II_flag.append([int(opt_val['Syn_Res']['timing']['PipelineII']) == 1])
 
 class HLS_Dataloader:
-    def __init__(self, test_size):
+    def __init__(self, test_size, Include_II_violation=False):
         # import dataset
         features = []
         R_DSP = []
         R_LUT = []
         R_BRM = []
         T_WNS = []
+        II_flag = []
 
-        load_dataset('./dataset/dataset.json', features, R_DSP, R_LUT, R_BRM, T_WNS)
+        load_dataset('./dataset/dataset.json', features, R_DSP, R_LUT, R_BRM, T_WNS, II_flag, Include_II_violation)
         self.samp_num = len(features)
         
         X = np.array(features)
@@ -71,7 +73,8 @@ class HLS_Dataloader:
         y_dsp = np.array(R_DSP)
         y_lut = np.array(R_LUT)
         y_brm = np.array(R_BRM)
-        Y = np.concatenate((y_wns, y_dsp, y_lut, y_brm), axis=1)
+        y_IIf = np.array(II_flag)
+        Y = np.concatenate((y_wns, y_dsp, y_lut, y_brm, y_IIf), axis=1)
 
         self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(X, Y, test_size=test_size, random_state=42)
 

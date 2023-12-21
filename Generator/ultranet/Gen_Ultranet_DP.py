@@ -278,27 +278,13 @@ def write_hls_accel(model_opt, path):
 
 def gen_opts(model_param, array_config):
     for conv, extra_para in zip(model_param, array_config[:, :8]):
-        # conv.simd = extra_para[0]
-        # conv.pe = extra_para[1]
-        # conv.actp = extra_para[2]
-        conv.kp = extra_para[3] 
-        conv.np = extra_para[4]
-        conv.gb = extra_para[5]  
-        # conv.kpf = extra_para[6]
-        conv.max_pool = extra_para[7]
-
-    # for n in range(len(model_param)):
-    #     if n == 0:
-    #         opf = 3
-    #     elif array_config[n-1, 8] == 0:
-    #         opf = model_param[n-1].pe * model_param[n-1].kp
-    #     else:
-    #         opf = model_param[n-1].pe
-
-    #     model_param[n].in_pe = opf
+        conv.kp = extra_para[0] 
+        conv.np = extra_para[1]
+        conv.gb = extra_para[2]  
+        conv.max_pool = extra_para[3]
 
     model_opt = []
-    for conv, opt_type in zip(model_param, array_config[:, 8]):
+    for conv, opt_type in zip(model_param, array_config[:, 4]):
         if opt_type == 0:
             conv.pack_flag = True        # to be modified
             model_opt.append(KP_Opt_Templates(conv))
@@ -312,13 +298,49 @@ def gen_opts(model_param, array_config):
     return model_opt
 
 
+def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
+    pipel_alloc = Pipeline_Allocation(model_opt[:-1], DSP_max=DSP_max, LUT_max=LUT_max, DSP_step=DSP_step, LUT_step=LUT_step)
+    print('Begin searching parallelism!')
+    Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
+
+    print('Finished searching! Overall latency is {Lat}')
+    print('SIMD, PE, ACTP, KPF, Latency:')
+    for i in range(len(model_opt[:-1])):
+        model_opt[i].conv.simd = SIMD_list[i]
+        model_opt[i].conv.pe = PE_list[i]
+        model_opt[i].conv.actp = ACTP_list[i]
+        model_opt[i].conv.kpf = KPF_list[i]
+        # setattr(model_opt[i].conv, 'simd', SIMD_list[i])
+        # setattr(model_opt[i].conv, 'pe', PE_list[i])
+        # setattr(model_opt[i].conv, 'actp', ACTP_list[i])
+        # setattr(model_opt[i].conv, 'kpf', KPF_list[i])
+        cur_Lat = model_opt[i].dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
+        print(f'{SIMD_list[i]}, {PE_list[i]}, {ACTP_list[i]}, {KPF_list[i]}, {cur_Lat}')
+
+    model_opt[-1].conv.simd = 4
+    model_opt[-1].conv.pe = 2
+    model_opt[-1].conv.actp = 2
+
+    for n in range(len(model_opt)):
+        if n == 0:
+            opf = 3
+        elif array_config[n-1, 4] == 0:
+            opf = model_opt[n-1].conv.pe * model_opt[n-1].conv.kp
+        else:
+            opf = model_opt[n-1].conv.pe
+
+        model_opt[n].conv.in_pe = opf
+
+    return model_opt
+
+
 if __name__=='__main__':
     model_name = 'UltraNet_ismart'
     weight = 'ultra_4w4a'
-    config_simd_pe = '4w4a_8fl_new'
+    config_simd_pe = '4w4a_8fl_dp'
 
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
-    dir_output = 'hls/' + weight + '/'
+    dir_output = 'hls/' + config_simd_pe + '/'
     if not os.path.exists(dir_output): os.makedirs(dir_output)
 
     # load model and state_dict
@@ -330,35 +352,14 @@ if __name__=='__main__':
     model_param = extract_model([1, 160, 320])
     adjust_weight(model_param)
     process_batchnorm(model_param) # get bn param before write hls config
+    torch.save(model_param, dir_output + 'model_param.pkl')
+
     model_opt = gen_opts(model_param, array_config)
-
-    pipel_alloc = Pipeline_Allocation(model_opt[:-1], DSP_max=330, LUT_max=70500, DSP_step=10, LUT_step=10000)
     t1 = time.time()
-    best_Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
+    model_opt = set_parallelism(model_opt, DSP_max=330, LUT_max=70500, DSP_step=5, LUT_step=10000)
     t2 = time.time()
-    print(f'DP search spent {(t2 - t1) / 60} minutes in total.')
-    print(f'latency:', best_Lat)
-    print(f'SIMD:', SIMD_list)
-    print(f'PE:', PE_list)
-    print(f'ACTP:', ACTP_list)
-    print(f'KPF:', KPF_list)
-
-    latencies = []
-    # total_dsp = 0
-    for idx, opt in enumerate(model_opt[:-1]):
-        model_opt[idx].conv.simd = SIMD_list[idx]
-        model_opt[idx].conv.pe = PE_list[idx]
-        model_opt[idx].conv.actp = ACTP_list[idx]
-        model_opt[idx].conv.kpf = KPF_list[idx]
-
-        latencies.append(model_opt[idx].dsp_operations() / (SIMD_list[idx] * PE_list[idx] * KPF_list[idx]))
-        # total_dsp += SIMD_list[idx] * PE_list[idx] * KPF_list[idx] + ACTP_list[idx]
-
-    print(f'Lat:', latencies)
-    # print(f'Total DSPs:', total_dsp)
-
-    # torch.save(model_param, dir_output + 'model_param.pkl')
+    print(f'Parallelism factor search spent {(t2 - t1) / 60} minutes in total.')
     
-    # write_hls_config(model_param, dir_output)
-    # write_hls_weights(model_opt, dir_output)
-    # write_hls_accel(model_opt, dir_output)
+    write_hls_config(model_param, dir_output)
+    write_hls_weights(model_opt, dir_output)
+    write_hls_accel(model_opt, dir_output)

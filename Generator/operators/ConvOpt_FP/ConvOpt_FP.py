@@ -178,9 +178,9 @@ class FP_Opt_Templates:
             flag = (kpf * simd % inpe == 0)
             flag = flag and (self.conv.ich * self.conv.k % (kpf * simd) == 0)
         else:
-            # flag = (inpe % (kpf * simd) == 0)
-            # flag = flag and (self.conv.ich * self.conv.k % inpe == 0)
-            flag = False
+            flag = (inpe % (kpf * simd) == 0)
+            flag = flag and (self.conv.ich * self.conv.k % inpe == 0)
+            # flag = False
 
         return flag
 
@@ -203,19 +203,20 @@ class FP_Opt_Templates:
         return float_features
 
     def Load_Model(self):
-        predictor_file = 'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_FP/predictors/BRR_dsp.pkl'
-        with open(predictor_file, 'rb') as file:
-            model_dsp = pickle.load(file)
-        
-        self.model_dsp = model_dsp
+        self.pred_models = {}
+        targets = ['wns', 'dsp', 'lut', 'bram', 'II']
+        for tar in targets:
+            predictor_file = f'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_FP/predictors/BRR_{tar}.pkl'
+            with open(predictor_file, 'rb') as file:
+                self.pred_models[tar] = pickle.load(file)
 
-    def predict(self, simd, pe, actp, kpf):
+    def predict(self, simd, pe, actp, kpf, target):
         features = self.get_feature(simd, pe, actp, kpf)
-        # print(len(features))
         X = np.array(features).reshape(1, -1)
-        y_dsp = int(self.model_dsp.predict(X))
+        y_np = self.pred_models[target].predict(X)
+        y = y_np[0]
 
-        return y_dsp
+        return y
 
     ################################################ Processing ################################################
     def weight_reorder(self):
