@@ -69,7 +69,7 @@ void stream_in_row_SIMD_INPE(
       n_c++;
       if(n_c == Np){
         n_c = 0;
-        row_buffer[simd_ipe_c][rowBufferIdx][mem_offset + ch_simd_c] = reg;
+        row_buffer[simd_ipe_c][rowBufferIdx][mem_offset + ch_simd_c] = reg;    
         mem_offset += (IN_CH / SIMD);
         if(mem_offset == ROW_LEN * IN_CH / SIMD){
           mem_offset = 0;
@@ -106,7 +106,7 @@ void stream_out_rows_SIMD_INPE_S2P(
 
   //counters
   ap_uint<3> kr_c = 0;
-  ap_uint<5> simd_c = 0;
+  ap_uint<8> simd_c = 0;
   ap_uint<14> mem_offset = 0;
 
   for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++) {
@@ -177,7 +177,7 @@ void stream_out_rows_SIMD_INPE_FPT(
     return;
 
   //counters
-  ap_uint<5> simd_c = 0;
+  ap_uint<8> simd_c = 0;
   ap_uint<14> mem_offset = 0;
 
   for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++) {
@@ -244,6 +244,7 @@ void reshape_buffer_SIMD_INPE_S2P(stream<ap_uint<IN_PE * IN_BIT> > &in,
                               stream<ap_uint<SIMD * IN_BIT * Np> > &out,
                               const unsigned reps = 1) {
   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+  const unsigned K_offset = (K + 1) / 2;
 
   ap_uint<IN_PE * IN_BIT * Np> row_buffer[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
 #pragma HLS ARRAY_PARTITION variable = row_buffer dim = 1 complete
@@ -251,12 +252,12 @@ void reshape_buffer_SIMD_INPE_S2P(stream<ap_uint<IN_PE * IN_BIT> > &in,
 
   ap_uint<3> storeBufferIdx = 0;
   ap_uint<3> loadBufferIdx = 1;
-  ap_int<10> rowIdx = - (K - 1);
+  ap_int<10> rowIdx = - K_offset;
 
-  for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+  for (unsigned rep = 0; rep < reps * IN_H + K_offset; rep++) {
 #pragma HLS dependence intra false variable = row_buffer
     stream_in_row_SIMD_INPE<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer, (rep >= reps * IN_H), storeBufferIdx);
-    stream_out_rows_SIMD_INPE_S2P<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < (K - 1)), rowIdx, loadBufferIdx);
+    stream_out_rows_SIMD_INPE_S2P<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < K_offset), rowIdx, loadBufferIdx);
     loadBufferIdx++;
     if (loadBufferIdx == (K + 1)){
       loadBufferIdx -= (K + 1);
@@ -281,6 +282,7 @@ void reshape_buffer_SIMD_INPE_FPT(stream<ap_uint<IN_PE * IN_BIT> > &in,
                                   stream<ap_uint<K * SIMD * IN_BIT * Np> > &out,
                                   const unsigned reps = 1) {
   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+  const unsigned K_offset = (K + 1) / 2;
 
   ap_uint<IN_PE * IN_BIT * Np> row_buffer[SIMD / IN_PE][K + 1][ROW_LEN * (IN_CH / SIMD)];
 #pragma HLS ARRAY_PARTITION variable = row_buffer dim = 1 complete
@@ -289,12 +291,12 @@ void reshape_buffer_SIMD_INPE_FPT(stream<ap_uint<IN_PE * IN_BIT> > &in,
 
   ap_uint<3> storeBufferIdx = 0;
   ap_uint<3> loadBufferIdx = 1;
-  ap_int<10> rowIdx = - (K - 1);
+  ap_int<10> rowIdx = - K_offset;
 
-  for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+  for (unsigned rep = 0; rep < reps * IN_H + K_offset; rep++) {
 #pragma HLS dependence intra false variable = row_buffer
     stream_in_row_SIMD_INPE<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer, (rep >= reps * IN_H), storeBufferIdx);
-    stream_out_rows_SIMD_INPE_FPT<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < (K - 1)), rowIdx, loadBufferIdx);
+    stream_out_rows_SIMD_INPE_FPT<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < K_offset), rowIdx, loadBufferIdx);
     loadBufferIdx++;
     if (loadBufferIdx == (K + 1)){
       loadBufferIdx -= (K + 1);
@@ -385,8 +387,8 @@ void stream_out_rows_INPE_SIMD_S2P(
 
   //counters
   ap_uint<3> kr_c = 0;
-  ap_uint<5> ch_ipe_c = 0;
-  ap_uint<5> ipe_simd_c = 0;
+  ap_uint<8> ch_ipe_c = 0;
+  ap_uint<8> ipe_simd_c = 0;
   ap_uint<14> mem_offset = 0;
 
   for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++) {
@@ -446,8 +448,8 @@ void stream_out_rows_INPE_SIMD_FPT(
     return;
 
   //counters
-  ap_uint<5> ch_ipe_c = 0;
-  ap_uint<5> ipe_simd_c = 0;
+  ap_uint<8> ch_ipe_c = 0;
+  ap_uint<8> ipe_simd_c = 0;
   ap_uint<14> mem_offset = 0;
 
   for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++) {
@@ -513,6 +515,7 @@ void reshape_buffer_INPE_SIMD_S2P(stream<ap_uint<IN_PE * IN_BIT> > &in,
                                   stream<ap_uint<SIMD * IN_BIT * Np> > &out,
                                   const unsigned reps = 1) {
   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+  const unsigned K_offset = (K + 1) / 2;
 
   ap_uint<SIMD * IN_BIT * Np> row_buffer[IN_PE / SIMD][K + 1][ROW_LEN * (IN_CH / IN_PE)];
 #pragma HLS ARRAY_PARTITION variable = row_buffer dim = 1 complete
@@ -520,12 +523,12 @@ void reshape_buffer_INPE_SIMD_S2P(stream<ap_uint<IN_PE * IN_BIT> > &in,
 
   ap_uint<3> storeBufferIdx = 0;
   ap_uint<3> loadBufferIdx = 1;
-  ap_int<10> rowIdx = - (K - 1);
+  ap_int<10> rowIdx = - K_offset;
 
-  for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+  for (unsigned rep = 0; rep < reps * IN_H + K_offset; rep++) {
 #pragma HLS dependence intra false variable = row_buffer
     stream_in_row_INPE_SIMD<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer, (rep >= reps * IN_H), storeBufferIdx);
-    stream_out_rows_INPE_SIMD_S2P<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < (K - 1)), rowIdx, loadBufferIdx);
+    stream_out_rows_INPE_SIMD_S2P<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < K_offset), rowIdx, loadBufferIdx);
     loadBufferIdx++;
     if (loadBufferIdx == (K + 1)){
       loadBufferIdx -= (K + 1);
@@ -550,6 +553,7 @@ void reshape_buffer_INPE_SIMD_FPT(stream<ap_uint<IN_PE * IN_BIT> > &in,
                                   stream<ap_uint<K * SIMD * IN_BIT * Np> > &out,
                                   const unsigned reps = 1) {
   const unsigned ROW_LEN = (IN_W + K - 2) / Np + 1;                                       // ceil((IN_W + K - 1)/Np)
+  const unsigned K_offset = (K + 1) / 2;
 
   ap_uint<SIMD * IN_BIT * Np> row_buffer[IN_PE / SIMD][K + 1][ROW_LEN * (IN_CH / IN_PE)];
 #pragma HLS ARRAY_PARTITION variable = row_buffer dim = 1 complete
@@ -558,12 +562,12 @@ void reshape_buffer_INPE_SIMD_FPT(stream<ap_uint<IN_PE * IN_BIT> > &in,
 
   ap_uint<3> storeBufferIdx = 0;
   ap_uint<3> loadBufferIdx = 1;
-  ap_int<10> rowIdx = - (K - 1);
+  ap_int<10> rowIdx = - K_offset;
 
-  for (unsigned rep = 0; rep < reps * IN_H + (K - 1); rep++) {
+  for (unsigned rep = 0; rep < reps * IN_H + K_offset; rep++) {
 #pragma HLS dependence intra false variable = row_buffer
     stream_in_row_INPE_SIMD<K, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN>(in, row_buffer, (rep >= reps * IN_H), storeBufferIdx);
-    stream_out_rows_INPE_SIMD_FPT<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < (K - 1)), rowIdx, loadBufferIdx);
+    stream_out_rows_INPE_SIMD_FPT<K, IN_H, IN_W, IN_CH, IN_BIT, IN_PE, SIMD, Np, ROW_LEN, OUTPENUM>(out, row_buffer, (rep < K_offset), rowIdx, loadBufferIdx);
     loadBufferIdx++;
     if (loadBufferIdx == (K + 1)){
       loadBufferIdx -= (K + 1);

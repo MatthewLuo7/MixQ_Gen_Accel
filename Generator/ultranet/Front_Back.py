@@ -75,8 +75,6 @@ void compute_pipeline(stream<my_ap_axis> &in, stream<my_ap_axis> &out,
 
     
 Back = '''
-  //-------------------- Add Last --------------------
-  AddLast<CONV_8_IN_H * CONV_8_IN_W * CONV_8_OUT_CH / 2>(conv_8_layer_out, out, reps);
 }
 
 void ultra_net(stream<my_ap_axis> &in, stream<my_ap_axis> &out,

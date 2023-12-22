@@ -303,7 +303,7 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
     print('Begin searching parallelism!')
     Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
 
-    print('Finished searching! Overall latency is {Lat}')
+    print(f'Finished searching! Overall latency is {Lat}')
     print('SIMD, PE, ACTP, KPF, Latency:')
     for i in range(len(model_opt[:-1])):
         model_opt[i].conv.simd = SIMD_list[i]
@@ -314,9 +314,11 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
         cur_Lat = model_opt[i].dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
         print(f'{SIMD_list[i]}, {PE_list[i]}, {ACTP_list[i]}, {KPF_list[i]}, {cur_Lat}')
 
-    model_opt[-1].conv.simd = 2
+    model_opt[-1].conv.simd = 4
     model_opt[-1].conv.pe = 2
     model_opt[-1].conv.actp = 2
+    model_opt[-1].conv.kpf = 1
+    model_opt[-1].conv.pack_flag = 0
 
     for n in range(len(model_opt)):
         if n == 0:

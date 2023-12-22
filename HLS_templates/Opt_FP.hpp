@@ -201,63 +201,6 @@ void FP_Array_Cascade(
   }
 }
 
-template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
-          unsigned IN_BIT, unsigned OUT_BIT, unsigned W_BIT, unsigned INC_BIT,
-          unsigned BIAS_BIT, unsigned L_SHIFT, unsigned PE, unsigned ACTP,
-          unsigned Np, unsigned M_BIT>
-void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
-                      const ap_int<INC_BIT> inc[ACTP][OUT_CH / ACTP],
-                      const ap_int<BIAS_BIT> bias[ACTP][OUT_CH / ACTP],
-                      stream<ap_uint<ACTP * OUT_BIT> > &out,
-                      const unsigned reps = 1){
-#pragma HLS ARRAY_PARTITION variable = inc complete dim = 1
-#pragma HLS ARRAY_PARTITION variable = bias complete dim = 1
-
-  const unsigned OUTPENUM = OUT_CH / PE;
-  const unsigned CONV_OUT_W = Np * ROW_LEN;
-  const unsigned ACTP_NUM = PE / ACTP;
-
-  ap_uint<8> ACTP_NUM_counter = 0;
-  ap_uint<10> w_counter = 0;
-  ap_uint<8> add_offset = 0;            //peIdx*ACTP_NUM
-  for(unsigned h = 0; h < IN_H * reps; h++){
-    for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
-      for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){
-      #pragma HLS pipeline
-
-        bool flag_out = ((w_counter > (K - 1 - 1)) && (w_counter < (K - 1 + IN_W)));
-
-        ap_int<ACTP * M_BIT> in_data;
-        in_data = in.read();
-
-        if(flag_out){
-          ap_uint<ACTP * OUT_BIT> out_data;
-          for(unsigned i = 0; i < ACTP; i++){
-            out_data((i + 1) * OUT_BIT - 1, i * OUT_BIT) = bn_qurelu_fixed<M_BIT, OUT_BIT, INC_BIT, BIAS_BIT, IN_BIT, W_BIT, L_SHIFT>
-            (in_data((i + 1) * M_BIT - 1, i * M_BIT), inc[i][ACTP_NUM_counter + add_offset], bias[i][ACTP_NUM_counter + add_offset]);
-          }
-          out.write(out_data);
-        }
-
-        //counters
-        ACTP_NUM_counter++;
-        if(ACTP_NUM_counter == ACTP_NUM){
-          ACTP_NUM_counter = 0;
-          w_counter++;
-          if(w_counter == CONV_OUT_W){
-            w_counter = 0;
-            add_offset += ACTP_NUM;
-            if(add_offset == OUTPENUM * ACTP_NUM){
-              add_offset = 0;
-            }
-          }
-        }
-      }
-    }
-  } 
-}
-
-
 /*
 Constraints
 
