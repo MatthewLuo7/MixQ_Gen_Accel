@@ -11,7 +11,7 @@ class DP_node:
 
 
 class Pipeline_Allocation:
-	def __init__(self, model_opt, DSP_max, LUT_max, DSP_step=1, LUT_step=2000):
+	def __init__(self, model_opt, DSP_max, LUT_max, DSP_step=1, LUT_step=2000, cycle=4.0):
 		self.model_opt = model_opt
 		self.n_layers = len(model_opt)
 		# dsp
@@ -22,6 +22,7 @@ class Pipeline_Allocation:
 		self.LUT_max = LUT_max
 		self.LUT_step = LUT_step
 		self.LUT_max_step = round(self.LUT_max / self.LUT_step)
+		self.cycle = cycle
 		self.Init_Lat = max(tuple(self.model_opt[k].dsp_operations() for k in range(self.n_layers)))
 		self.DPT = [[[DP_node(self.Init_Lat) for i in range(0, self.DSP_max_step + 1)] for j in range(0, self.LUT_max_step + 1)] for k in range(self.n_layers)]
 
@@ -49,8 +50,9 @@ class Pipeline_Allocation:
 					if not valid_flag:
 						continue
 
-					cur_II = bool(opt.predict(simd, pe, actp, kpf, 'II'))
-					if not cur_II:
+					con_II = bool(opt.predict(simd, pe, actp, kpf, 'II'))
+					con_wns = bool(opt.predict(simd, pe, actp, kpf, 'wns') < self.cycle)
+					if not (con_II and con_wns):
 						continue
 	
 					# cur_dsp = kpf * simd * pe + actp

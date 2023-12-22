@@ -310,14 +310,11 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
         model_opt[i].conv.pe = PE_list[i]
         model_opt[i].conv.actp = ACTP_list[i]
         model_opt[i].conv.kpf = KPF_list[i]
-        # setattr(model_opt[i].conv, 'simd', SIMD_list[i])
-        # setattr(model_opt[i].conv, 'pe', PE_list[i])
-        # setattr(model_opt[i].conv, 'actp', ACTP_list[i])
-        # setattr(model_opt[i].conv, 'kpf', KPF_list[i])
+
         cur_Lat = model_opt[i].dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
         print(f'{SIMD_list[i]}, {PE_list[i]}, {ACTP_list[i]}, {KPF_list[i]}, {cur_Lat}')
 
-    model_opt[-1].conv.simd = 4
+    model_opt[-1].conv.simd = 2
     model_opt[-1].conv.pe = 2
     model_opt[-1].conv.actp = 2
 
@@ -356,7 +353,7 @@ if __name__=='__main__':
 
     model_opt = gen_opts(model_param, array_config)
     t1 = time.time()
-    model_opt = set_parallelism(model_opt, DSP_max=330, LUT_max=70500, DSP_step=5, LUT_step=10000)
+    model_opt = set_parallelism(model_opt, DSP_max=330, LUT_max=56400, DSP_step=5, LUT_step=10000)
     t2 = time.time()
     print(f'Parallelism factor search spent {(t2 - t1) / 60} minutes in total.')
     

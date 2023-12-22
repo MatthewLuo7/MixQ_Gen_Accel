@@ -147,6 +147,36 @@ void print_mavu_DSPopt_stream_through(hls::stream<ap_uint<BIT * PE> > &out,
 }
 
 template <unsigned ROW, unsigned COL, unsigned CH, unsigned PE, unsigned BIT>
+void print_mavu_DSPopt_stream_through_a2(hls::stream<ap_uint<BIT * PE * 2> > &out,
+                                         string filename, unsigned reps) {
+  ofstream f(filename);
+  ap_uint<BIT * PE> buffer[CH / PE][COL];
+
+  for (int r = 0; r < ROW * reps; r++) {
+    for (int peIdx = 0; peIdx < CH / PE; peIdx++) {
+      for (int c = 0; c < COL; c += 2) {
+        ap_uint<BIT *PE * 2> data = out.read();
+        out << data;
+        buffer[peIdx][c] = data(BIT * PE - 1, 0);
+        buffer[peIdx][c + 1] = data(BIT * PE * 2 - 1, BIT * PE);
+      }
+    }
+    for (int c = 0; c < COL; c++) {
+      f << "[" << setw(4) << r << "," << setw(4) << c << "]";
+      for (int peIdx = 0; peIdx < CH / PE; peIdx++) {
+        for (int p = 0; p < PE; p++) {
+          ap_uint<BIT> data =
+              buffer[peIdx][c].range(p * BIT + BIT - 1, p * BIT);
+          f << data.to_string(16) << ",";
+        }
+      }
+      f << endl;
+    }
+  }
+  f.close();
+}
+
+template <unsigned ROW, unsigned COL, unsigned CH, unsigned PE, unsigned BIT>
 void print_output_featuremap(ap_uint<BIT> OFM[CH][ROW][COL], string filename,
                              unsigned reps) {
   ofstream f(filename);

@@ -181,7 +181,7 @@
 #define CONV_8_IN_BIT 4
 #define CONV_8_W_BIT 8
 #define CONV_8_BIAS_BIT 15
-#define CONV_8_SIMD 4
+#define CONV_8_SIMD 2
 #define CONV_8_PE 2
 #define CONV_8_ACTP 2
 #define CONV_8_Kp 1

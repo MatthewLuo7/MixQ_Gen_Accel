@@ -88,8 +88,8 @@ CONV_${No}_INC_BW_NUM>(conv_${No}_act_out, conv_${No}_conv_out, reps);
 
 #ifdef DEBUG
 cout << "conv_${No}_conv_out size " << conv_${No}_conv_out.size() << endl;
-print_mavu_DSPopt_stream_through<CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OCH_PF,
-                                 CONV_${No_lat}_IN_BIT>(conv_${No}_conv_out, output_path+"conv_${No}_conv_out.txt", reps);
+print_mavu_DSPopt_stream_through_a2<CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OCH_PF,
+                                    CONV_${No_lat}_IN_BIT>(conv_${No}_conv_out, output_path+"conv_${No}_conv_out.txt", reps);
 #endif
 
 //--------------------Pooling--------------------
@@ -100,7 +100,7 @@ max_pool2x2<CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OUT_
 #ifdef DEBUG
 cout << "conv_${No}_pool_out size " << conv_${No}_layer_out.size() << endl;
 print_mavu_DSPopt_stream_through<CONV_${No}_IN_H / 2, CONV_${No}_IN_W / 2,
-                           CONV_${No}_IN_CH, CONV_${No}_OCH_PF, CONV_${No}_OUT_BIT>(conv_${No}_layer_out, output_path+"conv_${No}_pool_out.txt", reps);
+                           CONV_${No}_OUT_CH, CONV_${No}_OCH_PF, CONV_${No}_OUT_BIT>(conv_${No}_layer_out, output_path+"conv_${No}_pool_out.txt", reps);
 #endif
 ''')
 
@@ -125,8 +125,8 @@ CONV_${No}_INC_BW_NUM>(conv_${No}_act_out, conv_${No}_conv_out, reps);
 
 #ifdef DEBUG
 cout << "conv_${No}_conv_out size " << conv_${No}_conv_out.size() << endl;
-print_mavu_DSPopt_stream_through<CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OCH_PF,
-                                 CONV_${No_lat}_IN_BIT>(conv_${No}_conv_out, output_path+"conv_${No}_conv_out.txt", reps);
+print_mavu_DSPopt_stream_through_a2<CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OCH_PF,
+                                    CONV_${No_lat}_IN_BIT>(conv_${No}_conv_out, output_path+"conv_${No}_conv_out.txt", reps);
 #endif
 
 //--------------------Pooling--------------------
