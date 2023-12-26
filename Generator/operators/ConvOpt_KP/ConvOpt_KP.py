@@ -136,6 +136,8 @@ class KP_Opt_Templates(FP_Opt_Templates):
     ################################################ HLS Template ################################################
     def find_CASCADE(self):
         cascade = 1
+        if self.conv.gb < 0:
+            return cascade
         upper = min((2**self.conv.gb), self.conv.simd*self.conv.kpf)
         for factor in range(1, int(upper) + 1):
             if (self.conv.simd*self.conv.kpf)%factor == 0:
