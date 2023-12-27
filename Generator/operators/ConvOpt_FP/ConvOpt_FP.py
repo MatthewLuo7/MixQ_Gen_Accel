@@ -302,6 +302,8 @@ class FP_Opt_Templates:
     ################################################ HLS Template ################################################
     def find_CASCADE(self):
         cascade = 1
+        if (2**self.conv.gb) < min(self.conv.kp, self.conv.np):
+            return cascade
         upper = min((2**self.conv.gb) // min(self.conv.kp, self.conv.np), self.conv.simd*self.conv.kpf)
         for factor in range(1, int(upper) + 1):
             if (self.conv.simd*self.conv.kpf)%factor == 0:

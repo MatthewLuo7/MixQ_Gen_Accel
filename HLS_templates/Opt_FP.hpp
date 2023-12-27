@@ -38,10 +38,29 @@ void FP_Pack_W(ap_uint<Kp * SIMD * W_BIT> in_weights, ap_int<WPACK_BIT> wpacks[S
   }
 }
 
+template <unsigned W_BIT, unsigned SIMD, unsigned Kp, unsigned PROD_BIT, unsigned WPACK_BIT>
+void FP_Pack_W_overlap(ap_uint<Kp * SIMD * W_BIT> in_weights,
+                       ap_int<WPACK_BIT> wpacks[SIMD],
+                       ap_uint<Kp> wpfix[SIMD]) {
+#pragma HLS array_partition variable = wpacks dim = 1
+#pragma HLS array_partition variable = wpfix dim = 1
 
-template <unsigned Kp, unsigned Np, unsigned W_BIT, unsigned IN_BIT, unsigned PROD_BIT, unsigned SIMD, unsigned CASCADE,
-          unsigned SIMD_BIT, unsigned WPACK_BIT, unsigned IPACK_BIT>
-void FP_Comp_SIMD(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD], ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1]) {
+  for(unsigned i = 0; i < SIMD; i++) {
+    ap_int<WPACK_BIT> wpack_temp = 0;
+    for(unsigned j = 0; j < Kp; j++){
+      ap_int<W_BIT> w_seg = in_weights(j*SIMD*W_BIT + i*W_BIT + W_BIT - 1, j*SIMD*W_BIT + i*W_BIT);
+      wpfix[i][j] = w_seg[0];
+      wpack_temp += (w_seg * (1 << (PROD_BIT * j)));
+    }
+    wpacks[i] = wpack_temp;
+  }
+}
+
+
+template <unsigned Kp, unsigned Np, unsigned W_BIT, unsigned IN_BIT, unsigned PROD_BIT,
+          unsigned SIMD, unsigned CASCADE, unsigned SIMD_BIT, unsigned WPACK_BIT, unsigned IPACK_BIT>
+void FP_Comp_SIMD_cascade(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD],
+                          ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1]) {
 #pragma HLS ARRAY_PARTITION variable = wpacks complete
 #pragma HLS ARRAY_PARTITION variable = ipacks complete
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
@@ -71,19 +90,98 @@ void FP_Comp_SIMD(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD
   }
 }
 
+template <unsigned Kp, unsigned Np, unsigned W_BIT, unsigned IN_BIT, unsigned PROD_BIT,
+          unsigned SIMD, unsigned SIMD_BIT, unsigned WPACK_BIT, unsigned IPACK_BIT>
+void FP_Comp_SIMD_overlap(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<Kp> wpfix[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD],
+                          ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1]) {
+#pragma HLS ARRAY_PARTITION variable = wpacks complete
+#pragma HLS ARRAY_PARTITION variable = ipacks complete
+#pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
+  
+  ap_int<W_BIT + IN_BIT + SIMD_BIT> rtemp[Kp + Np - 1];
+#pragma HLS ARRAY_PARTITION variable = rtemp complete
+  for(unsigned i = 0; i < (Kp + Np - 1); i++){
+    rtemp[i] = 0;
+  }
+
+  for (unsigned i = 0; i < SIMD; i++){
+    ap_uint<1> fixsig[Np + Kp - 1];
+#pragma HLS ARRAY_PARTITION variable = fixsig complete dim = 1
+    for(unsigned t = 0; t < (Np + Kp - 1); t++){
+      fixsig[t] = 0;
+    }
+
+    for (unsigned Kp_i = 0; Kp_i < Kp; Kp_i++){                 //Calculate LSBs
+      for (unsigned Np_i = 0; Np_i < Np; Np_i++){
+        ap_uint<1> i_lsb = ipacks[i][PROD_BIT*Np_i];
+        ap_uint<1> w_lsb = wpfix[i][Kp_i];
+        fixsig[Kp_i + Np_i] ^= i_lsb&w_lsb;
+      }
+    }
+
+    ap_int<PROD_BIT * (Kp + Np - 1) + 1> DSP_Res = ipacks[i] * wpacks[i];                 //DSP packing multiplication
+
+    ap_int<PROD_BIT + 1> rfix[Np + Kp -1];
+#pragma HLS ARRAY_PARTITION variable = rfix complete
+
+    rfix[0] = (fixsig[1], (ap_uint<PROD_BIT>) 0);
+    rfix[(Kp + Np - 1) - 1] = ((ap_uint<PROD_BIT>) 0, fixsig[(Kp + Np - 1) - 1]^DSP_Res[((Kp + Np - 1) - 1)*PROD_BIT]);
+    for (unsigned j = 1; j < ((Kp + Np - 1) - 1); j++){
+      rfix[j] = (fixsig[j+1], (ap_uint<PROD_BIT - 1>) 0, fixsig[j]^DSP_Res[j*PROD_BIT]);
+    }
+
+    for (unsigned k = 0; k < (Kp + Np - 1); k++){
+      ap_int<PROD_BIT + 1> res_temp = DSP_Res((k+1)*PROD_BIT, k*PROD_BIT);
+      ap_int<PROD_BIT + 1> acc_res_temp = res_temp + rfix[k];
+      rtemp[k] += acc_res_temp;
+    }
+  }
+
+  for(unsigned i = 0; i < (Kp + Np - 1); i++){
+    DSP_PartialRes[i] = rtemp[i];
+  }
+}
+
+template <unsigned Kp, unsigned Np, unsigned W_BIT, unsigned IN_BIT, unsigned PROD_BIT,
+          unsigned SIMD, unsigned CASCADE, unsigned SIMD_BIT, unsigned WPACK_BIT, unsigned IPACK_BIT, bool Overlap_Flag>
+void FP_Comp_SIMD(ap_uint<Kp * SIMD * W_BIT> in_weights,
+                  ap_uint<IPACK_BIT> ipacks[SIMD],
+                  ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1]){
+#pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
+#pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
+
+  if(Overlap_Flag){
+    ap_int<WPACK_BIT> wpacks[SIMD];
+#pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
+    ap_uint<Kp> wpfix[SIMD];
+#pragma HLS ARRAY_PARTITION variable = wpfix complete dim = 1
+    FP_Pack_W_overlap<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks, wpfix);
+
+    //SIMD computing array
+    FP_Comp_SIMD_overlap<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, SIMD_BIT, WPACK_BIT, IPACK_BIT>(wpacks, wpfix, ipacks, DSP_PartialRes);
+  }else{
+    ap_int<WPACK_BIT> wpacks[SIMD];
+#pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
+    FP_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks);
+
+    //SIMD computing array
+    FP_Comp_SIMD_cascade<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, WPACK_BIT, IPACK_BIT>(wpacks, ipacks, DSP_PartialRes);
+  }
+}
 
 /*
 Dataflow: (SIMD * PE) * (Kp * Np) ---> ceil(K / Kp) ---> K * IN_CH / SIMD ---> ROW_LEN ---> OUTPENUM ---> IN_H
 */
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
-          unsigned Kp, unsigned Np, unsigned CASCADE, unsigned GUARD_BIT,
+          unsigned Kp, unsigned Np, unsigned CASCADE, int GUARD_BIT,
           unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT>
 void FP_Array_Cascade(
     stream<ap_uint<Np * SIMD * IN_BIT> > &in,
     const ap_uint<K * SIMD * W_BIT> weights[PE][(K * IN_CH / SIMD) * (OUT_CH / PE)],
     stream<ap_uint<Np * PE * M_BIT> > &out,
     const unsigned reps = 1) {
+#pragma HLS ARRAY_PARTITION variable = weights complete dim = 1
 
   // static_assert(IN_CH % SIMD == 0, "IN_CH % SIMD !=0");
   // static_assert(SIMD % CASCADE == 0, "SIMD % CASCADE != 0");
@@ -95,12 +193,7 @@ void FP_Array_Cascade(
   const unsigned OUTPENUM = OUT_CH / PE;
   const unsigned INFOLD = K * IN_CH / SIMD;
   const unsigned KNUM = (K - 1) / Kp + 1;        //ceil(K / Kp) 
-
-#pragma HLS ARRAY_PARTITION variable = weights complete dim = 1
-
-  ap_int<WPACK_BIT> wpacks[PE][SIMD];
-#pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
-#pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 2
+  const bool Overlap_Flag = ((2 << GUARD_BIT) < Kp) && ((2 << GUARD_BIT) < Np);
 
   ap_uint<IPACK_BIT> ipacks[SIMD];
 #pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
@@ -155,12 +248,10 @@ void FP_Array_Cascade(
           //extract Kp weights
           ap_uint<Kp * SIMD * W_BIT> in_weights = cur_weights[p](Kp * SIMD * W_BIT - 1, 0);
           cur_weights[p] = cur_weights[p] >> (Kp * SIMD * W_BIT);
-          FP_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks[p]);
 
-          //SIMD computing array
           ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1];
-          #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
-          FP_Comp_SIMD<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, WPACK_BIT, IPACK_BIT>(wpacks[p], ipacks, DSP_PartialRes);
+#pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
+          FP_Comp_SIMD<Kp, Np, W_BIT, IN_BIT, PROD_BIT, SIMD, CASCADE, SIMD_BIT, WPACK_BIT, IPACK_BIT, Overlap_Flag>(in_weights, ipacks, DSP_PartialRes);
 
           for(unsigned i = 0; i < (Kp + Np - 1); i++){
             PartialRes[p][res_offset + i] += DSP_PartialRes[i];
@@ -247,7 +338,7 @@ SIMD_BIT == ceil(log2(SIMD * min(Kp, Np)))
 template <unsigned K, unsigned IN_W, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned OUT_BIT, unsigned W_BIT, unsigned INC_BIT, unsigned BIAS_BIT,
           unsigned L_SHIFT, unsigned IN_PE, unsigned SIMD, unsigned PE, unsigned ACTP,
-          unsigned Kp, unsigned Np, unsigned CASCADE, unsigned GUARD_BIT,
+          unsigned Kp, unsigned Np, unsigned CASCADE, int GUARD_BIT,
           unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT>
 void Conv_Opt_Test_Wrapper(
     stream<ap_uint<2 * IN_PE * IN_BIT> > &in,

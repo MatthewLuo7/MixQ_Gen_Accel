@@ -47,6 +47,7 @@ void KP_Pack_W_overlap(ap_uint<SIMD * Kp * W_BIT> weights,
                        ap_int<WPACK_BIT> wpacks[SIMD],
                        ap_uint<Kp> wpfix[SIMD]){
 #pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
+#pragma HLS ARRAY_PARTITION variable = wpfix complete dim = 1
 
   for (unsigned i = 0; i < SIMD; i++){
     ap_int<WPACK_BIT> wpack_temp = 0;
@@ -113,7 +114,7 @@ void KP_Comp_SIMD_cascade(ap_uint<IPACK_BIT> ipacks[SIMD],
 
 template <unsigned IN_BIT, unsigned W_BIT, unsigned IPACK_BIT, unsigned WPACK_BIT,
           unsigned PROD_BIT, unsigned SIMD_BIT, unsigned SIMD, unsigned Np,
-          unsigned Kp, unsigned CASCADE, bool Pattern_Flag>
+          unsigned Kp, bool Pattern_Flag>
 void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
                           ap_int<WPACK_BIT> wpacks[SIMD],
                           ap_uint<Kp> wpfix[SIMD],
@@ -181,8 +182,6 @@ void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
   }
 }
 
-
-
 template <unsigned IN_BIT, unsigned W_BIT, unsigned IPACK_BIT, unsigned WPACK_BIT,
           unsigned PROD_BIT, unsigned SIMD_BIT, unsigned SIMD, unsigned Np,
           unsigned Kp, unsigned CASCADE, unsigned WITV_BIT, bool Overlap_Flag, bool Pattern_Flag>
@@ -201,7 +200,7 @@ void KP_Comp_SIMD(ap_uint<SIMD * Kp * W_BIT> weights,
     KP_Pack_W_overlap<W_BIT, WITV_BIT, WPACK_BIT, Kp, SIMD>(weights, wpacks, wpfix);
 
     //SIMD computing array
-    KP_Comp_SIMD_overlap<IN_BIT, W_BIT, IPACK_BIT, WPACK_BIT, PROD_BIT, SIMD_BIT, SIMD, Np, Kp, CASCADE, Pattern_Flag>(ipacks, wpacks, wpfix, DSP_PartialRes);
+    KP_Comp_SIMD_overlap<IN_BIT, W_BIT, IPACK_BIT, WPACK_BIT, PROD_BIT, SIMD_BIT, SIMD, Np, Kp, Pattern_Flag>(ipacks, wpacks, wpfix, DSP_PartialRes);
   }else{
     ap_int<WPACK_BIT> wpacks[SIMD];
 #pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
@@ -211,118 +210,6 @@ void KP_Comp_SIMD(ap_uint<SIMD * Kp * W_BIT> weights,
     KP_Comp_SIMD_cascade<IN_BIT, W_BIT, IPACK_BIT, WPACK_BIT, PROD_BIT, SIMD_BIT, SIMD, Np, Kp, CASCADE, Pattern_Flag>(ipacks, wpacks, DSP_PartialRes);
   } 
 }
-
-
-
-
-// template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
-//           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
-//           unsigned Kp, unsigned Np, unsigned CASCADE, unsigned GUARD_BIT,
-//           unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT, bool Pattern_Flag>
-// void KP_Array_Cascade(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
-//                       const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
-//                       stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
-//                       const unsigned reps = 1){
-// #pragma HLS ARRAY_PARTITION variable = weights complete dim = 1
-
-//   const unsigned PROD_BIT = IN_BIT + W_BIT + GUARD_BIT;
-//   const unsigned WITV_BIT = Pattern_Flag ? PROD_BIT : (Np * PROD_BIT);
-//   const unsigned AITV_BIT = Pattern_Flag ? (Kp * PROD_BIT) : PROD_BIT;
-//   const unsigned IPACK_BIT = (Np - 1) * AITV_BIT + IN_BIT;
-//   const unsigned WPACK_BIT = (Kp - 1) * WITV_BIT + W_BIT + adW_BIT;
-//   const unsigned OUTPENUM = OUT_CH / (PE * Kp);
-//   const unsigned INFOLD = K * IN_CH / SIMD;
-
-//   ap_uint<IPACK_BIT> ipacks[SIMD];
-// #pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
-
-//   ap_int<M_BIT> PartialRes[Kp * PE][K + Np - 1];
-// #pragma HLS ARRAY_PARTITION variable = PartialRes complete dim = 1
-// #pragma HLS ARRAY_PARTITION variable = PartialRes complete dim = 2
-
-//   ap_uint<Np * SIMD * IN_BIT> in_data = 0;
-
-//   //counters
-//   ap_uint<3> kc_counter = 0;
-//   ap_uint<12> kich_counter = 0;
-//   ap_uint<16> och_offset = 0;       //peIdx * K*INFOLD
-//   for (unsigned h = 0; h < IN_H * reps; h++){
-//     for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
-//       for (unsigned cycle = 0; cycle < K * INFOLD * ROW_LEN; cycle++){
-// #pragma HLS pipeline II = 1
-
-//         //flags for input, result reset, and output
-//         bool flag_in = (kc_counter == 0);
-//         bool flag_res_reset = (kich_counter == 0);
-//         bool flag_out = (kich_counter == (K*INFOLD - 1));
-
-//         //input and pack activations
-//         if(flag_in){
-//           in_data = in.read();
-//           KP_Pack_ACT<IN_BIT, IPACK_BIT, AITV_BIT, Np, SIMD>(in_data, ipacks);
-//         }
-
-//         //shift and reset partial result accumulators
-//         if(flag_res_reset){
-//           for(unsigned p = 0; p < Kp * PE; p++){
-//             for(unsigned i = 0; i < (K - 1); i++){
-//               PartialRes[p][i] = PartialRes[p][i + Np];
-//             }
-//             for(unsigned j = (K - 1); j < (K + Np - 1); j++){
-//               PartialRes[p][j] = 0;
-//             }
-//           }
-//         }
-
-//         for(unsigned p = 0; p < PE; p++){
-//           const bool Overlap_Flag = false;
-//           ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp][Np];
-//           #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
-//           #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 2
-//           KP_Comp_SIMD<IN_BIT, W_BIT, IPACK_BIT, WPACK_BIT, PROD_BIT, SIMD_BIT, SIMD,
-//           Np, Kp, CASCADE, WITV_BIT, Overlap_Flag, Pattern_Flag>(weights[p][och_offset + kich_counter], ipacks, DSP_PartialRes);
-
-//           for(unsigned i = 0; i < Kp; i++){
-//             for(unsigned j = 0; j < Np; j++){
-//               PartialRes[i + p*Kp][kc_counter + j] += DSP_PartialRes[i][j];
-//             }
-//           }
-//         }
-
-//         //output results
-//         if(flag_out){
-//           ap_int<Np * Kp * PE * M_BIT> out_data;
-//           for(unsigned p = 0; p < Kp * PE; p++){
-//             for(unsigned i = 0; i < Np; i++){
-//               out_data(i*PE*Kp*M_BIT + p*M_BIT + M_BIT - 1, i*PE*Kp*M_BIT + p*M_BIT) = PartialRes[p][i];
-//             }
-//           }
-//           out.write(out_data);
-//         }
-
-//         //counters
-//         kc_counter++;
-//         if(kc_counter == K){
-//           kc_counter = 0;
-//         }
-
-//         kich_counter++;
-//         if(kich_counter == K*INFOLD){
-//           kich_counter = 0;
-//         }
-
-//         if(cycle == (K*INFOLD*ROW_LEN - 1)){
-//           och_offset += K*INFOLD;
-//           if(och_offset == OUTPENUM*K*INFOLD){
-//             och_offset = 0;
-//           }
-//         }
-//       }
-//     }
-//   }
-// }
-
-
 
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
