@@ -336,7 +336,7 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
 if __name__=='__main__':
     model_name = 'UltraNet_ismart'
     weight = 'ultra_4w4a'
-    config_simd_pe = '4w4a_8fl_dp'
+    config_simd_pe = '4w4a_8fl_dp_overlap'
 
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
     dir_output = 'hls/' + config_simd_pe + '/'
