@@ -38,12 +38,12 @@ const unsigned CONV_${No}_DEC_BW_NUM = CONV_${No}_IN_H * (CONV_${No}_OUT_CH / CO
 const unsigned CONV_${No}_INC_BW_NUM = CONV_${No}_IN_H * (CONV_${No}_OUT_CH / CONV_${No}_OCH_PF) * CONV_${No}_IN_W * (CONV_${No}_OCH_PF / CONV_${No}_ACTP);
     ''')
 
-KP_array_cascade = Template('''//--------------------Conv ${No}: Computing Array--------------------
+KP_array = Template('''//--------------------Conv ${No}: Computing Array--------------------
 stream<ap_uint<CONV_${No}_Np * CONV_${No}_OCH_PF * CONV_${No}_M_BIT> > conv_${No}_array_out("conv_${No}_array_out");
-KP_Array_Cascade<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CONV_${No}_OUT_CH,
-                 CONV_${No}_IN_BIT, CONV_${No}_W_BIT, CONV_${No}_SIMD * CONV_${No}_KPF, CONV_${No}_PE, CONV_${No}_Kp,
-                 CONV_${No}_Np, CONV_${No}_CASCADE, CONV_${No}_GUARD_BIT, CONV_${No}_M_BIT, 
-                 CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT, CONV_${No}_PatternFlag>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
+KP_Array<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CONV_${No}_OUT_CH,
+         CONV_${No}_IN_BIT, CONV_${No}_W_BIT, CONV_${No}_SIMD * CONV_${No}_KPF, CONV_${No}_PE, CONV_${No}_Kp,
+         CONV_${No}_Np, CONV_${No}_CASCADE, CONV_${No}_GUARD_BIT, CONV_${No}_M_BIT, 
+         CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT, CONV_${No}_PatternFlag>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
     ''')
 
 
@@ -165,4 +165,4 @@ class KP_Opt_Templates(FP_Opt_Templates):
                                   CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag)
 
     def gen_conv_array(self):
-        return KP_array_cascade.substitute(No=str(self.conv.n))
+        return KP_array.substitute(No=str(self.conv.n))

@@ -59,12 +59,12 @@ reshape_buffer_INPE_SIMD_FPT<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CON
                              CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
-FP_array_cascade = Template('''//--------------------Conv ${No}: Computing Array--------------------
+FP_array = Template('''//--------------------Conv ${No}: Computing Array--------------------
 stream<ap_uint<CONV_${No}_Np * CONV_${No}_OCH_PF * CONV_${No}_M_BIT> > conv_${No}_array_out("conv_${No}_array_out");
-FP_Array_Cascade<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CONV_${No}_OUT_CH,
-                 CONV_${No}_IN_BIT, CONV_${No}_W_BIT, CONV_${No}_SIMD * CONV_${No}_KPF, CONV_${No}_PE, CONV_${No}_Kp,
-                 CONV_${No}_Np, CONV_${No}_CASCADE, CONV_${No}_GUARD_BIT, CONV_${No}_M_BIT, 
-                 CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
+FP_Array<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CONV_${No}_OUT_CH,
+         CONV_${No}_IN_BIT, CONV_${No}_W_BIT, CONV_${No}_SIMD * CONV_${No}_KPF, CONV_${No}_PE, CONV_${No}_Kp,
+         CONV_${No}_Np, CONV_${No}_CASCADE, CONV_${No}_GUARD_BIT, CONV_${No}_M_BIT, 
+         CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
     ''')
 
 red_bw_temp = Template('''//--------------------Conv ${No}: Decrease Bit-width--------------------
@@ -332,7 +332,7 @@ class FP_Opt_Templates:
                 return rebuffer_INPE_SIMD_FPT.substitute(No=str(self.conv.n))
 
     def gen_conv_array(self):
-        return FP_array_cascade.substitute(No=str(self.conv.n))
+        return FP_array.substitute(No=str(self.conv.n))
 
     def gen_reduce_bw(self):
         return red_bw_temp.substitute(No=str(self.conv.n))

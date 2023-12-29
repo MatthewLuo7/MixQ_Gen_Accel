@@ -215,10 +215,10 @@ template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned 
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
           unsigned Kp, unsigned Np, unsigned CASCADE, int GUARD_BIT,
           unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT, bool Pattern_Flag>
-void KP_Array_Cascade(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
-                      const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
-                      stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
-                      const unsigned reps = 1){
+void KP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
+              const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
+              stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
+              const unsigned reps = 1){
 #pragma HLS ARRAY_PARTITION variable = weights complete dim = 1
 
   const unsigned PROD_BIT = IN_BIT + W_BIT + GUARD_BIT;
@@ -336,7 +336,7 @@ void Conv_In_Wrapper(stream<ap_uint<IN_BIT * IN_CH> > &in,
   reshape_buffer_S2P<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(in, padding_out, reps);
 
   stream<ap_uint<Np * PE * Kp * M_BIT> > conv_out("conv_out");
-  KP_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag>(padding_out, weights, conv_out, reps);
+  KP_Array<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag>(padding_out, weights, conv_out, reps);
 
   const unsigned convertnum_1 = IN_H * (OUT_CH / (PE * Kp)) * ROW_LEN;
   stream<ap_uint<ACTP * M_BIT> > convertnum_out("convertnum_out");
@@ -367,7 +367,7 @@ void Conv_In_Wrapper_KRowP(stream<ap_uint<IN_BIT * IN_CH> > &in,
   reshape_buffer_FPT<K, IN_H, IN_W, IN_CH, OUT_CH / PE, Np, IN_BIT, IN_PE, SIMD>(in, padding_out, reps);
 
   stream<ap_uint<Np * PE * Kp * M_BIT> > conv_out("conv_out");
-  KP_Array_Cascade<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD * K, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag>(padding_out, weights, conv_out, reps);
+  KP_Array<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD * K, PE, Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag>(padding_out, weights, conv_out, reps);
 
   const unsigned convertnum_1 = IN_H * (OUT_CH / (PE * Kp)) * ROW_LEN;
   stream<ap_uint<ACTP * M_BIT> > convertnum_out("convertnum_out");
