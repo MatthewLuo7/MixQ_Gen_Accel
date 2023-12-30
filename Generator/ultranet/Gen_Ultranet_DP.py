@@ -14,17 +14,22 @@ sys.path.append('../operators/ConvOpt_KP')
 sys.path.append('../operators/ConvOpt_KP/predictors')
 sys.path.append('../operators/ConvOpt_FP')
 sys.path.append('../operators/ConvOpt_FP/predictors')
+sys.path.append('../operators/ConvOpt_FP_Sep')
 sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn
 from quant_module import HWGQ, QuantConv2d, ImageInputQ
+
 from Front_Back import get_front, get_back
 from Opt_Templates import Gen_Opt_Templates
 from ConvOpt_FP import FP_Opt_Templates
+from ConvOpt_FP_Sep import FP_Sep_Opt_Templates
 from ConvOpt_KP import KP_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
+
 from Pipeline_DP import Pipeline_Allocation
+from dsp_eff_search import DSP_Config_Search
 
 
 class ConvParam: ...
@@ -276,24 +281,69 @@ def write_hls_accel(model_opt, path):
         print(content, file=f)
 
 
-def gen_opts(model_param, array_config):
-    for conv, extra_para in zip(model_param, array_config[:, :8]):
-        conv.kp = extra_para[0] 
-        conv.np = extra_para[1]
-        conv.gb = extra_para[2]  
-        conv.max_pool = extra_para[3]
+# def gen_opts(model_param, array_config):
+#     for conv, extra_para in zip(model_param, array_config[:, :8]):
+#         conv.kp = extra_para[0] 
+#         conv.np = extra_para[1]
+#         conv.gb = extra_para[2]  
+#         # conv.max_pool = extra_para[3]
 
+#     model_opt = []
+#     for conv, opt_type in zip(model_param, array_config[:, 4]):
+#         if opt_type == 0:
+#             conv.pack_flag = True        # to be modified
+#             model_opt.append(KP_Opt_Templates(conv))
+#         elif opt_type == 1:
+#             model_opt.append(FP_Opt_Templates(conv))
+#         elif opt_type == 2:
+#             model_opt.append(Conv1x1_Opt_Templates(conv))
+#         else:
+#             raise ValueError(f"Operator {str(opt_type)} is not defined!")
+
+#     return model_opt
+
+def gen_opts(model_param, array_config):
+    DSP_Explorer = DSP_Config_Search(27, 18, 8)
     model_opt = []
-    for conv, opt_type in zip(model_param, array_config[:, 4]):
-        if opt_type == 0:
-            conv.pack_flag = True        # to be modified
-            model_opt.append(KP_Opt_Templates(conv))
-        elif opt_type == 1:
+    for idx, conv in enumerate(model_param):
+        DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True)
+        conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
+        conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
+        conv.gb = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['gb']
+        # conv.kp = extra_para[0] 
+        # conv.np = extra_para[1]
+        # conv.gb = extra_para[2]  
+        # conv.max_pool = extra_para[3]
+
+        packing_type = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Packing_Type']
+        print(f'Layer {idx} type: {packing_type}')
+        if packing_type == 'Filter_Packing':
             model_opt.append(FP_Opt_Templates(conv))
-        elif opt_type == 2:
+        elif packing_type == 'Filter_Packing_Sep':
+            conv.Sep_Flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Sep_Flag']
+            model_opt.append(FP_Sep_Opt_Templates(conv))
+        elif packing_type == 'Kernel_Packing':
+            conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
+            model_opt.append(KP_Opt_Templates(conv))
+        elif packing_type == 'Kernel_Packing_Sep':
+            print('Have not defined Kernel_Packing_Sep yet!')
+            exit(0)
+        elif idx == (len(model_param) - 1):
             model_opt.append(Conv1x1_Opt_Templates(conv))
         else:
             raise ValueError(f"Operator {str(opt_type)} is not defined!")
+
+    # model_opt = []
+    # for conv, opt_type in zip(model_param, array_config[:, 4]):
+    #     # if opt_type == 0:
+    #     #     conv.pack_flag = True        # to be modified
+    #     #     model_opt.append(KP_Opt_Templates(conv))
+    #     # elif opt_type == 1:
+    #     #     model_opt.append(FP_Opt_Templates(conv))
+    #     # elif opt_type == 2:
+    #     #     model_opt.append(Conv1x1_Opt_Templates(conv))
+    #     # else:
+    #     #     raise ValueError(f"Operator {str(opt_type)} is not defined!")
 
     return model_opt
 
@@ -336,7 +386,7 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
 if __name__=='__main__':
     model_name = 'UltraNet_ismart'
     weight = 'ultra_4w4a'
-    config_simd_pe = '4w4a_8fl_dp_overlap'
+    config_simd_pe = '4w4a_8fl_dp_testflow'
 
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
     dir_output = 'hls/' + config_simd_pe + '/'
