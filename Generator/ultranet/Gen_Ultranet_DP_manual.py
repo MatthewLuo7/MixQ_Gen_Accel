@@ -280,33 +280,22 @@ def write_hls_accel(model_opt, path):
 
 
 def gen_opts(model_param, array_config):
-    DSP_Explorer = DSP_Config_Search(27, 18, 8)
-    model_opt = []
-    for idx, conv in enumerate(model_param):
-        DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True)
-        if idx == (len(model_param) - 1):
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True)
-        conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
-        conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
-        conv.gb = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['gb']
-        conv.w_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['w_sep']
-        conv.a_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['a_sep']
+    for conv, extra_para in zip(model_param, array_config[:, :6]):
+        conv.kp = extra_para[0] 
+        conv.np = extra_para[1]
+        conv.gb = extra_para[2]  
+        conv.w_sep = extra_para[3]
+        conv.a_sep = extra_para[4]
 
-        packing_type = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Packing_Type']
-        print(f'Layer {idx} type: {packing_type}')
-        if idx == (len(model_param) - 1):
-            model_opt.append(Conv1x1_Opt_Templates(conv))
-        elif packing_type == 'Filter_Packing':
-            model_opt.append(FP_Opt_Templates(conv))
-        elif packing_type == 'Filter_Packing_Sep':
-            conv.Sep_Flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Sep_Flag']
-            model_opt.append(FP_Sep_Opt_Templates(conv))
-        elif packing_type == 'Kernel_Packing':
-            conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
+    model_opt = []
+    for conv, opt_type in zip(model_param, array_config[:, 5]):
+        if opt_type == 0:
+            conv.pack_flag = True        # to be modified
             model_opt.append(KP_Opt_Templates(conv))
-        elif packing_type == 'Kernel_Packing_Sep':
-            print('Have not defined Kernel_Packing_Sep yet!')
-            exit(0)
+        elif opt_type == 1:
+            model_opt.append(FP_Opt_Templates(conv))
+        elif opt_type == 2:
+            model_opt.append(Conv1x1_Opt_Templates(conv))
         else:
             raise ValueError(f"Operator {str(opt_type)} is not defined!")
 
@@ -338,7 +327,7 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
     for n in range(len(model_opt)):
         if n == 0:
             opf = 3
-        elif array_config[n-1, 4] == 0:
+        elif array_config[n-1, 5] == 0:
             opf = model_opt[n-1].conv.pe * model_opt[n-1].conv.kp
         else:
             opf = model_opt[n-1].conv.pe
@@ -351,7 +340,7 @@ def set_parallelism(model_opt, DSP_max, LUT_max, DSP_step, LUT_step):
 if __name__=='__main__':
     model_name = 'UltraNet_ismart'
     weight = 'ultra_4w4a'
-    config_simd_pe = '4w4a_8fl_dp_testflow'
+    config_simd_pe = '4w4a_8fl_dp_overlap_manual'
 
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
     dir_output = 'hls/' + config_simd_pe + '/'

@@ -155,12 +155,7 @@ class DSP_Config_Search:
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])
 
                             if C1 or C2:
-                                if wsep == 1 and asep == 1:
-                                    DSP_Config_Dic = {'Packing_Type': 'Filter_Packing', 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
-                                else:
-                                    Sep_Flag = True if asep == 2 else False
-                                    DSP_Config_Dic = {'Packing_Type': 'Filter_Packing_Sep', 'Sep_Flag': Sep_Flag, 'wsep': wsep, 'asep': asep, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
-                                
+                                DSP_Config_Dic = {'Packing_Type': 'Filter_Packing', 'w_sep': wsep, 'a_sep': asep, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
 
                 if Kernel_Packing_EN:
                     for wsep in [1, 2]:
@@ -176,11 +171,7 @@ class DSP_Config_Search:
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])
 
                             if C1 or C2:
-                                if wsep == 1 and asep == 1:
-                                    DSP_Config_Dic = {'Packing_Type': 'Kernel_Packing', 'Pack_Flag': pack_flag, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
-                                else:
-                                    Sep_Flag = True if asep == 2 else False
-                                    DSP_Config_Dic = {'Packing_Type': 'Kernel_Packing_Sep', 'Sep_Flag': Sep_Flag, 'Pack_Flag': pack_flag, 'wsep': wsep, 'asep': asep, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
+                                DSP_Config_Dic = {'Packing_Type': 'Kernel_Packing', 'Pack_Flag': pack_flag, 'w_sep': wsep, 'a_sep': asep, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
 
                 precision_str = 'w'+str(int(wb))+'a'+str(int(ab))
                 DSP_Config_Lookup[precision_str] = DSP_Config_Dic
@@ -202,6 +193,7 @@ class DSP_Config_Search:
 
 
 if __name__ == '__main__':
+    K = 1
     DSP_Explorer = DSP_Config_Search(27, 18, 8)
-    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=3, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True)
-    DSP_Explorer.Save_Lookup_Table(DSP_Config_Lookup, K=3, overlap=1)
+    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=K, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True)
+    DSP_Explorer.Save_Lookup_Table(DSP_Config_Lookup, K=K, overlap=1)

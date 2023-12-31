@@ -59,7 +59,7 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
       for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){
       #pragma HLS pipeline
 
-        bool flag_out = ((w_counter > (K - 1 - 1)) && (w_counter < (K - 1 + IN_W)));
+        bool flag_out = ((w_counter >= (K - 1)) && (w_counter < (K - 1 + IN_W)));
 
         ap_uint<ACTP * M_BIT> in_data;
         in_data = in.read();
@@ -107,25 +107,27 @@ void Bias_Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
   const unsigned ACTP_NUM = PE / ACTP;
 
   ap_uint<8> ACTP_NUM_counter = 0;
-  ap_int<11> w_counter = 0;
+  ap_uint<10> w_counter = 0;
   ap_uint<8> add_offset = 0;            //peIdx*ACTP_NUM
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){
       #pragma HLS pipeline
 
-        // bool flag_out = ((w_counter > (K - 1 - 1)) && (w_counter < (K - 1 + IN_W)));
+        bool flag_out = ((w_counter >= (K - 1)) && (w_counter < (K - 1 + IN_W)));
 
         ap_uint<ACTP * OUT_BIT> in_data;
         in_data = in.read();
 
-        ap_uint<ACTP * OUT_BIT> out_data;
-        for(unsigned i = 0; i < ACTP; i++){
-          ap_int<OUT_BIT> add_temp = in_data((i + 1) * OUT_BIT - 1, i * OUT_BIT);
-          add_temp += bias[i][ACTP_NUM_counter + add_offset];
-          out_data((i + 1) * OUT_BIT - 1, i * OUT_BIT) = add_temp;
+        if(flag_out){
+          ap_uint<ACTP * OUT_BIT> out_data;
+          for(unsigned i = 0; i < ACTP; i++){
+            ap_int<OUT_BIT> add_temp = in_data((i + 1) * OUT_BIT - 1, i * OUT_BIT);
+            add_temp += bias[i][ACTP_NUM_counter + add_offset];
+            out_data((i + 1) * OUT_BIT - 1, i * OUT_BIT) = add_temp;
+          }
+          out.write(out_data);
         }
-        out.write(out_data);
 
         //counters
         ACTP_NUM_counter++;
