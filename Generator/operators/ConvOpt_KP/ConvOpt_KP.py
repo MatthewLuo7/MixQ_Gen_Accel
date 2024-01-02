@@ -171,7 +171,12 @@ class KP_Opt_Templates(FP_Opt_Templates):
         INFOLD = self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)
         OUTPENUM = self.conv.och // (self.conv.pe * self.conv.kp)
 
-        kc_counter_bw = math.ceil(math.log2(self.conv.k + 1))
-        kich_counter_bw = math.ceil(math.log2(self.conv.k * INFOLD + 1))
-        och_offset_bw = math.ceil(math.log2(OUTPENUM * self.conv.k * INFOLD + 1))
+        # kc_counter_bw = math.ceil(math.log2(self.conv.k + 1))
+        # kich_counter_bw = math.ceil(math.log2(self.conv.k * INFOLD + 1))
+        # och_offset_bw = math.ceil(math.log2(OUTPENUM * self.conv.k * INFOLD + 1))
+
+        kc_counter_bw = self.ceil_width(self.conv.k)
+        kich_counter_bw = self.ceil_width(self.conv.k * INFOLD)
+        och_offset_bw = self.ceil_width(OUTPENUM * self.conv.k * INFOLD)
+
         return KP_array.substitute(No=str(self.conv.n), kc_counter_bw=str(kc_counter_bw), kich_counter_bw=str(kich_counter_bw), och_offset_bw=str(och_offset_bw))

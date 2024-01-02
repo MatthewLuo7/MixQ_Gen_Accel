@@ -256,6 +256,13 @@ class FP_Opt_Templates:
 
             return f"const ap_uint<{self.conv.k * self.conv.wbit * self.conv.k * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
+    def ceil_width(self, x, min_BW=2):
+        x = x + 1
+        BW = math.ceil(math.log2(x))
+        BW = max(BW, min_BW)
+
+        return BW
+
     ################################################ Write Weight Tools ################################################
     def hex_str(self, x):
         return ('"' + hex(x) + '"')
@@ -330,51 +337,74 @@ class FP_Opt_Templates:
                                    W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
 
     def gen_reshape_buffer(self):
-        BufferIdx_bw = math.ceil(math.log2(self.conv.k + 1 + 1))
-        rowIdx_bw = math.ceil(math.log2(self.conv.irow - 1 + 1)) + 1
+        # BufferIdx_bw = math.ceil(math.log2(self.conv.k + 1 + 1))
+        # rowIdx_bw = math.ceil(math.log2(self.conv.irow - 1 + 1)) + 1
+        BufferIdx_bw = self.ceil_width(self.conv.k + 1)
+        rowIdx_bw = self.ceil_width(self.conv.irow - 1) + 1
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
 
         if self.conv.kpf == 1:
             if self.conv.simd >= self.conv.in_pe:
-                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
-                simd_ipe_c_bw = math.ceil(math.log2(self.conv.simd // self.conv.in_pe + 1))
-                ch_simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
-                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.simd + 1))
-                kr_c_bw = math.ceil(math.log2(self.conv.k + 1))
-                simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+                # n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                # simd_ipe_c_bw = math.ceil(math.log2(self.conv.simd // self.conv.in_pe + 1))
+                # ch_simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+                # mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.simd + 1))
+                # kr_c_bw = math.ceil(math.log2(self.conv.k + 1))
+                # simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+
+                n_c_bw = self.ceil_width(self.conv.np)
+                simd_ipe_c_bw = self.ceil_width(self.conv.simd // self.conv.in_pe)
+                ch_simd_c_bw = self.ceil_width(self.conv.ich // self.conv.simd)
+                mem_offset_bw = self.ceil_width(ROW_LEN * self.conv.ich // self.conv.simd)
+                kr_c_bw = self.ceil_width(self.conv.k)
+                simd_c_bw = self.ceil_width(self.conv.ich // self.conv.simd)
 
                 return rebuffer_SIMD_INPE_S2P.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
                                                          n_c_bw=str(n_c_bw), simd_ipe_c_bw=str(simd_ipe_c_bw), ch_simd_c_bw=str(ch_simd_c_bw),
                                                          mem_offset_bw=str(mem_offset_bw), kr_c_bw=str(kr_c_bw), simd_c_bw=str(simd_c_bw))
             else:
-                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
-                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.in_pe + 1))
-                kr_c_bw = math.ceil(math.log2(self.conv.k + 1))
-                ch_ipe_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.in_pe + 1))
-                ipe_simd_c_bw = math.ceil(math.log2(self.conv.in_pe // self.conv.simd + 1))
+                # n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                # mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.in_pe + 1))
+                # kr_c_bw = math.ceil(math.log2(self.conv.k + 1))
+                # ch_ipe_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.in_pe + 1))
+                # ipe_simd_c_bw = math.ceil(math.log2(self.conv.in_pe // self.conv.simd + 1))
 
-                # if self.conv.n == 1:
-                #     print(f'ROW_LEN: {ROW_LEN}, ich: {self.conv.ich}, in_pe: {self.conv.in_pe}')
+                n_c_bw = self.ceil_width(self.conv.np)
+                mem_offset_bw = self.ceil_width(ROW_LEN * self.conv.ich // self.conv.in_pe)
+                kr_c_bw = self.ceil_width(self.conv.k)
+                ch_ipe_c_bw = self.ceil_width(self.conv.ich // self.conv.in_pe)
+                ipe_simd_c_bw = self.ceil_width(self.conv.in_pe // self.conv.simd)
 
                 return rebuffer_INPE_SIMD_S2P.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
                                                          n_c_bw=str(n_c_bw), mem_offset_bw=str(mem_offset_bw), kr_c_bw=str(kr_c_bw),
                                                          ch_ipe_c_bw=str(ch_ipe_c_bw), ipe_simd_c_bw=str(ipe_simd_c_bw))
         else:
             if self.conv.simd >= self.conv.in_pe:
-                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
-                simd_ipe_c_bw = math.ceil(math.log2(self.conv.simd // self.conv.in_pe + 1))
-                ch_simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
-                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.simd + 1))
-                simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+                # n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                # simd_ipe_c_bw = math.ceil(math.log2(self.conv.simd // self.conv.in_pe + 1))
+                # ch_simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+                # mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.simd + 1))
+                # simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+
+                n_c_bw = self.ceil_width(self.conv.np)
+                simd_ipe_c_bw = self.ceil_width(self.conv.simd // self.conv.in_pe)
+                ch_simd_c_bw = self.ceil_width(self.conv.ich // self.conv.simd)
+                mem_offset_bw = self.ceil_width(ROW_LEN * self.conv.ich // self.conv.simd)
+                simd_c_bw = self.ceil_width(self.conv.ich // self.conv.simd)
 
                 return rebuffer_SIMD_INPE_FPT.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
                                                          n_c_bw=str(n_c_bw), simd_ipe_c_bw=str(simd_ipe_c_bw), ch_simd_c_bw=str(ch_simd_c_bw),
                                                          mem_offset_bw=str(mem_offset_bw), simd_c_bw=str(simd_c_bw))
             else:
-                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
-                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.in_pe + 1))
-                ch_ipe_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.in_pe + 1))
-                ipe_simd_c_bw = math.ceil(math.log2(self.conv.in_pe // self.conv.simd + 1))
+                # n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                # mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.in_pe + 1))
+                # ch_ipe_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.in_pe + 1))
+                # ipe_simd_c_bw = math.ceil(math.log2(self.conv.in_pe // self.conv.simd + 1))
+
+                n_c_bw = self.ceil_width(self.conv.np)
+                mem_offset_bw = self.ceil_width(ROW_LEN * self.conv.ich // self.conv.in_pe)
+                ch_ipe_c_bw = self.ceil_width(self.conv.ich // self.conv.in_pe)
+                ipe_simd_c_bw = self.ceil_width(self.conv.in_pe // self.conv.simd)
 
                 return rebuffer_INPE_SIMD_FPT.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
                                                          n_c_bw=str(n_c_bw), mem_offset_bw=str(mem_offset_bw), ch_ipe_c_bw=str(ch_ipe_c_bw),
@@ -385,10 +415,16 @@ class FP_Opt_Templates:
         INFOLD = self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)
         OUTPENUM = self.conv.och // self.conv.pe
 
-        k_counter_bw = math.ceil(math.log2(KNUM + 1))
-        infold_counter_bw = math.ceil(math.log2(INFOLD + 1))
-        res_offset_bw = math.ceil(math.log2(self.conv.kp * KNUM + 1))
-        add_offset_bw = math.ceil(math.log2(OUTPENUM * INFOLD + 1))
+        # k_counter_bw = math.ceil(math.log2(KNUM + 1))
+        # infold_counter_bw = math.ceil(math.log2(INFOLD + 1))
+        # res_offset_bw = math.ceil(math.log2(self.conv.kp * KNUM + 1))
+        # add_offset_bw = math.ceil(math.log2(OUTPENUM * INFOLD + 1))
+
+        k_counter_bw = self.ceil_width(KNUM)
+        infold_counter_bw = self.ceil_width(INFOLD)
+        res_offset_bw = self.ceil_width(self.conv.kp * KNUM)
+        add_offset_bw = self.ceil_width(OUTPENUM * INFOLD)
+
         return FP_array.substitute(No=str(self.conv.n), k_counter_bw=str(k_counter_bw), infold_counter_bw=str(infold_counter_bw),
                                   res_offset_bw=str(res_offset_bw), add_offset_bw=str(add_offset_bw))
 
@@ -398,9 +434,13 @@ class FP_Opt_Templates:
     def gen_act_trim(self):
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
 
-        ACTP_NUM_counter_bw = math.ceil(math.log2(self.conv.pe / self.conv.actp + 1))
-        w_counter_bw = math.ceil(math.log2(self.conv.np * ROW_LEN + 1))
-        add_offset_bw = math.ceil(math.log2(self.conv.och // self.conv.actp + 1))
+        # ACTP_NUM_counter_bw = math.ceil(math.log2(self.conv.pe / self.conv.actp + 1))
+        # w_counter_bw = math.ceil(math.log2(self.conv.np * ROW_LEN + 1))
+        # add_offset_bw = math.ceil(math.log2(self.conv.och // self.conv.actp + 1))
+
+        ACTP_NUM_counter_bw = self.ceil_width(self.conv.pe / self.conv.actp)
+        w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
+        add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
 
         return act_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
                                         w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))

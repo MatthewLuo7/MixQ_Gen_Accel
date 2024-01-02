@@ -60,9 +60,13 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
     def gen_bias_trim(self):
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
 
-        ACTP_NUM_counter_bw = math.ceil(math.log2(self.conv.pe / self.conv.actp + 1))
-        w_counter_bw = math.ceil(math.log2(self.conv.np * ROW_LEN + 1))
-        add_offset_bw = math.ceil(math.log2(self.conv.och // self.conv.actp + 1))
+        # ACTP_NUM_counter_bw = math.ceil(math.log2(self.conv.pe / self.conv.actp + 1))
+        # w_counter_bw = math.ceil(math.log2(self.conv.np * ROW_LEN + 1))
+        # add_offset_bw = math.ceil(math.log2(self.conv.och // self.conv.actp + 1))
+
+        ACTP_NUM_counter_bw = self.ceil_width(self.conv.pe / self.conv.actp)
+        w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
+        add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
         
         return bias_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
                                         w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
