@@ -38,7 +38,8 @@ ap_uint<OUT_BIT> bn_qurelu_fixed(ap_int<IN_BIT> in, ap_int<INC_BIT> inc,
 template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
           unsigned IN_BIT, unsigned OUT_BIT, unsigned W_BIT, unsigned INC_BIT,
           unsigned BIAS_BIT, unsigned L_SHIFT, unsigned PE, unsigned ACTP,
-          unsigned Np, unsigned M_BIT>
+          unsigned Np, unsigned M_BIT, unsigned ACTP_NUM_counter_bw,
+          unsigned w_counter_bw, unsigned add_offset_bw>
 void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
                       const ap_int<INC_BIT> inc[ACTP][OUT_CH / ACTP],
                       const ap_int<BIAS_BIT> bias[ACTP][OUT_CH / ACTP],
@@ -51,9 +52,9 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
   const unsigned CONV_OUT_W = Np * ROW_LEN;
   const unsigned ACTP_NUM = PE / ACTP;
 
-  ap_uint<8> ACTP_NUM_counter = 0;
-  ap_uint<10> w_counter = 0;
-  ap_uint<8> add_offset = 0;            //peIdx*ACTP_NUM
+  ap_uint<ACTP_NUM_counter_bw> ACTP_NUM_counter = 0;
+  ap_uint<w_counter_bw> w_counter = 0;
+  ap_uint<add_offset_bw> add_offset = 0;            //peIdx*ACTP_NUM
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){
@@ -95,7 +96,8 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
 
 
 template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
-          unsigned OUT_BIT, unsigned BIAS_BIT, unsigned PE, unsigned ACTP, unsigned Np>
+          unsigned OUT_BIT, unsigned BIAS_BIT, unsigned PE, unsigned ACTP, unsigned Np,
+          unsigned ACTP_NUM_counter_bw, unsigned w_counter_bw, unsigned add_offset_bw>
 void Bias_Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
                const ap_int<BIAS_BIT> bias[ACTP][OUT_CH / ACTP],
                stream<ap_uint<ACTP * OUT_BIT> > &out,
@@ -106,9 +108,9 @@ void Bias_Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
   const unsigned CONV_OUT_W = Np * ROW_LEN;
   const unsigned ACTP_NUM = PE / ACTP;
 
-  ap_uint<8> ACTP_NUM_counter = 0;
-  ap_uint<10> w_counter = 0;
-  ap_uint<8> add_offset = 0;            //peIdx*ACTP_NUM
+  ap_uint<ACTP_NUM_counter_bw> ACTP_NUM_counter = 0;
+  ap_uint<w_counter_bw> w_counter = 0;
+  ap_uint<add_offset_bw> add_offset = 0;            //peIdx*ACTP_NUM
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for(unsigned cycle = 0; cycle < (ACTP_NUM * CONV_OUT_W); cycle++){

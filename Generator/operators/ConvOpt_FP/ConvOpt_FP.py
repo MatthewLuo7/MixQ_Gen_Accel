@@ -40,25 +40,30 @@ const unsigned CONV_${No}_A_Sep = ${A_Sep};
 rebuffer_SIMD_INPE_S2P = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_${No}_Np * CONV_${No}_SIMD * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 reshape_buffer_SIMD_INPE_S2P<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_IN_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
-                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD>(conv_${No}_in, conv_${No}_padding_out, reps);
+                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD, ${BufferIdx_bw},
+                             ${rowIdx_bw}, ${n_c_bw}, ${simd_ipe_c_bw}, ${ch_simd_c_bw}, ${mem_offset_bw},
+                             ${kr_c_bw}, ${simd_c_bw}>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
 rebuffer_INPE_SIMD_S2P = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_${No}_Np * CONV_${No}_SIMD * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 reshape_buffer_INPE_SIMD_S2P<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_IN_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
-                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD>(conv_${No}_in, conv_${No}_padding_out, reps);
+                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD, ${BufferIdx_bw},
+                             ${rowIdx_bw}, ${n_c_bw}, ${mem_offset_bw}, ${kr_c_bw}, ${ch_ipe_c_bw}, ${ipe_simd_c_bw}>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
 rebuffer_SIMD_INPE_FPT = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_${No}_Np * CONV_${No}_K * CONV_${No}_SIMD * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 reshape_buffer_SIMD_INPE_FPT<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_IN_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
-                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD>(conv_${No}_in, conv_${No}_padding_out, reps);
+                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD, ${BufferIdx_bw},
+                             ${rowIdx_bw}, ${n_c_bw}, ${simd_ipe_c_bw}, ${ch_simd_c_bw}, ${mem_offset_bw}, ${simd_c_bw}>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
 rebuffer_INPE_SIMD_FPT = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_${No}_Np * CONV_${No}_K * CONV_${No}_SIMD * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 reshape_buffer_INPE_SIMD_FPT<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_IN_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
-                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD>(conv_${No}_in, conv_${No}_padding_out, reps);
+                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_SIMD, ${BufferIdx_bw},
+                             ${rowIdx_bw}, ${n_c_bw}, ${mem_offset_bw}, ${ch_ipe_c_bw}, ${ipe_simd_c_bw}>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
 FP_array = Template('''//--------------------Conv ${No}: Computing Array--------------------
@@ -66,7 +71,8 @@ stream<ap_uint<CONV_${No}_Np * CONV_${No}_OCH_PF * CONV_${No}_M_BIT> > conv_${No
 FP_Array<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CONV_${No}_OUT_CH,
          CONV_${No}_IN_BIT, CONV_${No}_W_BIT, CONV_${No}_SIMD * CONV_${No}_KPF, CONV_${No}_PE, CONV_${No}_Kp,
          CONV_${No}_Np, CONV_${No}_CASCADE, CONV_${No}_GUARD_BIT, CONV_${No}_M_BIT, 
-         CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT, CONV_${No}_W_Sep, CONV_${No}_A_Sep>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
+         CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT, CONV_${No}_W_Sep, CONV_${No}_A_Sep,
+         ${k_counter_bw}, ${infold_counter_bw}, ${res_offset_bw}, ${add_offset_bw}>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
     ''')
 
 red_bw_temp = Template('''//--------------------Conv ${No}: Decrease Bit-width--------------------
@@ -79,7 +85,8 @@ act_trim_temp = Template('''//--------------------Conv ${No}: Activate and Trim-
 stream<ap_uint<CONV_${No}_ACTP * CONV_${No}_OUT_BIT> > conv_${No}_act_out("conv_${No}_act_out");
 Activation_Trim<CONV_${No}_K, CONV_${No}_IN_W, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_OUT_CH,
 CONV_${No}_IN_BIT, CONV_${No}_OUT_BIT, CONV_${No}_W_BIT, CONV_${No}_INC_BIT, CONV_${No}_BIAS_BIT,
-CONV_${No}_L_SHIFT, CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np, CONV_${No}_M_BIT>(conv_${No}_dec_bw_out, conv_${No}_inc, conv_${No}_bias, conv_${No}_act_out, reps);
+CONV_${No}_L_SHIFT, CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np, CONV_${No}_M_BIT,
+${ACTP_NUM_counter_bw}, ${w_counter_bw}, ${add_offset_bw}>(conv_${No}_dec_bw_out, conv_${No}_inc, conv_${No}_bias, conv_${No}_act_out, reps);
     ''')
 
 inc_bw_temp_1 = Template('''//--------------------Conv ${No}: Increase Bit-width--------------------
@@ -323,25 +330,80 @@ class FP_Opt_Templates:
                                    W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
 
     def gen_reshape_buffer(self):
+        BufferIdx_bw = math.ceil(math.log2(self.conv.k + 1 + 1))
+        rowIdx_bw = math.ceil(math.log2(self.conv.irow - 1 + 1)) + 1
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
+
         if self.conv.kpf == 1:
             if self.conv.simd >= self.conv.in_pe:
-                return rebuffer_SIMD_INPE_S2P.substitute(No=str(self.conv.n))
+                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                simd_ipe_c_bw = math.ceil(math.log2(self.conv.simd // self.conv.in_pe + 1))
+                ch_simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.simd + 1))
+                kr_c_bw = math.ceil(math.log2(self.conv.k + 1))
+                simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+
+                return rebuffer_SIMD_INPE_S2P.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
+                                                         n_c_bw=str(n_c_bw), simd_ipe_c_bw=str(simd_ipe_c_bw), ch_simd_c_bw=str(ch_simd_c_bw),
+                                                         mem_offset_bw=str(mem_offset_bw), kr_c_bw=str(kr_c_bw), simd_c_bw=str(simd_c_bw))
             else:
-                return rebuffer_INPE_SIMD_S2P.substitute(No=str(self.conv.n))
+                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.in_pe + 1))
+                kr_c_bw = math.ceil(math.log2(self.conv.k + 1))
+                ch_ipe_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.in_pe + 1))
+                ipe_simd_c_bw = math.ceil(math.log2(self.conv.in_pe // self.conv.simd + 1))
+
+                # if self.conv.n == 1:
+                #     print(f'ROW_LEN: {ROW_LEN}, ich: {self.conv.ich}, in_pe: {self.conv.in_pe}')
+
+                return rebuffer_INPE_SIMD_S2P.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
+                                                         n_c_bw=str(n_c_bw), mem_offset_bw=str(mem_offset_bw), kr_c_bw=str(kr_c_bw),
+                                                         ch_ipe_c_bw=str(ch_ipe_c_bw), ipe_simd_c_bw=str(ipe_simd_c_bw))
         else:
             if self.conv.simd >= self.conv.in_pe:
-                return rebuffer_SIMD_INPE_FPT.substitute(No=str(self.conv.n))
+                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                simd_ipe_c_bw = math.ceil(math.log2(self.conv.simd // self.conv.in_pe + 1))
+                ch_simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.simd + 1))
+                simd_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.simd + 1))
+
+                return rebuffer_SIMD_INPE_FPT.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
+                                                         n_c_bw=str(n_c_bw), simd_ipe_c_bw=str(simd_ipe_c_bw), ch_simd_c_bw=str(ch_simd_c_bw),
+                                                         mem_offset_bw=str(mem_offset_bw), simd_c_bw=str(simd_c_bw))
             else:
-                return rebuffer_INPE_SIMD_FPT.substitute(No=str(self.conv.n))
+                n_c_bw = math.ceil(math.log2(self.conv.np + 1))
+                mem_offset_bw = math.ceil(math.log2(ROW_LEN * self.conv.ich // self.conv.in_pe + 1))
+                ch_ipe_c_bw = math.ceil(math.log2(self.conv.ich // self.conv.in_pe + 1))
+                ipe_simd_c_bw = math.ceil(math.log2(self.conv.in_pe // self.conv.simd + 1))
+
+                return rebuffer_INPE_SIMD_FPT.substitute(No=str(self.conv.n), BufferIdx_bw=str(BufferIdx_bw), rowIdx_bw=str(rowIdx_bw),
+                                                         n_c_bw=str(n_c_bw), mem_offset_bw=str(mem_offset_bw), ch_ipe_c_bw=str(ch_ipe_c_bw),
+                                                         ipe_simd_c_bw=str(ipe_simd_c_bw))
 
     def gen_conv_array(self):
-        return FP_array.substitute(No=str(self.conv.n))
+        KNUM = (self.conv.k - 1) // self.conv.kp + 1
+        INFOLD = self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)
+        OUTPENUM = self.conv.och // self.conv.pe
+
+        k_counter_bw = math.ceil(math.log2(KNUM + 1))
+        infold_counter_bw = math.ceil(math.log2(INFOLD + 1))
+        res_offset_bw = math.ceil(math.log2(self.conv.kp * KNUM + 1))
+        add_offset_bw = math.ceil(math.log2(OUTPENUM * INFOLD + 1))
+        return FP_array.substitute(No=str(self.conv.n), k_counter_bw=str(k_counter_bw), infold_counter_bw=str(infold_counter_bw),
+                                  res_offset_bw=str(res_offset_bw), add_offset_bw=str(add_offset_bw))
 
     def gen_reduce_bw(self):
         return red_bw_temp.substitute(No=str(self.conv.n))
 
     def gen_act_trim(self):
-        return act_trim_temp.substitute(No=str(self.conv.n))
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
+
+        ACTP_NUM_counter_bw = math.ceil(math.log2(self.conv.pe / self.conv.actp + 1))
+        w_counter_bw = math.ceil(math.log2(self.conv.np * ROW_LEN + 1))
+        add_offset_bw = math.ceil(math.log2(self.conv.och // self.conv.actp + 1))
+
+        return act_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
+                                        w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
 
     def gen_increase_bw(self):
         if self.conv.max_pool:

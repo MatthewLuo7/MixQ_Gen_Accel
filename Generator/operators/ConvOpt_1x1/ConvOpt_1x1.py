@@ -20,7 +20,8 @@ const unsigned CONV_${No}_A_Sep = ${A_Sep};
 bias_trim_temp = Template('''//--------------------Conv ${No}: Bias and Trim--------------------
 stream<ap_uint<CONV_${No}_ACTP * CONV_${No}_OUT_BIT> > conv_${No}_act_out("conv_${No}_act_out");
 Bias_Trim<CONV_${No}_K, CONV_${No}_IN_W, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_OUT_CH,
-CONV_${No}_OUT_BIT, CONV_${No}_BIAS_BIT,CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np>(conv_${No}_dec_bw_out, conv_${No}_bias, conv_${No}_act_out, reps);
+CONV_${No}_OUT_BIT, CONV_${No}_BIAS_BIT,CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np,
+${ACTP_NUM_counter_bw}, ${w_counter_bw}, ${add_offset_bw}>(conv_${No}_dec_bw_out, conv_${No}_bias, conv_${No}_act_out, reps);
     ''')
 
 inc_bw_last_temp = Template('''//--------------------Conv ${No}: Increase Bit-width--------------------
@@ -57,7 +58,14 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
                                   SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd))),
                                   CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag, W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
     def gen_bias_trim(self):
-        return bias_trim_temp.substitute(No=str(self.conv.n))
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
+
+        ACTP_NUM_counter_bw = math.ceil(math.log2(self.conv.pe / self.conv.actp + 1))
+        w_counter_bw = math.ceil(math.log2(self.conv.np * ROW_LEN + 1))
+        add_offset_bw = math.ceil(math.log2(self.conv.och // self.conv.actp + 1))
+        
+        return bias_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
+                                        w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
 
     def gen_bw_last(self):
         return inc_bw_last_temp.substitute(No=str(self.conv.n), CONV_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / self.conv.pe)))

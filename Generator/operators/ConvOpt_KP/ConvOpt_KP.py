@@ -45,7 +45,8 @@ stream<ap_uint<CONV_${No}_Np * CONV_${No}_OCH_PF * CONV_${No}_M_BIT> > conv_${No
 KP_Array<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CONV_${No}_OUT_CH,
          CONV_${No}_IN_BIT, CONV_${No}_W_BIT, CONV_${No}_SIMD * CONV_${No}_KPF, CONV_${No}_PE, CONV_${No}_Kp,
          CONV_${No}_Np, CONV_${No}_CASCADE, CONV_${No}_GUARD_BIT, CONV_${No}_M_BIT, 
-         CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT, CONV_${No}_W_Sep, CONV_${No}_A_Sep, CONV_${No}_PatternFlag>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
+         CONV_${No}_SIMD_BIT, CONV_${No}_adW_BIT, CONV_${No}_W_Sep, CONV_${No}_A_Sep, CONV_${No}_PatternFlag,
+         ${kc_counter_bw}, ${kich_counter_bw}, ${och_offset_bw}>(conv_${No}_padding_out, conv_${No}_w, conv_${No}_array_out, reps);
     ''')
 
 
@@ -167,4 +168,10 @@ class KP_Opt_Templates(FP_Opt_Templates):
                                   CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag, W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
 
     def gen_conv_array(self):
-        return KP_array.substitute(No=str(self.conv.n))
+        INFOLD = self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)
+        OUTPENUM = self.conv.och // (self.conv.pe * self.conv.kp)
+
+        kc_counter_bw = math.ceil(math.log2(self.conv.k + 1))
+        kich_counter_bw = math.ceil(math.log2(self.conv.k * INFOLD + 1))
+        och_offset_bw = math.ceil(math.log2(OUTPENUM * self.conv.k * INFOLD + 1))
+        return KP_array.substitute(No=str(self.conv.n), kc_counter_bw=str(kc_counter_bw), kich_counter_bw=str(kich_counter_bw), och_offset_bw=str(och_offset_bw))

@@ -243,7 +243,7 @@ void KP_Comp_SIMD(ap_uint<SIMD * Kp * W_BIT> weights,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, bool Pattern_Flag>
+          unsigned adW_BIT, bool Pattern_Flag, unsigned kc_counter_bw, unsigned kich_counter_bw, unsigned och_offset_bw>
 void KP_Array_bas(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
                   const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
                   stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
@@ -269,9 +269,9 @@ void KP_Array_bas(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
   ap_uint<Np * SIMD * IN_BIT> in_data = 0;
 
   //counters
-  ap_uint<3> kc_counter = 0;
-  ap_uint<12> kich_counter = 0;
-  ap_uint<16> och_offset = 0;       //peIdx * K*INFOLD
+  ap_uint<kc_counter_bw> kc_counter = 0;
+  ap_uint<kich_counter_bw> kich_counter = 0;
+  ap_uint<och_offset_bw> och_offset = 0;       //peIdx * K*INFOLD
   for (unsigned h = 0; h < IN_H * reps; h++){
     for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for (unsigned cycle = 0; cycle < K * INFOLD * ROW_LEN; cycle++){
@@ -475,7 +475,8 @@ void KP_Comp_SIMD_sep(ap_uint<SIMD * Kp * W_BIT> weights,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag>
+          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag, unsigned kc_counter_bw,
+          unsigned kich_counter_bw, unsigned och_offset_bw>
 void KP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
                   const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
                   stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
@@ -514,9 +515,9 @@ void KP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
   ap_uint<Np * SIMD * IN_BIT> in_data = 0;
 
   //counters
-  ap_uint<3> kc_counter = 0;
-  ap_uint<12> kich_counter = 0;
-  ap_uint<16> och_offset = 0;       //peIdx * K*INFOLD
+  ap_uint<kc_counter_bw> kc_counter = 0;
+  ap_uint<kich_counter_bw> kich_counter = 0;
+  ap_uint<och_offset_bw> och_offset = 0;       //peIdx * K*INFOLD
   for (unsigned h = 0; h < IN_H * reps; h++){
     for (unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
       for (unsigned cycle = 0; cycle < K * INFOLD * ROW_LEN; cycle++){
@@ -605,7 +606,8 @@ void KP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag>
+          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag, unsigned kc_counter_bw,
+          unsigned kich_counter_bw, unsigned och_offset_bw>
 void KP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
               const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],
               stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
@@ -614,10 +616,12 @@ void KP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 
   if(SEL == 1){
     KP_Array_bas<K, ROW_LEN, IN_H, IN_CH,OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
-                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag>(in, weights, out, reps);
+                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag,
+                 kc_counter_bw, kich_counter_bw, och_offset_bw>(in, weights, out, reps);
   }else{
     KP_Array_sep<K, ROW_LEN, IN_H, IN_CH,OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
-                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, W_Sep, A_Sep, Pattern_Flag>(in, weights, out, reps);
+                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, W_Sep, A_Sep, Pattern_Flag,
+                 kc_counter_bw, kich_counter_bw, och_offset_bw>(in, weights, out, reps);
   }
 }
 

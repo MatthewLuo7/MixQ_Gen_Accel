@@ -204,9 +204,9 @@ void FP_Comp_SIMD(ap_uint<Kp * SIMD * W_BIT> in_weights,
 Dataflow: (SIMD * PE) * (Kp * Np) ---> ceil(K / Kp) ---> K * IN_CH / SIMD ---> ROW_LEN ---> OUTPENUM ---> IN_H
 */
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
-          unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
-          unsigned Kp, unsigned Np, unsigned CASCADE, int GUARD_BIT,
-          unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT>
+          unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
+          unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
+          unsigned adW_BIT, unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array_bas(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
                   const ap_uint<K * SIMD * W_BIT> weights[PE][(K * IN_CH / SIMD) * (OUT_CH / PE)],
                   stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -233,10 +233,10 @@ void FP_Array_bas(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 #pragma HLS ARRAY_PARTITION variable = cur_weights complete dim = 1
 
   //counters
-  ap_uint<3> k_counter = 0;
-  ap_uint<12> infold_counter = 0;
-  ap_uint<5> res_offset = 0;
-  ap_uint<16> add_offset = 0;       //peIdx * INFOLD
+  ap_uint<k_counter_bw> k_counter = 0;
+  ap_uint<infold_counter_bw> infold_counter = 0;
+  ap_uint<res_offset_bw> res_offset = 0;
+  ap_uint<add_offset_bw> add_offset = 0;       //peIdx * INFOLD
 
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
@@ -443,7 +443,8 @@ void FP_Comp_SIMD_sep(ap_uint<Kp * SIMD * W_BIT> in_weights,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep>
+          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, unsigned k_counter_bw, unsigned infold_counter_bw,
+          unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
                   const ap_uint<K * SIMD * W_BIT> weights[PE][(K * IN_CH / SIMD) * (OUT_CH / PE)],
                   stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -483,10 +484,10 @@ void FP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 #pragma HLS ARRAY_PARTITION variable = cur_weights complete dim = 1
 
   //counters
-  ap_uint<3> k_counter = 0;
-  ap_uint<12> infold_counter = 0;
-  ap_uint<5> res_offset = 0;
-  ap_uint<16> add_offset = 0;       //peIdx * INFOLD
+  ap_uint<k_counter_bw> k_counter = 0;
+  ap_uint<infold_counter_bw> infold_counter = 0;
+  ap_uint<res_offset_bw> res_offset = 0;
+  ap_uint<add_offset_bw> add_offset = 0;       //peIdx * INFOLD
 
   for(unsigned h = 0; h < IN_H * reps; h++){
     for(unsigned peIdx = 0; peIdx < OUTPENUM; peIdx++){
@@ -582,9 +583,10 @@ void FP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 
 //-------------------------------------------------------- Unified FP Wrapper --------------------------------------------------------
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
-          unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE,
-          unsigned Kp, unsigned Np, unsigned CASCADE, int GUARD_BIT,
-          unsigned M_BIT, unsigned SIMD_BIT, unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep>
+          unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
+          unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
+          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, unsigned k_counter_bw, unsigned infold_counter_bw,
+          unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
               const ap_uint<K * SIMD * W_BIT> weights[PE][(K * IN_CH / SIMD) * (OUT_CH / PE)],
               stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -593,10 +595,12 @@ void FP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 
   if(SEL == 1){
     FP_Array_bas<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE,
-                 Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT>(in, weights, out, reps);
+                 Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT,
+                 k_counter_bw, infold_counter_bw, res_offset_bw, add_offset_bw>(in, weights, out, reps);
   }else{                                                                                            // SEL == 2
     FP_Array_sep<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE,
-                 Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, W_Sep, A_Sep>(in, weights, out, reps);
+                 Kp, Np, CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, W_Sep, A_Sep,
+                 k_counter_bw, infold_counter_bw, res_offset_bw, add_offset_bw>(in, weights, out, reps);
   }
 }
 
