@@ -152,12 +152,6 @@ class KP_Opt_Templates(FP_Opt_Templates):
             in_assign = 'conv0_in'
         else:
             in_assign = f'conv_{self.conv.n-1}_layer_out'
-        # if not hasattr(self.conv, 'pack_flag'):
-        #     pack_flag, Ep, Dp, conv.gb, conv.T_mul = po.Kernel_Packing(self.conv.wbit, self.conv.abit, 0)
-        #     if pack_flag:
-        #         setattr(self.conv, 'pack_flag', True)
-        #     else:
-        #         setattr(self.conv, 'pack_flag', False)
             
         if self.conv.pack_flag:
             PatternFlag = 'true'
@@ -170,10 +164,6 @@ class KP_Opt_Templates(FP_Opt_Templates):
     def gen_conv_array(self):
         INFOLD = self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)
         OUTPENUM = self.conv.och // (self.conv.pe * self.conv.kp)
-
-        # kc_counter_bw = math.ceil(math.log2(self.conv.k + 1))
-        # kich_counter_bw = math.ceil(math.log2(self.conv.k * INFOLD + 1))
-        # och_offset_bw = math.ceil(math.log2(OUTPENUM * self.conv.k * INFOLD + 1))
 
         kc_counter_bw = self.ceil_width(self.conv.k)
         kich_counter_bw = self.ceil_width(self.conv.k * INFOLD)

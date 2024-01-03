@@ -17,7 +17,7 @@ void KP_Pack_ACT(ap_uint<Np * SIMD * IN_BIT> in_data,
 
   for (unsigned i = 0; i < SIMD; i++){
     ap_uint<IPACK_BIT> temp = 0;
-    for (int j = 0; j < Np; j++){
+    for (unsigned j = 0; j < Np; j++){
       temp(j*AITV_BIT + IN_BIT - 1, j*AITV_BIT) = in_data(j*SIMD*IN_BIT + i*IN_BIT + IN_BIT - 1, j*SIMD*IN_BIT + i*IN_BIT);
     }
     ipacks[i] = temp;

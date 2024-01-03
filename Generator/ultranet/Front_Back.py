@@ -10,7 +10,6 @@ Front = '''//#define DEBUG
 #include <string>
 using namespace std;
 #include "config.h"
-#include "conv1x1DSP2.hpp"
 #include "function.h"
 #include "pool_reord.hpp"
 #include "stream_tools.h"
@@ -20,7 +19,9 @@ using namespace std;
 #include <stdint.h>
 #include "S2P_buffer.hpp"
 #include "Opt_FP.hpp"
+#include "Opt_FP_LUT.hpp"
 #include "Opt_KP.hpp"
+#include "Opt_KP_LUT.hpp"
 
 string output_path = "E:/Projects/DeepBurning_MixQ/Accel_test_2_4w4a/5_gen_2/debug_output";
 
