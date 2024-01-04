@@ -37,7 +37,7 @@ class KP_LUT_Opt_Templates(KP_Opt_Templates):
         OUTPENUM = self.conv.och // (self.conv.pe * self.conv.kp)
 
         kc_counter_bw = self.ceil_width(self.conv.k)
-        kich_counter_bw = self.ceil_width(self.conv.k * INFOLD)
+        kich_counter_bw = self.ceil_width(self.conv.k * INFOLD, min_BW=2)
         och_offset_bw = self.ceil_width(OUTPENUM * self.conv.k * INFOLD)
 
         return KP_LUT_array.substitute(No=str(self.conv.n), kc_counter_bw=str(kc_counter_bw), kich_counter_bw=str(kich_counter_bw), och_offset_bw=str(och_offset_bw))

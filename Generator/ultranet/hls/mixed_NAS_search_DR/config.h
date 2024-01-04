@@ -36,8 +36,8 @@
 #define CONV_1_INC_BIT 11
 #define CONV_1_BIAS_BIT 18
 #define CONV_1_OUT_BIT 3
-#define CONV_1_SIMD 8
-#define CONV_1_PE 8
+#define CONV_1_SIMD 16
+#define CONV_1_PE 4
 #define CONV_1_L_SHIFT 8
 #define CONV_1_ACTP 4
 #define CONV_1_Kp 3
@@ -57,14 +57,14 @@
 #define CONV_2_INC_BIT 13
 #define CONV_2_BIAS_BIT 19
 #define CONV_2_OUT_BIT 6
-#define CONV_2_SIMD 8
-#define CONV_2_PE 8
+#define CONV_2_SIMD 16
+#define CONV_2_PE 4
 #define CONV_2_L_SHIFT 8
 #define CONV_2_ACTP 4
 #define CONV_2_Kp 3
 #define CONV_2_Np 4
 #define CONV_2_GUARD_BIT 0
-#define CONV_2_IN_PE 8
+#define CONV_2_IN_PE 4
 #define CONV_2_KPF 1
 
 // conv_3
@@ -85,7 +85,7 @@
 #define CONV_3_Kp 3
 #define CONV_3_Np 2
 #define CONV_3_GUARD_BIT 0
-#define CONV_3_IN_PE 8
+#define CONV_3_IN_PE 4
 #define CONV_3_KPF 1
 
 // conv_4

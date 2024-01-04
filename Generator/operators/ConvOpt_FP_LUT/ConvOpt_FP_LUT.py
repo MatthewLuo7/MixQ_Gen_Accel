@@ -40,7 +40,7 @@ class FP_LUT_Opt_Templates(FP_Opt_Templates):
         OUTPENUM = self.conv.och // self.conv.pe
 
         k_counter_bw = self.ceil_width(KNUM)
-        infold_counter_bw = self.ceil_width(INFOLD)
+        infold_counter_bw = self.ceil_width(INFOLD, min_BW=2)
         res_offset_bw = self.ceil_width(self.conv.kp * KNUM)
         add_offset_bw = self.ceil_width(OUTPENUM * INFOLD)
 

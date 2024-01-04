@@ -256,7 +256,7 @@ class FP_Opt_Templates:
 
             return f"const ap_uint<{self.conv.k * self.conv.wbit * self.conv.k * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
-    def ceil_width(self, x, min_BW=2):
+    def ceil_width(self, x, min_BW=1):
         x = x + 1
         BW = math.ceil(math.log2(x))
         BW = max(BW, min_BW)
@@ -396,7 +396,7 @@ class FP_Opt_Templates:
         OUTPENUM = self.conv.och // self.conv.pe
 
         k_counter_bw = self.ceil_width(KNUM)
-        infold_counter_bw = self.ceil_width(INFOLD)
+        infold_counter_bw = self.ceil_width(INFOLD, min_BW=2)
         res_offset_bw = self.ceil_width(self.conv.kp * KNUM)
         add_offset_bw = self.ceil_width(OUTPENUM * INFOLD)
 
