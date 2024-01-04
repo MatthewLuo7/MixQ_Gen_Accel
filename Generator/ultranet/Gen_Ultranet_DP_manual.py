@@ -12,8 +12,10 @@ sys.path.append('..')
 sys.path.append('../operators')
 sys.path.append('../operators/ConvOpt_KP')
 sys.path.append('../operators/ConvOpt_KP/predictors')
+sys.path.append('../operators/ConvOpt_KP_LUT')
 sys.path.append('../operators/ConvOpt_FP')
 sys.path.append('../operators/ConvOpt_FP/predictors')
+sys.path.append('../operators/ConvOpt_FP_LUT')
 sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
@@ -23,7 +25,9 @@ from quant_module import HWGQ, QuantConv2d, ImageInputQ
 from Front_Back import get_front, get_back
 from Opt_Templates import Gen_Opt_Templates
 from ConvOpt_FP import FP_Opt_Templates
+from ConvOpt_FP_LUT import FP_LUT_Opt_Templates
 from ConvOpt_KP import KP_Opt_Templates
+from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
 
 from Pipeline_DP import Pipeline_Allocation

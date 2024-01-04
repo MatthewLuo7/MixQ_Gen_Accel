@@ -31,7 +31,7 @@ class FP_LUT_Opt_Templates(FP_Opt_Templates):
         else:
                 in_assign = f'conv_{self.conv.n-1}_layer_out'
 
-        return FP_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
+        return FP_LUT_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
                                    SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd * min(self.conv.kp, self.conv.np)))))
 
     def gen_conv_array(self):

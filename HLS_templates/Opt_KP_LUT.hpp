@@ -59,8 +59,11 @@ void KP_Comp_SIMD_LUT(ap_uint<IN_BIT> ipacks[SIMD][Np],
   for(unsigned i = 0; i < SIMD; i++){
   	for(unsigned k = 0; k < Kp; k++){
   	  for(unsigned n = 0; n < Np; n++){
-#pragma HLS RESOURCE variable=mul_temp core=Mul_LUT
   	    ap_int<W_BIT + IN_BIT> mul_temp = wpacks[i][k] * ipacks[i][n];
+
+#pragma HLS RESOURCE variable=mul_temp core=Mul_LUT
+        mul_temp = wpacks[i][k] * ipacks[i][n];
+        
   	    res[k][n] += mul_temp;
   	  }
   	}

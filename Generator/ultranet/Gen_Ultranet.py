@@ -12,19 +12,22 @@ sys.path.append('..')
 sys.path.append('../operators')
 sys.path.append('../operators/ConvOpt_KP')
 sys.path.append('../operators/ConvOpt_KP/predictors')
+sys.path.append('../operators/ConvOpt_KP_LUT')
 sys.path.append('../operators/ConvOpt_FP')
 sys.path.append('../operators/ConvOpt_FP/predictors')
+sys.path.append('../operators/ConvOpt_FP_LUT')
 sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn
-from quant_module import HWGQ, QuantConv2d, ImageInputQ
+from anypacking.quant_module import HWGQ, QuantConv2d, ImageInputQ
 from Front_Back import get_front, get_back
 from Opt_Templates import Gen_Opt_Templates
 from ConvOpt_FP import FP_Opt_Templates
+from ConvOpt_FP_LUT import FP_LUT_Opt_Templates
 from ConvOpt_KP import KP_Opt_Templates
+from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
-
 
 class ConvParam: ...
 
@@ -130,6 +133,7 @@ def extract_model(in_shape):
                 weight_q = weight_q.astype(np.int32)
                 conv_cur.w = weight_q
             else:
+                print(f'debug: layer {conv_cnt} error')
                 raise NotImplementedError(sub_module)
             print(', ich {ich}, och {och}, irow {irow}, icol {icol}, ksp {k}{s}{p}, wbit {wbit}, wstep {wstep}'.format(**vars(conv_cur)))
 
@@ -276,7 +280,7 @@ def write_hls_accel(model_opt, path):
 
 
 def gen_opts(model_param, array_config):
-    for conv, extra_para in zip(model_param, array_config[:, :8]):
+    for conv, extra_para in zip(model_param, array_config[:, :10]):
         conv.simd = extra_para[0]
         conv.pe = extra_para[1]
         conv.actp = extra_para[2]
@@ -285,6 +289,8 @@ def gen_opts(model_param, array_config):
         conv.gb = extra_para[5]  
         conv.kpf = extra_para[6]
         conv.max_pool = extra_para[7]
+        conv.w_sep = extra_para[8]
+        conv.a_sep = extra_para[9]
 
     for n in range(len(model_param)):
         if n == 0:
@@ -297,13 +303,20 @@ def gen_opts(model_param, array_config):
         model_param[n].in_pe = opf
 
     model_opt = []
-    for conv, opt_type in zip(model_param, array_config[:, 8]):
+    for conv, opt_type in zip(model_param, array_config[:, 10]):
+
         if opt_type == 0:
-            conv.pack_flag = True        # to be modified
+            conv.pack_flag = False        # to be modified
             model_opt.append(KP_Opt_Templates(conv))
         elif opt_type == 1:
-            model_opt.append(FP_Opt_Templates(conv))
+            conv.pack_flag = False        # to be modified
+            model_opt.append(KP_LUT_Opt_Templates(conv))
         elif opt_type == 2:
+            model_opt.append(FP_Opt_Templates(conv))
+        elif opt_type == 3:
+            model_opt.append(FP_LUT_Opt_Templates(conv))
+        elif opt_type == 4:
+            conv.pack_flag = False        # to be modified
             model_opt.append(Conv1x1_Opt_Templates(conv))
         else:
             raise ValueError(f"Operator {str(opt_type)} is not defined!")
@@ -312,12 +325,17 @@ def gen_opts(model_param, array_config):
 
 
 if __name__=='__main__':
-    model_name = 'UltraNet_ismart'
-    weight = 'ultra_4w4a'
-    config_simd_pe = '4w4a_8fl_new'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-w', '--weight', default='fixed', help='.pt file name in ./weights/')
+    parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart
+    parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
+    opt = parser.parse_args()
+    model_name = opt.model
+    weight = opt.weight
+    config_simd_pe = opt.config_simd_pe
 
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
-    dir_output = 'hls/' + weight + '/'
+    dir_output = 'hls/' + weight + '_' + config_simd_pe + '/'
     if not os.path.exists(dir_output): os.makedirs(dir_output)
 
     # load model and state_dict
