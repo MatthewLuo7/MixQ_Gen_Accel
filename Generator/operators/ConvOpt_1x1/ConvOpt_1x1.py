@@ -20,7 +20,7 @@ const unsigned CONV_${No}_A_Sep = ${A_Sep};
 bias_trim_temp = Template('''//--------------------Conv ${No}: Bias and Trim--------------------
 stream<ap_uint<CONV_${No}_ACTP * CONV_${No}_OUT_BIT> > conv_${No}_act_out("conv_${No}_act_out");
 Bias_Trim<CONV_${No}_K, CONV_${No}_IN_W, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_OUT_CH,
-CONV_${No}_OUT_BIT, CONV_${No}_BIAS_BIT,CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np,
+CONV_${No}_OUT_BIT, CONV_${No}_BIAS_BIT, CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np,
 ${ACTP_NUM_counter_bw}, ${w_counter_bw}, ${add_offset_bw}>(conv_${No}_dec_bw_out, conv_${No}_bias, conv_${No}_act_out, reps);
     ''')
 
@@ -38,10 +38,24 @@ print_mavu_DSPopt_stream_through<CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OU
 //-------------------- Add Last --------------------
 AddLast<CONV_${No}_IN_H * CONV_${No}_IN_W * CONV_${No}_OUT_CH / 2>(conv_${No}_layer_out, out, reps);''')
 
+red_trim_last_temp = Template('''//--------------------Conv ${No}: Decrease Bit-width--------------------
+stream<ap_uint<CONV_${No}_ACTP * CONV_${No}_M_BIT> > conv_${No}_dec_bw_out("conv_${No}_dec_bw_out");
+StreamingDataWidthConverter_Batch<CONV_${No}_Np * CONV_${No}_OCH_PF * CONV_${No}_M_BIT, CONV_${No}_ACTP * CONV_${No}_M_BIT,
+                                  CONV_${No}_DEC_BW_NUM>(conv_${No}_array_out, conv_${No}_dec_bw_out, reps);
+
+stream<ap_uint<CONV_${No}_ACTP * CONV_${No}_OUT_BIT> > conv_${No}_act_out("conv_${No}_act_out");
+Trim<CONV_${No}_K, CONV_${No}_IN_W, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_OUT_CH,
+CONV_${No}_OUT_BIT,  CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np,
+${ACTP_NUM_counter_bw}, ${w_counter_bw}, ${add_offset_bw}>(conv_${No}_dec_bw_out, conv_${No}_bias, conv_${No}_act_out, reps);
+
+//-------------------- Add Last --------------------
+AddLast<CONV_${No}_IN_H * CONV_${No}_IN_W * CONV_${No}_OUT_CH / 2>(conv_${No}_act_out, out, reps);''')
+
 
 class Conv1x1_Opt_Templates(KP_Opt_Templates):
     def __init__(self, conv):
         self.conv = conv
+        assert self.conv.actp == self.conv.pe * self.conv.kp, f'actp: {self.conv.actp}, pe: {self.conv.pe}, kp: {self.conv.kp}'
         self.conv.obit = 32
     ################################################ HLS Template ################################################
     def gen_conv_para(self):
@@ -65,7 +79,17 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
         add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
         
         return bias_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
-                                        w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
+                                         w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
+
+    def gen_red_trim_last(self):
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
+        
+        ACTP_NUM_counter_bw = self.ceil_width(self.conv.pe / self.conv.actp)
+        w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
+        add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
+
+        return red_trim_last_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
+                                             w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
 
     def gen_bw_last(self):
         return inc_bw_last_temp.substitute(No=str(self.conv.n), CONV_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / self.conv.pe)))
@@ -81,10 +105,13 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
         content += f'\n'
         content += self.gen_conv_array()
         content += f'\n'
-        content += self.gen_reduce_bw()
-        content += f'\n'
-        content += self.gen_bias_trim()
-        content += f'\n'
-        content += self.gen_bw_last()
+        if hasattr(self.conv, 'bias'):
+            content += self.gen_reduce_bw()
+            content += f'\n'
+            content += self.gen_bias_trim()
+            content += f'\n'
+            content += self.gen_bw_last()
+        else:
+            content += self.gen_red_trim_last()
 
         return content

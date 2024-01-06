@@ -16,60 +16,22 @@ sys.path.append('../operators/ConvOpt_KP_LUT')
 sys.path.append('../operators/ConvOpt_FP')
 sys.path.append('../operators/ConvOpt_FP/predictors')
 sys.path.append('../operators/ConvOpt_FP_LUT')
+sys.path.append('../operators/ConvOpt_FP_DW')
 sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn
 from anypacking.quant_module import HWGQ, QuantConv2d, ImageInputQ
-from Front_Back import get_front, get_back
+from Accelerator_Template import write_hls_config, write_hls_weights, write_hls_accel
 from Opt_Templates import Gen_Opt_Templates
 from ConvOpt_FP import FP_Opt_Templates
 from ConvOpt_FP_LUT import FP_LUT_Opt_Templates
+from ConvOpt_FP_DW import FP_DW_Opt_Templates
 from ConvOpt_KP import KP_Opt_Templates
 from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
 
 class ConvParam: ...
-
-def write_hls_config(model_param, path):
-    name_mapping = {
-        'k': 'K',
-        'ich': 'IN_CH',
-        'irow': 'IN_H',
-        'icol': 'IN_W',
-        'och': 'OUT_CH',
-        'abit': 'IN_BIT',
-        'wbit': 'W_BIT',
-        'incbit': 'INC_BIT',
-        'biasbit': 'BIAS_BIT',
-        'obit': 'OUT_BIT',
-        'simd': 'SIMD',
-        'pe': 'PE',
-        'lshift': 'L_SHIFT',
-        'actp': 'ACTP',
-        'kp': 'Kp',
-        'np': 'Np',
-        'gb': 'GUARD_BIT',
-        'in_pe': 'IN_PE',
-        'kpf': 'KPF'
-    }
-    content = f'''/********************************************************************************
-********************************************************************************/
-
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
-
-'''
-    for n, conv in enumerate(model_param):
-        content += f'// conv_{n}\n'
-        for k, v in name_mapping.items():
-            if hasattr(conv, k): # e.g. conv_last has no incbit
-                content += f'#define CONV_{n}_{v} {getattr(conv, k)}\n'
-        content += '\n'
-    content += '#endif'
-
-    with open(path + 'config.h', 'w') as f:
-        print(content, file=f)
 
 def extract_model(in_shape):
     model_param: List[ConvParam] = []
@@ -133,7 +95,6 @@ def extract_model(in_shape):
                 weight_q = weight_q.astype(np.int32)
                 conv_cur.w = weight_q
             else:
-                print(f'debug: layer {conv_cnt} error')
                 raise NotImplementedError(sub_module)
             print(', ich {ich}, och {och}, irow {irow}, icol {icol}, ksp {k}{s}{p}, wbit {wbit}, wstep {wstep}'.format(**vars(conv_cur)))
 
@@ -218,10 +179,11 @@ def process_batchnorm(model_param):
     conv_last = model_param[-1] # process lastbias
     conv_last.inc = None
     conv_last.div = 1/(conv_last.wstep * conv_last.astep)
-    conv_last.bias = np.round(conv_last.convbias * conv_last.div).astype(np.int64)
-    conv_last.bias_raw = conv_last.convbias * conv_last.div
-    conv_last.biasbit = bitlength(conv_last.bias)
-    print(f'conv_last biasbit {conv_last.biasbit}, div {conv_last.div}')
+    if hasattr(conv_last, 'convbias'):
+        conv_last.bias = np.round(conv_last.convbias * conv_last.div).astype(np.int64)
+        conv_last.bias_raw = conv_last.convbias * conv_last.div
+        conv_last.biasbit = bitlength(conv_last.bias)
+        print(f'conv_last biasbit {conv_last.biasbit}, div {conv_last.div}')
 
 
 def print_ndarray_recursion(arr, str_func=str, file=sys.stdout, stop=0):
@@ -235,28 +197,6 @@ def print_ndarray_recursion(arr, str_func=str, file=sys.stdout, stop=0):
         if i!=len(arr)-1: print(',', file=file, end=ends)
     print(ends+'}', file=file, end='')
 
-def write_hls_weights(model_opt, path):
-    '''write_hls_weights(model_param, path)
-    Write hls weights+inc+bias array code according to numpy shape.
-    '''
-    f = open(path + 'weights.hpp', 'w')
-
-    print(f'''/********************************************************************************
-********************************************************************************/
-
-#ifndef _WEIGHTS_HPP_
-#define _WEIGHTS_HPP_
-#include <ap_int.h>
-''', file=f)
-
-    for opt in model_opt:
-        print(f"Write conv_{opt.conv.n} weight, pe {opt.conv.pe}, simd {opt.conv.simd}, wbit {opt.conv.wbit}")
-        content = opt.write_weights()
-        print(content, file=f, end='')
-    
-    print('#endif', file=f)
-    f.close()
-
 def adjust_weight(model_param):
     # special_wa_bit = ((4,2),(5,3),(5,4),(5,5),(5,6),(5,7),(5,8),(7,2),(7,3)) 
     special_wa_bit = []
@@ -265,19 +205,6 @@ def adjust_weight(model_param):
         if (conv.wbit, conv.abit) in special_wa_bit:
             print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
             conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
-
-def write_hls_accel(model_opt, path):
-
-    content = get_front()
-
-    for opt in model_opt:
-        content += opt.gen_operator()
-    
-    content += get_back()
-
-    with open(path + 'accelerator.cpp', 'w') as f:
-        print(content, file=f)
-
 
 def gen_opts(model_param, array_config):
     for conv, extra_para in zip(model_param, array_config[:, :10]):
@@ -304,20 +231,23 @@ def gen_opts(model_param, array_config):
 
     model_opt = []
     for conv, opt_type in zip(model_param, array_config[:, 10]):
+        pack_flag = False        # to be modified
 
         if opt_type == 0:
-            conv.pack_flag = False        # to be modified
+            conv.pack_flag = pack_flag        # to be modified
             model_opt.append(KP_Opt_Templates(conv))
         elif opt_type == 1:
-            conv.pack_flag = False        # to be modified
+            conv.pack_flag = pack_flag        # to be modified
             model_opt.append(KP_LUT_Opt_Templates(conv))
         elif opt_type == 2:
             model_opt.append(FP_Opt_Templates(conv))
         elif opt_type == 3:
             model_opt.append(FP_LUT_Opt_Templates(conv))
         elif opt_type == 4:
-            conv.pack_flag = False        # to be modified
+            conv.pack_flag = pack_flag        # to be modified
             model_opt.append(Conv1x1_Opt_Templates(conv))
+        elif opt_type == 5:
+            model_opt.append(FP_DW_Opt_Templates(conv))
         else:
             raise ValueError(f"Operator {str(opt_type)} is not defined!")
 
@@ -329,6 +259,7 @@ if __name__=='__main__':
     parser.add_argument('-w', '--weight', default='fixed', help='.pt file name in ./weights/')
     parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart
     parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
+    parser.add_argument('--GenTB', default=True)
     opt = parser.parse_args()
     model_name = opt.model
     weight = opt.weight
@@ -352,4 +283,4 @@ if __name__=='__main__':
     
     write_hls_config(model_param, dir_output)
     write_hls_weights(model_opt, dir_output)
-    write_hls_accel(model_opt, dir_output)
+    write_hls_accel(model_opt, dir_output, net_name='ultra_net', GenTB=opt.GenTB)

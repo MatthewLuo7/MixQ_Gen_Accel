@@ -1,3 +1,10 @@
+#define grid_row 20
+#define grid_col 40
+#define org_row 360
+#define org_col 640
+#define inp_col 160
+#define inp_row 320
+#define div 396.2211686439363
 #include <stdint.h>
 #include <ap_int.h>
 #include "stream_tools.h"
@@ -5,9 +12,6 @@
 #include <fstream>
 #include <string>
 using namespace std;
-#define grid_row 10
-#define grid_col 20
-#define div 2048.0
 
 string opath = "E:/Projects/DeepBurning_MixQ/Accel_test_2_4w4a/5_gen_2/debug_output/";
 
@@ -37,13 +41,13 @@ void write_data(const char *path, char *ptr, unsigned int size) {
 
 int main(int argc, char const *argv[])
 {
-    unsigned char img[160][320][3];
+    unsigned char img[inp_row][inp_col][3];
 
     load_data("E:/Projects/DeepBurning_MixQ/Accel_test_2_4w4a/test_data/0.bin", (char *) img, sizeof(img));
 
     unsigned char * data = (unsigned char *) img;
     const int data_points_per_line = 8;        // ch * 10
-    const int nums_line_pre_img = 160 * 320 * 3 / 8;
+    const int nums_line_pre_img = inp_row * inp_col * 3 / 8;
 
     int img_repeat = 1;
 
@@ -66,14 +70,6 @@ int main(int argc, char const *argv[])
     
     for (unsigned ir = 0; ir < img_repeat; ir++){
         ap_int<32> conv_8_out [grid_row*grid_col][6][6];
-        // for(unsigned int i = 0; i< (grid_row*grid_col); i++)
-        //     for(unsigned int j = 0; j<6; j++)
-        //         for(unsigned int k = 0; k<3; k++){
-        //             my_ap_axis output = output_stream.read();
-        //             ap_uint<64> out_data = output.data;
-        //             conv_8_out[i][j][2*k]   = out_data(31,0);
-        //             conv_8_out[i][j][2*k+1] = out_data(63,32);
-        //         }
 
         for(unsigned r = 0; r < grid_row; r++)
             for(unsigned ofi = 0; ofi < 18; ofi++)
@@ -155,10 +151,10 @@ int main(int argc, char const *argv[])
 
         float xmin,xmax,ymin,ymax;
 
-        xmin = (x - w/2)*640/320;
-        xmax = (x + w/2)*640/320;
-        ymin = (y - h/2)*360/160;
-        ymax = (y + h/2)*360/160;
+        xmin = (x - w/2)*org_col/inp_col;
+        xmax = (x + w/2)*org_col/inp_col;
+        ymin = (y - h/2)*org_row/inp_row;
+        ymax = (y + h/2)*org_row/inp_row;
 
         cout << "x: " << x << " y: " << y << " w: " << w << " h: " << h << endl;
         cout << "xmin: " << xmin << " xmax: " << xmax << " ymin: " << ymin << " ymax: " << ymax << endl;
@@ -166,18 +162,3 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

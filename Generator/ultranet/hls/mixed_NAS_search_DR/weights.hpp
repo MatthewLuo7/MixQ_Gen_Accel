@@ -1,4 +1,7 @@
 /********************************************************************************
+* Filename: weights.hpp
+* Date: $Fri Jan  5 17:31:21 2024
+* Description: weights and other parameters for the generated accelerator
 ********************************************************************************/
 
 #ifndef _WEIGHTS_HPP_
