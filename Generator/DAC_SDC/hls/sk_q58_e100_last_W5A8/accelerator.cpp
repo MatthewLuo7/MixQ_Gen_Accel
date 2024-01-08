@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: weights.hpp
-* Date: $Sun Jan  7 18:11:57 2024
+* Date: $Mon Jan  8 11:51:55 2024
 * Description: accelerator main function
 ********************************************************************************/
 //#define DEBUG
@@ -16,7 +16,6 @@ using namespace std;
 
 #include "config.h"
 #include "weights.hpp"
-#include "debug.hpp"
 #include "function.h"
 #include "Opt_FP.hpp"
 #include "Opt_FP_DW.hpp"
@@ -878,7 +877,6 @@ void sky_net(stream<my_ap_axis> &in, stream<my_ap_axis> &out,
 #pragma HLS ARRAY_PARTITION variable = conv_11_bias complete dim = 1
 
 #pragma HLS ARRAY_PARTITION variable = conv_12_w complete dim = 1
-#pragma HLS ARRAY_PARTITION variable = conv_12_inc complete dim = 1
 
 
 

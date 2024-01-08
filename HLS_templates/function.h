@@ -156,7 +156,6 @@ template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned O
 void Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
           stream<ap_uint<ACTP * OUT_BIT> > &out,
           const unsigned reps = 1){
-#pragma HLS ARRAY_PARTITION variable = bias complete dim = 1
 
   const unsigned OUTPENUM = OUT_CH / OPF;
   const unsigned CONV_OUT_W = Np * ROW_LEN;

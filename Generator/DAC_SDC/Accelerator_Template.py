@@ -28,6 +28,8 @@ using namespace std;
 '''
     for f in path.iterdir():
         file_name = str(f).split('\\')[-1]
+        if file_name == 'debug.hpp':
+            continue
         content += f'#include "{file_name}"\n'
 
     content += '\n'
@@ -37,11 +39,11 @@ using namespace std;
 def get_parameter_partition(model_opt):
     content = ''
     for opt in model_opt:
-        if hasattr(opt.conv, 'w'):
+        if hasattr(opt.conv, 'w') and opt.conv.w is not None:
             content += f'#pragma HLS ARRAY_PARTITION variable = conv_{opt.conv.n}_w complete dim = 1\n'
-        if hasattr(opt.conv, 'inc'):
+        if hasattr(opt.conv, 'inc') and opt.conv.inc is not None:
             content += f'#pragma HLS ARRAY_PARTITION variable = conv_{opt.conv.n}_inc complete dim = 1\n'
-        if hasattr(opt.conv, 'bias'):
+        if hasattr(opt.conv, 'bias') and opt.conv.bias is not None:
             content += f'#pragma HLS ARRAY_PARTITION variable = conv_{opt.conv.n}_bias complete dim = 1\n'
 
         content += '\n'
@@ -149,10 +151,24 @@ def write_hls_accel(model_opt, path, net_name, GenTB, debug_path='./debug_path/'
         print(content, file=f)
 
     if GenTB:
+        grid_row = model_opt[-1].conv.irow
+        grid_col = model_opt[-1].conv.icol
+        org_row = 360
+        org_col = 640
+        inp_row = model_opt[0].conv.irow
+        inp_col = model_opt[0].conv.icol
+        div = model_opt[-1].conv.div
+    
+        post_processing = f'''#define grid_row {grid_row}
+#define grid_col {grid_col}
+#define org_row {org_row}
+#define org_col {org_col}
+#define inp_row {inp_row}
+#define inp_col {inp_col}
+#define div {div}\n'''
         with open(path + 'tb.cpp', 'w') as f:
-            content = gen_tb(debug_path, net_name, input_path, max_pool_scale, repeat_num)
+            content = gen_tb(debug_path, net_name, input_path, max_pool_scale, post_processing, repeat_num)
             print(content, file=f)
-
 
 def write_hls_config(model_opt, path):
     name_mapping = {
@@ -173,7 +189,6 @@ def write_hls_config(model_opt, path):
         'kp': 'Kp',
         'np': 'Np',
         'gb': 'GUARD_BIT',
-        # 'in_pe': 'IN_PE',
         'kpf': 'KPF'
     }
     content = f'''/********************************************************************************
@@ -192,22 +207,6 @@ def write_hls_config(model_opt, path):
             if hasattr(opt.conv, k): # e.g. conv_last has no incbit
                 content += f'#define CONV_{n}_{v} {getattr(opt.conv, k)}\n'
         content += '\n'
-
-    grid_row = model_opt[-1].conv.irow
-    grid_col = model_opt[-1].conv.icol
-    org_row = 360
-    org_col = 640
-    inp_row = model_opt[0].conv.irow
-    inp_col = model_opt[0].conv.icol
-    div = model_opt[-1].conv.div
-
-    content += f'''#define grid_row {grid_row}
-#define grid_col {grid_col}
-#define org_row {org_row}
-#define org_col {org_col}
-#define inp_row {inp_row}
-#define inp_col {inp_col}
-#define div {div}\n'''
 
     content += '#endif'
 

@@ -16,6 +16,8 @@ TB_templates = Template('''/****************************************************
 #include "config.h"
 using namespace std;
 
+${post_processing}
+
 string opath = "${debug_path}";
 
 void ${name}(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
@@ -144,7 +146,7 @@ int main(int argc, char const *argv[])
 }''')
 
 
-def gen_tb(debug_path, name, input_path, max_pool_scale, repeat_num='1'):
+def gen_tb(debug_path, name, input_path, max_pool_scale, post_processing, repeat_num='1'):
 
 	return TB_templates.substitute(ctime=str(time.ctime()), debug_path=debug_path, name=name, input_path=input_path,
-							       repeat_num=repeat_num, max_pool_scale=str(max_pool_scale))
+							       repeat_num=str(repeat_num), max_pool_scale=str(max_pool_scale), post_processing=post_processing)

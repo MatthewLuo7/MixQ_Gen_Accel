@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: config.h
-* Date: $Sun Jan  7 18:11:57 2024
+* Date: $Mon Jan  8 11:51:55 2024
 * Description: configuration file for the generated accelerator
 ********************************************************************************/
 
@@ -264,11 +264,4 @@
 #define CONV_12_GUARD_BIT 8
 #define CONV_12_KPF 1
 
-#define grid_row 20
-#define grid_col 40
-#define org_row 360
-#define org_col 640
-#define inp_row 160
-#define inp_col 320
-#define div 396.2211686439363
 #endif
