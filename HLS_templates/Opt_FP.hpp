@@ -472,7 +472,7 @@ void FP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 
   ap_uint<IPACK_BIT> ipacks[A_Sep][SIMD];
 #pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
-#pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
+#pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 2
 
   ap_int<M_BIT_Sep> PartialRes[2][PE][Kp * KNUM + Np - 1];
 #pragma HLS ARRAY_PARTITION variable = PartialRes complete dim = 1

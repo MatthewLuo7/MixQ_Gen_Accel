@@ -24,6 +24,7 @@ name_mapping_FP = {
     }
 
 FP_para = Template('''//--------------------Conv ${No}: Parameters--------------------
+const unsigned CONV_${No}_IN_PE = ${IN_PE};
 stream<ap_uint<CONV_${No}_IN_PE * CONV_${No}_IN_BIT> > &conv_${No}_in = ${in_assign_last};
 const unsigned CONV_${No}_M_BIT = CONV_${No}_IN_BIT + CONV_${No}_W_BIT + ${EX_M_BIT};
 const unsigned CONV_${No}_SIMD_BIT = ${SIMD_BIT};
@@ -152,6 +153,12 @@ class FP_Opt_Templates:
     def __init__(self, conv):
         self.conv = conv
 
+    def get_opf(self):
+        if hasattr(self.conv, 'pe'):
+            return self.conv.pe
+        else:
+            return None
+
     ################################################ Search ################################################
     def dsp_operations(self):
         KNUM = (self.conv.k - 1) // self.conv.kp + 1
@@ -189,7 +196,6 @@ class FP_Opt_Templates:
         else:
             flag = (inpe % (kpf * simd) == 0)
             flag = flag and (self.conv.ich * self.conv.k % inpe == 0)
-            # flag = False
 
         return flag
 
@@ -329,16 +335,16 @@ class FP_Opt_Templates:
     def gen_conv_para(self):
         if self.conv.n == 0:
                 in_assign = 'conv0_in'
+                IN_PE = '3'
         else:
                 in_assign = f'conv_{self.conv.n-1}_layer_out'
+                IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'
 
         return FP_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
                                    SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd * min(self.conv.kp, self.conv.np)))), CASCADE=str(self.find_CASCADE()),
-                                   W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
+                                   W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep, IN_PE=IN_PE)
 
     def gen_reshape_buffer(self):
-        # BufferIdx_bw = math.ceil(math.log2(self.conv.k + 1 + 1))
-        # rowIdx_bw = math.ceil(math.log2(self.conv.irow - 1 + 1)) + 1
         BufferIdx_bw = self.ceil_width(self.conv.k + 1)
         rowIdx_bw = self.ceil_width(self.conv.irow - 1) + 1
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
@@ -407,9 +413,10 @@ class FP_Opt_Templates:
         return red_bw_temp.substitute(No=str(self.conv.n))
 
     def gen_act_trim(self):
+        OPF = self.conv.pe
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
 
-        ACTP_NUM_counter_bw = self.ceil_width(self.conv.pe / self.conv.actp)
+        ACTP_NUM_counter_bw = self.ceil_width(OPF / self.conv.actp)
         w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
         add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
 

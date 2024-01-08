@@ -113,8 +113,13 @@ void DW_stream_out_rows_PE_INPE_S2P(
           }
         }
 
-        for (unsigned j = 0; j < Np; j++){
-          write_data((j+1)*PE_BIT - 1, j*PE_BIT) = data[j];
+        // for (unsigned j = 0; j < Np; j++){
+        //   write_data((j+1)*PE_BIT - 1, j*PE_BIT) = data[j];
+        // }
+        for(unsigned i = 0; i < PE; i++){
+          for(unsigned j = 0; j < Np; j++){
+            write_data(i*Np*IN_BIT + j*IN_BIT + IN_BIT - 1, i*Np*IN_BIT + j*IN_BIT) = data[j](i*IN_BIT + IN_BIT - 1, i*IN_BIT);
+          }
         }
       }
       out.write(write_data);
@@ -186,8 +191,13 @@ void DW_stream_out_rows_PE_INPE_FPT(
           }
         }
 
-        for (unsigned j = 0; j < Np; j++){
-          write_data(j * K * PE_BIT + kr * PE_BIT + PE_BIT - 1, j * K * PE_BIT + kr * PE_BIT) = data[j];
+        // for (unsigned j = 0; j < Np; j++){
+        //   write_data(j * K * PE_BIT + kr * PE_BIT + PE_BIT - 1, j * K * PE_BIT + kr * PE_BIT) = data[j];
+        // }
+        for(unsigned i = 0; i < PE; i++){
+          for(unsigned j = 0; j < Np; j++){
+            write_data(i*Np*K*IN_BIT + j*K*IN_BIT + kr*IN_BIT + IN_BIT - 1, i*Np*K*IN_BIT + j*K*IN_BIT + kr*IN_BIT) = data[j](i*IN_BIT + IN_BIT - 1, i*IN_BIT);
+          }
         }
       }
 
@@ -370,7 +380,12 @@ void DW_stream_out_rows_INPE_PE_S2P(
       if ((outRowIdx - (K / 2) + kr_c < 0) || (outRowIdx - (K / 2) + kr_c >= IN_H)) {
         write_data = 0;
       } else {
-        write_data = row_buffer[ipe_pe_c][rowBufferIdx][mem_offset + ch_ipe_c];
+        // write_data = row_buffer[ipe_pe_c][rowBufferIdx][mem_offset + ch_ipe_c];
+        for(unsigned i = 0; i < PE; i++){
+          for(unsigned j = 0; j < Np; j++){
+            write_data(i*Np*IN_BIT + j*IN_BIT + IN_BIT - 1, i*Np*IN_BIT + j*IN_BIT) = row_buffer[ipe_pe_c][rowBufferIdx][mem_offset + ch_ipe_c](j*PE*IN_BIT + i*IN_BIT + IN_BIT - 1, j*PE*IN_BIT + i*IN_BIT);
+          }
+        }
       }
       out.write(write_data);
 
@@ -441,8 +456,13 @@ void DW_stream_out_rows_INPE_PE_FPT(
           }
         }
 
-        for(unsigned j = 0; j < Np; j++){
-          write_data(j * K * PE_BIT + kr * PE_BIT + PE_BIT - 1, j * K * PE_BIT + kr * PE_BIT) = data[j];
+        // for(unsigned j = 0; j < Np; j++){
+        //   write_data(j * K * PE_BIT + kr * PE_BIT + PE_BIT - 1, j * K * PE_BIT + kr * PE_BIT) = data[j];
+        // }
+        for(unsigned i = 0; i < PE; i++){
+          for(unsigned j = 0; j < Np; j++){
+            write_data(i*Np*K*IN_BIT + j*K*IN_BIT + kr*IN_BIT + IN_BIT - 1, i*Np*K*IN_BIT + j*K*IN_BIT + kr*IN_BIT) = data[j](i*IN_BIT + IN_BIT - 1, i*IN_BIT);
+          }
         }
       }
 

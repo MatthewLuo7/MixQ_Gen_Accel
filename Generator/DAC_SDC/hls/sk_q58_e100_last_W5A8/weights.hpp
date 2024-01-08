@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: weights.hpp
-* Date: $Fri Jan  5 16:55:44 2024
+* Date: $Sun Jan  7 18:11:57 2024
 * Description: weights and other parameters for the generated accelerator
 ********************************************************************************/
 

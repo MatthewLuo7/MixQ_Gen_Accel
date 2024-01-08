@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 
 FP_LUT_para = Template('''//--------------------Conv ${No}: Parameters--------------------
+const unsigned CONV_${No}_IN_PE = ${IN_PE};
 stream<ap_uint<CONV_${No}_IN_PE * CONV_${No}_IN_BIT> > &conv_${No}_in = ${in_assign_last};
 const unsigned CONV_${No}_M_BIT = CONV_${No}_IN_BIT + CONV_${No}_W_BIT + ${EX_M_BIT};
 const unsigned CONV_${No}_SIMD_BIT = ${SIMD_BIT};
@@ -28,11 +29,13 @@ class FP_LUT_Opt_Templates(FP_Opt_Templates):
     def gen_conv_para(self):
         if self.conv.n == 0:
                 in_assign = 'conv0_in'
+                IN_PE = '3'
         else:
                 in_assign = f'conv_{self.conv.n-1}_layer_out'
+                IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'
 
         return FP_LUT_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
-                                   SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd * min(self.conv.kp, self.conv.np)))))
+                                   SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd * min(self.conv.kp, self.conv.np)))), IN_PE=IN_PE)
 
     def gen_conv_array(self):
         KNUM = (self.conv.k - 1) // self.conv.kp + 1

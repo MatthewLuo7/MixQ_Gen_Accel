@@ -1,6 +1,7 @@
 from string import Template
 import time
 import pathlib
+from TB_Template import gen_tb
 
 hls_templates_path = pathlib.Path('../../HLS_templates/')
 
@@ -124,14 +125,16 @@ def get_accelerator(net_name, input_width, input_height, layers, model_opt, debu
     return accelerator
 
 
-def write_hls_accel(model_opt, path, net_name, GenTB):
-
-    # content = get_front()
-
-    # for opt in model_opt:
-    #     content += opt.gen_operator()
-    
-    # content += get_back()
+def write_hls_accel(model_opt, path, net_name, GenTB, debug_path='./debug_path/', input_path='./input/test1.bin', repeat_num=1):
+    # set in_pe
+    max_pool_scale = 1
+    for idx, opt in enumerate(model_opt):
+        if idx == 0:
+            setattr(opt.conv, 'in_pe', 3)
+        else:
+            setattr(opt.conv, 'in_pe', model_opt[idx - 1].get_opf())
+        if hasattr(opt.conv, 'max_pool') and opt.conv.max_pool == True:
+            max_pool_scale = max_pool_scale * 2
 
     input_width = model_opt[0].conv.icol
     input_height = model_opt[0].conv.irow
@@ -146,13 +149,12 @@ def write_hls_accel(model_opt, path, net_name, GenTB):
         print(content, file=f)
 
     if GenTB:
-        with open('tb_template.txt', 'r') as tb:
-            content = tb.read()
         with open(path + 'tb.cpp', 'w') as f:
+            content = gen_tb(debug_path, net_name, input_path, max_pool_scale, repeat_num)
             print(content, file=f)
 
 
-def write_hls_config(model_param, path):
+def write_hls_config(model_opt, path):
     name_mapping = {
         'k': 'K',
         'ich': 'IN_CH',
@@ -171,7 +173,7 @@ def write_hls_config(model_param, path):
         'kp': 'Kp',
         'np': 'Np',
         'gb': 'GUARD_BIT',
-        'in_pe': 'IN_PE',
+        # 'in_pe': 'IN_PE',
         'kpf': 'KPF'
     }
     content = f'''/********************************************************************************
@@ -184,20 +186,20 @@ def write_hls_config(model_param, path):
 #define _CONFIG_H_
 
 '''
-    for n, conv in enumerate(model_param):
+    for n, opt in enumerate(model_opt):
         content += f'// conv_{n}\n'
         for k, v in name_mapping.items():
-            if hasattr(conv, k): # e.g. conv_last has no incbit
-                content += f'#define CONV_{n}_{v} {getattr(conv, k)}\n'
+            if hasattr(opt.conv, k): # e.g. conv_last has no incbit
+                content += f'#define CONV_{n}_{v} {getattr(opt.conv, k)}\n'
         content += '\n'
 
-    grid_row = model_param[-1].irow
-    grid_col = model_param[-1].icol
+    grid_row = model_opt[-1].conv.irow
+    grid_col = model_opt[-1].conv.icol
     org_row = 360
     org_col = 640
-    inp_row = model_param[0].irow
-    inp_col = model_param[0].icol
-    div = model_param[-1].div
+    inp_row = model_opt[0].conv.irow
+    inp_col = model_opt[0].conv.icol
+    div = model_opt[-1].conv.div
 
     content += f'''#define grid_row {grid_row}
 #define grid_col {grid_col}

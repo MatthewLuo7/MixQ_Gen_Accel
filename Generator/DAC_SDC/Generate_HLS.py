@@ -67,6 +67,7 @@ def extract_model(in_shape):
             conv_cur.p = sub_module.padding[0]
             conv_cur.ich = sub_module.in_channels
             conv_cur.och = sub_module.out_channels
+            conv_cur.groups = sub_module.groups if hasattr(sub_module, 'groups') else 1
             conv_cur.irow = feature_map_shape[1]
             conv_cur.icol = feature_map_shape[2]
             
@@ -96,7 +97,7 @@ def extract_model(in_shape):
                 conv_cur.w = weight_q
             else:
                 raise NotImplementedError(sub_module)
-            print(', ich {ich}, och {och}, irow {irow}, icol {icol}, ksp {k}{s}{p}, wbit {wbit}, wstep {wstep}'.format(**vars(conv_cur)))
+            print(', ich {ich}, och {och}, irow {irow}, icol {icol}, ksp {k}{s}{p}, wbit {wbit}, wstep {wstep}, g {groups}'.format(**vars(conv_cur)))
 
             conv_cur.max_pool = False
             
@@ -219,16 +220,6 @@ def gen_opts(model_param, array_config):
         conv.w_sep = extra_para[8]
         conv.a_sep = extra_para[9]
 
-    for n in range(len(model_param)):
-        if n == 0:
-            opf = 3
-        elif array_config[n-1, 8] == 0:
-            opf = model_param[n-1].pe * model_param[n-1].kp
-        else:
-            opf = model_param[n-1].pe
-
-        model_param[n].in_pe = opf
-
     model_opt = []
     for conv, opt_type in zip(model_param, array_config[:, 10]):
         pack_flag = False        # to be modified
@@ -256,14 +247,16 @@ def gen_opts(model_param, array_config):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--name', help='name for the NN accelerator')
     parser.add_argument('-w', '--weight', default='fixed', help='.pt file name in ./weights/')
-    parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart
+    parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart  SkyNet_FixQ
     parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
     parser.add_argument('--GenTB', default=True)
     opt = parser.parse_args()
     model_name = opt.model
     weight = opt.weight
     config_simd_pe = opt.config_simd_pe
+    name = str(opt.name)
 
     array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
     dir_output = 'hls/' + weight + '_' + config_simd_pe + '/'
@@ -281,6 +274,6 @@ if __name__=='__main__':
     model_opt = gen_opts(model_param, array_config)
     torch.save(model_param, dir_output + 'model_param.pkl')
     
-    write_hls_config(model_param, dir_output)
+    write_hls_config(model_opt, dir_output)
     write_hls_weights(model_opt, dir_output)
-    write_hls_accel(model_opt, dir_output, net_name='ultra_net', GenTB=opt.GenTB)
+    write_hls_accel(model_opt, dir_output, net_name=name, GenTB=opt.GenTB)

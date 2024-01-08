@@ -1,5 +1,5 @@
 from string import Template
-from ConvOpt_FP import FP_Opt_Templates
+from ConvOpt_FP import FP_Opt_Templates, act_trim_temp
 import math
 import pickle
 import numpy as np
@@ -26,6 +26,7 @@ name_mapping_KP = {
     }
 
 KP_para = Template('''//--------------------Conv ${No}: Parameters--------------------
+const unsigned CONV_${No}_IN_PE = ${IN_PE};
 stream<ap_uint<CONV_${No}_IN_PE * CONV_${No}_IN_BIT> > &conv_${No}_in = ${in_assign_last};
 const unsigned CONV_${No}_M_BIT = CONV_${No}_IN_BIT + CONV_${No}_W_BIT + ${EX_M_BIT};
 const unsigned CONV_${No}_SIMD_BIT = ${SIMD_BIT};
@@ -51,6 +52,11 @@ KP_Array<CONV_${No}_K, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_IN_CH, CO
 
 
 class KP_Opt_Templates(FP_Opt_Templates):
+    def get_opf(self):
+        if hasattr(self.conv, 'pe') and hasattr(self.conv, 'kp'):
+            return self.conv.pe * self.conv.kp
+        else:
+            return None
 
     ################################################ Search ################################################
     def dsp_operations(self):
@@ -150,8 +156,10 @@ class KP_Opt_Templates(FP_Opt_Templates):
     def gen_conv_para(self):
         if self.conv.n == 0:
             in_assign = 'conv0_in'
+            IN_PE = '3'
         else:
             in_assign = f'conv_{self.conv.n-1}_layer_out'
+            IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'
             
         if self.conv.pack_flag:
             PatternFlag = 'true'
@@ -159,7 +167,7 @@ class KP_Opt_Templates(FP_Opt_Templates):
             PatternFlag = 'false'
         return KP_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
                                   SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd))),
-                                  CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag, W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
+                                  CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag, W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep, IN_PE=IN_PE)
 
     def gen_conv_array(self):
         INFOLD = self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)
@@ -170,3 +178,14 @@ class KP_Opt_Templates(FP_Opt_Templates):
         och_offset_bw = self.ceil_width(OUTPENUM * self.conv.k * INFOLD)
 
         return KP_array.substitute(No=str(self.conv.n), kc_counter_bw=str(kc_counter_bw), kich_counter_bw=str(kich_counter_bw), och_offset_bw=str(och_offset_bw))
+
+    def gen_act_trim(self):
+        OPF = self.conv.pe * self.conv.kp
+        ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
+
+        ACTP_NUM_counter_bw = self.ceil_width(OPF / self.conv.actp)
+        w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
+        add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
+
+        return act_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
+                                        w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))

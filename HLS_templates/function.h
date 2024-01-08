@@ -37,7 +37,7 @@ ap_uint<OUT_BIT> bn_qurelu_fixed(ap_int<IN_BIT> in, ap_int<INC_BIT> inc,
 
 template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
           unsigned IN_BIT, unsigned OUT_BIT, unsigned W_BIT, unsigned INC_BIT,
-          unsigned BIAS_BIT, unsigned L_SHIFT, unsigned PE, unsigned ACTP,
+          unsigned BIAS_BIT, unsigned L_SHIFT, unsigned OPF, unsigned ACTP,
           unsigned Np, unsigned M_BIT, unsigned ACTP_NUM_counter_bw,
           unsigned w_counter_bw, unsigned add_offset_bw>
 void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
@@ -48,9 +48,9 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
 #pragma HLS ARRAY_PARTITION variable = inc complete dim = 1
 #pragma HLS ARRAY_PARTITION variable = bias complete dim = 1
 
-  const unsigned OUTPENUM = OUT_CH / PE;
+  const unsigned OUTPENUM = OUT_CH / OPF;
   const unsigned CONV_OUT_W = Np * ROW_LEN;
-  const unsigned ACTP_NUM = PE / ACTP;
+  const unsigned ACTP_NUM = OPF / ACTP;
 
   ap_uint<ACTP_NUM_counter_bw> ACTP_NUM_counter = 0;
   ap_uint<w_counter_bw> w_counter = 0;
@@ -96,7 +96,7 @@ void Activation_Trim( stream<ap_uint<ACTP * M_BIT> > &in,
 
 
 template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
-          unsigned OUT_BIT, unsigned BIAS_BIT, unsigned PE, unsigned ACTP, unsigned Np,
+          unsigned OUT_BIT, unsigned BIAS_BIT, unsigned OPF, unsigned ACTP, unsigned Np,
           unsigned ACTP_NUM_counter_bw, unsigned w_counter_bw, unsigned add_offset_bw>
 void Bias_Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
                const ap_int<BIAS_BIT> bias[ACTP][OUT_CH / ACTP],
@@ -104,9 +104,9 @@ void Bias_Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
                const unsigned reps = 1){
 #pragma HLS ARRAY_PARTITION variable = bias complete dim = 1
 
-  const unsigned OUTPENUM = OUT_CH / PE;
+  const unsigned OUTPENUM = OUT_CH / OPF;
   const unsigned CONV_OUT_W = Np * ROW_LEN;
-  const unsigned ACTP_NUM = PE / ACTP;
+  const unsigned ACTP_NUM = OPF / ACTP;
 
   ap_uint<ACTP_NUM_counter_bw> ACTP_NUM_counter = 0;
   ap_uint<w_counter_bw> w_counter = 0;
@@ -151,16 +151,16 @@ void Bias_Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
 
 
 template <unsigned K, unsigned IN_W, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
-          unsigned OUT_BIT, unsigned PE, unsigned ACTP, unsigned Np, unsigned ACTP_NUM_counter_bw,
+          unsigned OUT_BIT, unsigned OPF, unsigned ACTP, unsigned Np, unsigned ACTP_NUM_counter_bw,
           unsigned w_counter_bw, unsigned add_offset_bw>
 void Trim(stream<ap_uint<ACTP * OUT_BIT> > &in,
           stream<ap_uint<ACTP * OUT_BIT> > &out,
           const unsigned reps = 1){
 #pragma HLS ARRAY_PARTITION variable = bias complete dim = 1
 
-  const unsigned OUTPENUM = OUT_CH / PE;
+  const unsigned OUTPENUM = OUT_CH / OPF;
   const unsigned CONV_OUT_W = Np * ROW_LEN;
-  const unsigned ACTP_NUM = PE / ACTP;
+  const unsigned ACTP_NUM = OPF / ACTP;
 
   ap_uint<ACTP_NUM_counter_bw> ACTP_NUM_counter = 0;
   ap_uint<w_counter_bw> w_counter = 0;

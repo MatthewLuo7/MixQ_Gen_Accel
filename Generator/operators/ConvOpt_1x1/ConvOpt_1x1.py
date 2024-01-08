@@ -3,6 +3,7 @@ from ConvOpt_KP import KP_Opt_Templates
 import math
 
 KP_para = Template('''//--------------------Conv ${No}: Parameters--------------------
+const unsigned CONV_${No}_IN_PE = ${IN_PE};
 stream<ap_uint<CONV_${No}_IN_PE * CONV_${No}_IN_BIT> > &conv_${No}_in = ${in_assign_last};
 const unsigned CONV_${No}_M_BIT = 32;
 const unsigned CONV_${No}_SIMD_BIT = ${SIMD_BIT};
@@ -46,7 +47,7 @@ StreamingDataWidthConverter_Batch<CONV_${No}_Np * CONV_${No}_OCH_PF * CONV_${No}
 stream<ap_uint<CONV_${No}_ACTP * CONV_${No}_OUT_BIT> > conv_${No}_act_out("conv_${No}_act_out");
 Trim<CONV_${No}_K, CONV_${No}_IN_W, CONV_${No}_ROW_LEN, CONV_${No}_IN_H, CONV_${No}_OUT_CH,
 CONV_${No}_OUT_BIT,  CONV_${No}_OCH_PF, CONV_${No}_ACTP, CONV_${No}_Np,
-${ACTP_NUM_counter_bw}, ${w_counter_bw}, ${add_offset_bw}>(conv_${No}_dec_bw_out, conv_${No}_bias, conv_${No}_act_out, reps);
+${ACTP_NUM_counter_bw}, ${w_counter_bw}, ${add_offset_bw}>(conv_${No}_dec_bw_out, conv_${No}_act_out, reps);
 
 //-------------------- Add Last --------------------
 AddLast<CONV_${No}_IN_H * CONV_${No}_IN_W * CONV_${No}_OUT_CH / 2>(conv_${No}_act_out, out, reps);''')
@@ -61,8 +62,10 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
     def gen_conv_para(self):
         if self.conv.n == 0:
             in_assign = 'conv0_in'
+            IN_PE = '3'
         else:
             in_assign = f'conv_{self.conv.n-1}_layer_out'
+            IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'
             
         if self.conv.pack_flag:
             PatternFlag = 'true'
@@ -70,11 +73,12 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
             PatternFlag = 'false'
         return KP_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))),
                                   SIMD_BIT=str(math.ceil(math.log2(self.conv.kpf * self.conv.simd))),
-                                  CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag, W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep)
+                                  CASCADE=str(self.find_CASCADE()), PatternFlag=PatternFlag, W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep, IN_PE=IN_PE)
     def gen_bias_trim(self):
+        OPF = self.conv.pe * self.conv.kp
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
 
-        ACTP_NUM_counter_bw = self.ceil_width(self.conv.pe / self.conv.actp)
+        ACTP_NUM_counter_bw = self.ceil_width(OPF / self.conv.actp)
         w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
         add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
         
@@ -82,9 +86,10 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
                                          w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
 
     def gen_red_trim_last(self):
+        OPF = self.conv.pe * self.conv.kp
         ROW_LEN = (self.conv.icol + self.conv.k - 2) // self.conv.np + 1
-        
-        ACTP_NUM_counter_bw = self.ceil_width(self.conv.pe / self.conv.actp)
+
+        ACTP_NUM_counter_bw = self.ceil_width(OPF / self.conv.actp)
         w_counter_bw = self.ceil_width(self.conv.np * ROW_LEN)
         add_offset_bw = self.ceil_width(self.conv.och // self.conv.actp)
 

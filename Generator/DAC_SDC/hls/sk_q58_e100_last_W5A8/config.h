@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: config.h
-* Date: $Fri Jan  5 16:55:44 2024
+* Date: $Sun Jan  7 18:11:57 2024
 * Description: configuration file for the generated accelerator
 ********************************************************************************/
 
@@ -25,7 +25,6 @@
 #define CONV_0_Kp 3
 #define CONV_0_Np 2
 #define CONV_0_GUARD_BIT 1
-#define CONV_0_IN_PE 3
 #define CONV_0_KPF 1
 
 // conv_1
@@ -46,7 +45,6 @@
 #define CONV_1_Kp 2
 #define CONV_1_Np 1
 #define CONV_1_GUARD_BIT 8
-#define CONV_1_IN_PE 1
 #define CONV_1_KPF 1
 
 // conv_2
@@ -67,7 +65,6 @@
 #define CONV_2_Kp 3
 #define CONV_2_Np 2
 #define CONV_2_GUARD_BIT 1
-#define CONV_2_IN_PE 3
 #define CONV_2_KPF 1
 
 // conv_3
@@ -88,7 +85,6 @@
 #define CONV_3_Kp 2
 #define CONV_3_Np 1
 #define CONV_3_GUARD_BIT 8
-#define CONV_3_IN_PE 3
 #define CONV_3_KPF 1
 
 // conv_4
@@ -109,7 +105,6 @@
 #define CONV_4_Kp 3
 #define CONV_4_Np 2
 #define CONV_4_GUARD_BIT 1
-#define CONV_4_IN_PE 4
 #define CONV_4_KPF 1
 
 // conv_5
@@ -130,7 +125,6 @@
 #define CONV_5_Kp 2
 #define CONV_5_Np 1
 #define CONV_5_GUARD_BIT 8
-#define CONV_5_IN_PE 2
 #define CONV_5_KPF 1
 
 // conv_6
@@ -151,7 +145,6 @@
 #define CONV_6_Kp 3
 #define CONV_6_Np 2
 #define CONV_6_GUARD_BIT 1
-#define CONV_6_IN_PE 4
 #define CONV_6_KPF 1
 
 // conv_7
@@ -172,7 +165,6 @@
 #define CONV_7_Kp 2
 #define CONV_7_Np 1
 #define CONV_7_GUARD_BIT 8
-#define CONV_7_IN_PE 1
 #define CONV_7_KPF 1
 
 // conv_8
@@ -193,7 +185,6 @@
 #define CONV_8_Kp 3
 #define CONV_8_Np 2
 #define CONV_8_GUARD_BIT 1
-#define CONV_8_IN_PE 4
 #define CONV_8_KPF 1
 
 // conv_9
@@ -214,7 +205,6 @@
 #define CONV_9_Kp 2
 #define CONV_9_Np 1
 #define CONV_9_GUARD_BIT 8
-#define CONV_9_IN_PE 2
 #define CONV_9_KPF 1
 
 // conv_10
@@ -235,7 +225,6 @@
 #define CONV_10_Kp 3
 #define CONV_10_Np 2
 #define CONV_10_GUARD_BIT 1
-#define CONV_10_IN_PE 8
 #define CONV_10_KPF 1
 
 // conv_11
@@ -256,7 +245,6 @@
 #define CONV_11_Kp 2
 #define CONV_11_Np 1
 #define CONV_11_GUARD_BIT 8
-#define CONV_11_IN_PE 2
 #define CONV_11_KPF 1
 
 // conv_12
@@ -274,7 +262,13 @@
 #define CONV_12_Kp 2
 #define CONV_12_Np 1
 #define CONV_12_GUARD_BIT 8
-#define CONV_12_IN_PE 2
 #define CONV_12_KPF 1
 
+#define grid_row 20
+#define grid_col 40
+#define org_row 360
+#define org_col 640
+#define inp_row 160
+#define inp_col 320
+#define div 396.2211686439363
 #endif
