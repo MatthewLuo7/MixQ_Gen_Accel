@@ -39,7 +39,7 @@ const unsigned CONV_${No}_A_Sep = ${A_Sep};
     ''')
 
 DW_rebuffer_PE_INPE_S2P = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
-stream<ap_uint<CONV_${No}_Np * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
+stream<ap_uint<CONV_${No}_PE * CONV_${No}_Np * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 DW_reshape_buffer_PE_INPE_S2P<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
                              CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_PE,
                              ${BufferIdx_bw}, ${rowIdx_bw}, ${n_c_bw}, ${pe_ipe_c_bw}, ${ch_pe_c_bw}, ${mem_offset_bw}, ${kr_c_bw}, ${mem_offset_bw_2}>(conv_${No}_in, conv_${No}_padding_out, reps);
@@ -53,14 +53,14 @@ DW_reshape_buffer_INPE_PE_S2P<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CO
     ''')
 
 DW_rebuffer_PE_INPE_FPT = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
-stream<ap_uint<CONV_${No}_Np * CONV_${No}_K * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
+stream<ap_uint<CONV_${No}_PE * CONV_${No}_Np * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 DW_reshape_buffer_PE_INPE_FPT<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
                               CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_PE,
                               ${BufferIdx_bw}, ${rowIdx_bw}, ${n_c_bw}, ${pe_ipe_c_bw}, ${ch_pe_c_bw}, ${mem_offset_bw}, ${mem_offset_bw_2}>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
 DW_rebuffer_INPE_PE_FPT = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
-stream<ap_uint<CONV_${No}_Np * CONV_${No}_K * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
+stream<ap_uint<CONV_${No}_PE * CONV_${No}_Np * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 DW_reshape_buffer_INPE_PE_FPT<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
                               CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_PE, ${BufferIdx_bw},
                               ${rowIdx_bw}, ${n_c_bw}, ${mem_offset_bw}, ${ch_ipe_c_bw}, ${ipe_pe_c_bw}, ${mem_offset_bw_2}>(conv_${No}_in, conv_${No}_padding_out, reps);
