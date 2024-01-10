@@ -31,6 +31,8 @@ from ConvOpt_KP import KP_Opt_Templates
 from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
 
+from dsp_eff_search import DSP_Config_Search
+
 class ConvParam: ...
 
 def extract_model(in_shape):
@@ -208,39 +210,82 @@ def adjust_weight(model_param):
             conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
 
 def gen_opts(model_param, array_config):
-    for conv, extra_para in zip(model_param, array_config[:, :10]):
+    DSP_Explorer = DSP_Config_Search(27, 18, 8)
+    model_opt = []
+    for idx, (conv, extra_para) in enumerate(zip(model_param, array_config)):
         conv.simd = extra_para[0]
         conv.pe = extra_para[1]
         conv.actp = extra_para[2]
-        conv.kp = extra_para[3] 
-        conv.np = extra_para[4]
-        conv.gb = extra_para[5]  
-        conv.kpf = extra_para[6]
-        conv.max_pool = extra_para[7]
-        conv.w_sep = extra_para[8]
-        conv.a_sep = extra_para[9]
+        conv.kpf = extra_para[3]
+        conv.max_pool = conv.max_pool
 
-    model_opt = []
-    for conv, opt_type in zip(model_param, array_config[:, 10]):
-        pack_flag = False        # to be modified
-
-        if opt_type == 0:
-            conv.pack_flag = pack_flag        # to be modified
-            model_opt.append(KP_Opt_Templates(conv))
-        elif opt_type == 1:
-            conv.pack_flag = pack_flag        # to be modified
-            model_opt.append(KP_LUT_Opt_Templates(conv))
-        elif opt_type == 2:
-            model_opt.append(FP_Opt_Templates(conv))
-        elif opt_type == 3:
-            model_opt.append(FP_LUT_Opt_Templates(conv))
-        elif opt_type == 4:
-            conv.pack_flag = pack_flag        # to be modified
-            model_opt.append(Conv1x1_Opt_Templates(conv))
-        elif opt_type == 5:
-            model_opt.append(FP_DW_Opt_Templates(conv))
+        if idx == (len(model_param) - 1):
+            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True, och=conv.och)
+        elif conv.w.shape[1] == 1:        # depth-wise conv
+            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=False, och=conv.och)
         else:
-            raise ValueError(f"Operator {str(opt_type)} is not defined!")
+            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, och=conv.och)
+
+        conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
+        conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
+        conv.gb = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['gb']
+        conv.w_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['w_sep']
+        conv.a_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['a_sep']
+
+        packing_type = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Packing_Type']
+
+        if idx == (len(model_param) - 1):
+            conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
+            model_opt.append(Conv1x1_Opt_Templates(conv))
+        elif packing_type == 'Filter_Packing':
+            if conv.w.shape[1] == 1:
+                model_opt.append(FP_DW_Opt_Templates(conv))
+            else:
+                model_opt.append(FP_Opt_Templates(conv))
+        elif packing_type == 'Kernel_Packing':
+            conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
+
+            if conv.w.shape[1] == 1:
+                raise TypeError(f"Kernel_Packing operator cannot be used for Depth-wise Convolution!")
+            else:
+                model_opt.append(KP_Opt_Templates(conv))
+        else:
+            raise TypeError(f"Operator {str(opt_type)} is not defined!")
+
+    # for conv, extra_para in zip(model_param, array_config[:, :10]):
+    #     conv.simd = extra_para[0]
+    #     conv.pe = extra_para[1]
+    #     conv.actp = extra_para[2]
+    #     conv.kp = extra_para[3] 
+    #     conv.np = extra_para[4]
+    #     conv.gb = extra_para[5]  
+    #     conv.kpf = extra_para[6]
+    #     conv.max_pool = extra_para[7]
+    #     conv.w_sep = extra_para[8]
+    #     conv.a_sep = extra_para[9]
+
+    # model_opt = []
+    # for conv, opt_type in zip(model_param, array_config[:, 10]):
+    #     pack_flag = False        # to be modified
+
+
+    #     if opt_type == 0:
+    #         conv.pack_flag = pack_flag        # to be modified
+    #         model_opt.append(KP_Opt_Templates(conv))
+    #     elif opt_type == 1:
+    #         conv.pack_flag = pack_flag        # to be modified
+    #         model_opt.append(KP_LUT_Opt_Templates(conv))
+    #     elif opt_type == 2:
+    #         model_opt.append(FP_Opt_Templates(conv))
+    #     elif opt_type == 3:
+    #         model_opt.append(FP_LUT_Opt_Templates(conv))
+    #     elif opt_type == 4:
+    #         conv.pack_flag = pack_flag        # to be modified
+    #         model_opt.append(Conv1x1_Opt_Templates(conv))
+    #     elif opt_type == 5:
+    #         model_opt.append(FP_DW_Opt_Templates(conv))
+    #     else:
+    #         raise ValueError(f"Operator {str(opt_type)} is not defined!")
 
     return model_opt
 
@@ -251,6 +296,8 @@ if __name__=='__main__':
     parser.add_argument('-w', '--weight', default='fixed', help='.pt file name in ./weights/')
     parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart  SkyNet_FixQ
     parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
+    parser.add_argument('-dp', '--debug-path', default='./debug_path/', help = 'path for debug outpt')
+    parser.add_argument('-ip', '--input-path', default='./test/0.bin', help = '.bin file for testing')
     parser.add_argument('--GenTB', default=True)
     opt = parser.parse_args()
     model_name = opt.model
@@ -276,4 +323,4 @@ if __name__=='__main__':
     
     write_hls_config(model_opt, dir_output)
     write_hls_weights(model_opt, dir_output)
-    write_hls_accel(model_opt, dir_output, net_name=name, GenTB=opt.GenTB)
+    write_hls_accel(model_opt, dir_output, net_name=name, GenTB=opt.GenTB, debug_path=opt.debug_path, input_path=opt.input_path)

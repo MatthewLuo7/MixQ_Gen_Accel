@@ -615,11 +615,11 @@ void KP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
   const unsigned SEL = W_Sep * A_Sep;
 
   if(SEL == 1){
-    KP_Array_bas<K, ROW_LEN, IN_H, IN_CH,OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
+    KP_Array_bas<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
                  CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag,
                  kc_counter_bw, kich_counter_bw, och_offset_bw>(in, weights, out, reps);
   }else{
-    KP_Array_sep<K, ROW_LEN, IN_H, IN_CH,OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
+    KP_Array_sep<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
                  CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, W_Sep, A_Sep, Pattern_Flag,
                  kc_counter_bw, kich_counter_bw, och_offset_bw>(in, weights, out, reps);
   }

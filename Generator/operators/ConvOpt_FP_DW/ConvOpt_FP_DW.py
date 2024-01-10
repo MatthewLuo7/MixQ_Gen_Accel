@@ -110,6 +110,22 @@ class FP_DW_Opt_Templates(FP_Opt_Templates):
 
         return valid_flag, best_actp
 
+    def reshape_buffer_constraints(self, inpe, pe, kpf):
+        if pe >= inpe:
+            flag = (pe % inpe == 0)
+            flag = flag and (self.conv.och % pe == 0)
+        else:
+            flag = (inpe % pe == 0)
+            flag = flag and (self.conv.och % inpe == 0)
+
+        return flag
+
+    def check_constraints(self, inpe, pe, kpf):
+        flag = self.reshape_buffer_constraints(inpe=inpe, pe=pe, kpf=kpf)
+        flag = flag and (self.conv.och % pe == 0)
+
+        return flag
+
 
     ################################################ Processing ################################################
     def weight_reorder(self):
@@ -241,45 +257,3 @@ class FP_DW_Opt_Templates(FP_Opt_Templates):
 
         return FP_array_DW.substitute(No=str(self.conv.n), k_counter_bw=str(k_counter_bw), infold_counter_bw=str(infold_counter_bw),
                                   res_offset_bw=str(res_offset_bw), add_offset_bw=str(add_offset_bw))
-
-
-    def gen_operator(self):
-        content = f'''
-/********************************************************************************Convolution {self.conv.n}********************************************************************************/
-
-'''
-        content += self.gen_conv_para()
-        content += f'\n'
-        content += self.gen_reshape_buffer()
-        content += f'\n'
-        content += self.gen_conv_array()
-        content += f'\n'
-        content += self.gen_reduce_bw()
-        content += f'\n'
-        content += self.gen_act_trim()
-        content += f'\n'
-        content += self.gen_increase_bw()
-        content += f'\n'
-
-        return content
-
-
-    def gen_operator_for_sampling(self):
-        content = f'''
-/********************************************************************************Convolution {self.conv.n}********************************************************************************/
-
-'''
-        content += self.gen_conv_para()
-        content += f'\n'
-        content += self.gen_reshape_buffer()
-        content += f'\n'
-        content += self.gen_conv_array()
-        content += f'\n'
-        content += self.gen_reduce_bw()
-        content += f'\n'
-        content += self.gen_act_trim()
-        content += f'\n'
-        content += self.gen_increase_bw_for_sampling()
-        content += f'\n'
-
-        return content

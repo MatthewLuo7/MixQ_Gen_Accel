@@ -11,10 +11,10 @@ using namespace hls;
 #include "Opt_FP.hpp"
 
 //-------------------------------------------------------- Basic FP --------------------------------------------------------
-template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH,
-          unsigned IN_BIT, unsigned W_BIT, unsigned KPF, unsigned PE, unsigned Kp,
-          unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT,
-          unsigned adW_BIT, unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
+template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH, unsigned IN_BIT,
+          unsigned W_BIT, unsigned KPF, unsigned PE, unsigned Kp, unsigned Np,
+          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned adW_BIT,
+          unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array_bas_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
                      const ap_uint<K * KPF * W_BIT> weights[PE][(K / KPF) * (OUT_CH / PE)],
                      stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -60,7 +60,6 @@ void FP_Array_bas_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
         //input new activations and load weights
         if(flag_in){
           in_data = in.read();
-          // FP_Pack_ACT<IN_BIT, KPF, Np, PROD_BIT, IPACK_BIT>(in_data, ipacks);
           for(unsigned p = 0; p < PE; p++){
             ap_uint<Np * KPF * IN_BIT> in_data_temp = in_data(p*Np*KPF*IN_BIT + Np*KPF*IN_BIT - 1, p*Np*KPF*IN_BIT);
             FP_Pack_ACT<IN_BIT, KPF, Np, PROD_BIT, IPACK_BIT>(in_data_temp, ipacks[p]);
@@ -194,11 +193,6 @@ void FP_Array_sep_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
         //input new activations and load weights
         if(flag_in){
           in_data = in.read();
-          // if(Sep_Flag){
-          //   FP_Pack_ACT_sep<IN_BIT, IN_BIT_H, IN_BIT_L, KPF, Np, PROD_BIT, IPACK_BIT>(in_data, ipacks);
-          // }else{
-          //   FP_Pack_ACT<IN_BIT, KPF, Np, PROD_BIT, IPACK_BIT>(in_data, ipacks[0]);
-          // }
           for(unsigned p = 0; p < PE; p++){
             ap_uint<Np * KPF * IN_BIT> in_data_temp = in_data(p*Np*KPF*IN_BIT + Np*KPF*IN_BIT - 1, p*Np*KPF*IN_BIT);
             if(Sep_Flag){

@@ -37,6 +37,9 @@ class QConvLayer:
         groups = self.conv.groups if hasattr(self.conv, 'groups') else 1
         x = F.conv2d(x, self.w, bias=None, stride=self.conv.s, padding=self.conv.p, groups=groups) # [N, OCH, OROW, OCOL]
 
+        if self.conv.n == 10:
+            print(x[0, :8, 0, 0])
+
         och = x.shape[1]
         if True:
             if self.conv.inc is not None:
@@ -71,6 +74,9 @@ class QConvLayer:
                     xtemp = list(xtemp)
                     # print(','.join(map(hex, xtemp)), file=f)
                     print(','.join(map(str, xtemp)), file=f)
+
+        if self.conv.n == 10:
+            print(x[0, :8, 0, 0])
 
         return x
 

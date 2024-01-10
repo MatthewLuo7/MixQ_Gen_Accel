@@ -72,7 +72,7 @@ class DSP_Config_Search:
         return Kp, Np, gb, T_mul
 
 
-    def Kernel_Packing(self, wb=4, ab=4, overlap=0):
+    def Kernel_Packing(self, wb=4, ab=4, overlap=0, och=None):
         # assume there are two ports E and D, and PortE >= PortD
         PortE = max(self.PortA, self.PortB)
         PortD = min(self.PortA, self.PortB)
@@ -103,6 +103,13 @@ class DSP_Config_Search:
 
             for Epi in range(1, Epmax + 1):
                 for Dpi in range(1, Dpmax + 1):
+                    # suppose och % kp == 0
+                    if och is not None:
+                        if pflag == 0 and (och % Epi != 0):
+                            continue
+                        if pflag == 1 and (och % Dpi != 0):
+                            continue
+
                     gbi_min = -overlap   # the minimum guard bits requirement 
 
                     # calculating the upper-bound of guard bits
@@ -135,7 +142,7 @@ class DSP_Config_Search:
 
         return pack_flag, Kp, Np, gb, T_mul
 
-    def Packing_Exploration(self, K=3, overlap=0, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True):
+    def Packing_Exploration(self, K=3, overlap=0, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, och=None):
         DSP_Config_Lookup = {}
         for wb in range(wbmin, wbmax + 1):
             for ab in range(abmin, abmax + 1):
@@ -165,7 +172,7 @@ class DSP_Config_Search:
                             wb_sep = math.ceil(wb / wsep)
                             ab_sep = math.ceil(ab / asep)
 
-                            pack_flag, Kp, Np, gb, T_mul = self.Kernel_Packing(wb_sep, ab_sep, overlap)
+                            pack_flag, Kp, Np, gb, T_mul = self.Kernel_Packing(wb_sep, ab_sep, overlap, och=och)
                             T_mul /= (wsep * asep)
                             C1 = T_mul > DSP_Config_Dic['T_mul']
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])

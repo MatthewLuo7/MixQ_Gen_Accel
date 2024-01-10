@@ -121,7 +121,7 @@ ${parameter_partition}
 def get_accelerator(net_name, input_width, input_height, layers, model_opt, debug_path='./debug_path/'):
     head_files = get_headfiles()
     parameter_partition = get_parameter_partition(model_opt)
-    accelerator = Accelerator.substitute(head_files=head_files, debug_path=debug_path, input_height=str(input_height),
+    accelerator = Accelerator.substitute(head_files=head_files, debug_path=str(debug_path).replace('\\', '/'), input_height=str(input_height),
                                          input_width=str(input_width), layers=layers, net_name=str(net_name), parameter_partition=parameter_partition)
 
     return accelerator
@@ -145,7 +145,7 @@ def write_hls_accel(model_opt, path, net_name, GenTB, debug_path='./debug_path/'
     for opt in model_opt:
         layers += opt.gen_operator()
 
-    content = get_accelerator(net_name, input_width, input_height, layers, model_opt)
+    content = get_accelerator(net_name, input_width, input_height, layers, model_opt, debug_path=debug_path)
 
     with open(path + 'accelerator.cpp', 'w') as f:
         print(content, file=f)
@@ -167,7 +167,7 @@ def write_hls_accel(model_opt, path, net_name, GenTB, debug_path='./debug_path/'
 #define inp_col {inp_col}
 #define div {div}\n'''
         with open(path + 'tb.cpp', 'w') as f:
-            content = gen_tb(debug_path, net_name, input_path, max_pool_scale, post_processing, repeat_num)
+            content = gen_tb(str(debug_path).replace('\\', '/'), net_name, str(input_path).replace('\\', '/'), max_pool_scale, post_processing, repeat_num)
             print(content, file=f)
 
 def write_hls_config(model_opt, path):
