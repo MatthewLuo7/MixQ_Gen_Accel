@@ -41,8 +41,8 @@ const unsigned CONV_${No}_A_Sep = ${A_Sep};
 DW_rebuffer_PE_INPE_S2P = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_${No}_PE * CONV_${No}_Np * CONV_${No}_KPF * CONV_${No}_IN_BIT> > conv_${No}_padding_out("conv_${No}_padding_out");
 DW_reshape_buffer_PE_INPE_S2P<CONV_${No}_K, CONV_${No}_IN_H, CONV_${No}_IN_W, CONV_${No}_OUT_CH, CONV_${No}_OUT_CH / CONV_${No}_OCH_PF,
-                             CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_PE,
-                             ${BufferIdx_bw}, ${rowIdx_bw}, ${n_c_bw}, ${pe_ipe_c_bw}, ${ch_pe_c_bw}, ${mem_offset_bw}, ${kr_c_bw}, ${mem_offset_bw_2}>(conv_${No}_in, conv_${No}_padding_out, reps);
+                              CONV_${No}_Np, CONV_${No}_IN_BIT, CONV_${No}_IN_PE, CONV_${No}_PE,
+                              ${BufferIdx_bw}, ${rowIdx_bw}, ${n_c_bw}, ${pe_ipe_c_bw}, ${ch_pe_c_bw}, ${mem_offset_bw}, ${kr_c_bw}, ${mem_offset_bw_2}>(conv_${No}_in, conv_${No}_padding_out, reps);
     ''')
 
 DW_rebuffer_INPE_PE_S2P = Template('''//--------------------Conv ${No}: Reshape and Padding Buffer--------------------
@@ -187,8 +187,8 @@ class FP_DW_Opt_Templates(FP_Opt_Templates):
                 IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'
 
         return FP_DW_para.substitute(No=str(self.conv.n), in_assign_last=in_assign, EX_M_BIT=str(math.ceil(math.log2(self.conv.k * self.conv.k))),
-                                  KPF_BIT=str(math.ceil(math.log2(self.conv.kpf * min(self.conv.kp, self.conv.np)))), CASCADE=str(self.find_CASCADE()),
-                                  W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep, IN_PE=IN_PE)
+                                     KPF_BIT=str(math.ceil(math.log2(self.conv.kpf * min(self.conv.kp, self.conv.np)))), CASCADE=str(self.find_CASCADE()),
+                                     W_Sep=self.conv.w_sep, A_Sep=self.conv.a_sep, IN_PE=IN_PE)
 
     def gen_reshape_buffer(self):
         BufferIdx_bw = self.ceil_width(self.conv.k + 1)

@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: tb.cpp
-* Date: Sun Jan 14 12:13:09 2024
+* Date: Sun Jan 14 11:46:21 2024
 * Description: reference testbench for accelerator
 ********************************************************************************/
 #include <stdint.h>
@@ -21,7 +21,7 @@ using namespace std;
 #define div 1829.2285204780505
 
 
-string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/2_skynet_mixed2/debug_path/";
+string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/2_skynet_mixed3/debug_path/";
 
 void sky_net(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
 

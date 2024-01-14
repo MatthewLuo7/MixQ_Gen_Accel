@@ -17,6 +17,7 @@ sys.path.append('../operators/ConvOpt_FP')
 sys.path.append('../operators/ConvOpt_FP/predictors')
 sys.path.append('../operators/ConvOpt_FP_LUT')
 sys.path.append('../operators/ConvOpt_FP_DW')
+sys.path.append('../operators/ConvOpt_FP_DW_LUT')
 sys.path.append('../operators/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
@@ -27,6 +28,7 @@ from Opt_Templates import Gen_Opt_Templates
 from ConvOpt_FP import FP_Opt_Templates
 from ConvOpt_FP_LUT import FP_LUT_Opt_Templates
 from ConvOpt_FP_DW import FP_DW_Opt_Templates
+from ConvOpt_FP_DW_LUT import FP_DW_LUT_Opt_Templates
 from ConvOpt_KP import KP_Opt_Templates
 from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
@@ -240,6 +242,7 @@ def gen_opts(model_param, array_config):
         elif packing_type == 'Filter_Packing':
             if conv.w.shape[1] == 1:
                 model_opt.append(FP_DW_Opt_Templates(conv))
+                # model_opt.append(FP_DW_LUT_Opt_Templates(conv))    # LUT-replaced
             else:
                 model_opt.append(FP_Opt_Templates(conv))
         elif packing_type == 'Kernel_Packing':

@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: config.h
-* Date: $Sun Jan 14 12:13:09 2024
+* Date: $Sun Jan 14 11:46:21 2024
 * Description: configuration file for the generated accelerator
 ********************************************************************************/
 
@@ -65,7 +65,7 @@
 #define CONV_2_Kp 3
 #define CONV_2_Np 2
 #define CONV_2_GUARD_BIT 0
-#define CONV_2_KPF 1
+#define CONV_2_KPF 3
 
 // conv_3
 #define CONV_3_K 1
@@ -105,7 +105,7 @@
 #define CONV_4_Kp 3
 #define CONV_4_Np 2
 #define CONV_4_GUARD_BIT 0
-#define CONV_4_KPF 1
+#define CONV_4_KPF 3
 
 // conv_5
 #define CONV_5_K 1
@@ -185,7 +185,7 @@
 #define CONV_8_Kp 1
 #define CONV_8_Np 2
 #define CONV_8_GUARD_BIT 4
-#define CONV_8_KPF 1
+#define CONV_8_KPF 3
 
 // conv_9
 #define CONV_9_K 1

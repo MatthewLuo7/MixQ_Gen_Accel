@@ -138,16 +138,16 @@ void FP_Array_lut(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
           ap_uint<Kp * SIMD * W_BIT> in_weights = cur_weights[p](Kp * SIMD * W_BIT - 1, 0);
           cur_weights[p] = cur_weights[p] >> (Kp * SIMD * W_BIT);
 
-          ap_int<W_BIT + IN_BIT + SIMD_BIT> DSP_PartialRes[Kp + Np - 1];
+          ap_int<ACC_BIT> DSP_PartialRes[Kp + Np - 1];
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 1
 
           ap_int<W_BIT> wpacks[SIMD][Kp];
 #pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
 #pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 2
-    	  FP_Extract_W<W_BIT, SIMD, Kp>(in_weights, wpacks);
+    	    FP_Extract_W<W_BIT, SIMD, Kp>(in_weights, wpacks);
 
-    	  //SIMD computing array
-    	  FP_Comp_SIMD_LUT<W_BIT, IN_BIT, Kp, Np, ACC_BIT, SIMD>(wpacks, ipacks, DSP_PartialRes);
+    	    //SIMD computing array
+    	    FP_Comp_SIMD_LUT<W_BIT, IN_BIT, Kp, Np, ACC_BIT, SIMD>(wpacks, ipacks, DSP_PartialRes);
 
           for(unsigned i = 0; i < (Kp + Np - 1); i++){
             PartialRes[p][res_offset + i] += DSP_PartialRes[i];
