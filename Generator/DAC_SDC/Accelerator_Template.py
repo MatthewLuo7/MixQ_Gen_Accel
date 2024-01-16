@@ -3,7 +3,7 @@ import time
 import pathlib
 from TB_Template import gen_tb
 
-hls_templates_path = pathlib.Path('../../HLS_templates/')
+hls_templates_path = pathlib.Path('../../HLS_Templates/')
 
 def get_headfiles(path=hls_templates_path):
     content = f'''/********************************************************************************

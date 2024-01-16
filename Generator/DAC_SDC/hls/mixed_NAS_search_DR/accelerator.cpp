@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: weights.hpp
-* Date: $Fri Jan  5 17:31:21 2024
+* Date: $Mon Jan 15 12:12:22 2024
 * Description: accelerator main function
 ********************************************************************************/
 //#define DEBUG
@@ -16,7 +16,6 @@ using namespace std;
 
 #include "config.h"
 #include "weights.hpp"
-#include "debug.hpp"
 #include "function.h"
 #include "Opt_FP.hpp"
 #include "Opt_FP_DW.hpp"
@@ -30,7 +29,7 @@ using namespace std;
 
 
 
-string output_path = "./debug_path/";
+string output_path = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/3_ultranet_mixed1/debug_path/";
 
 template <unsigned IN_BIT, unsigned IN_CH, unsigned OUT_BIT, unsigned IN_NUM>
 void input_quant(hls::stream<ap_uint<IN_BIT * IN_CH> > &in,
@@ -83,6 +82,7 @@ void compute_pipeline(stream<my_ap_axis> &in, stream<my_ap_axis> &out,
 /********************************************************************************Convolution 0********************************************************************************/
 
 //--------------------Conv 0: Parameters--------------------
+const unsigned CONV_0_IN_PE = 3;
 stream<ap_uint<CONV_0_IN_PE * CONV_0_IN_BIT> > &conv_0_in = conv0_in;
 const unsigned CONV_0_M_BIT = CONV_0_IN_BIT + CONV_0_W_BIT + 5;
 const unsigned CONV_0_SIMD_BIT = 3;
@@ -149,6 +149,7 @@ print_mavu_DSPopt_stream_through<CONV_0_IN_H / 2, CONV_0_IN_W / 2,
 /********************************************************************************Convolution 1********************************************************************************/
 
 //--------------------Conv 1: Parameters--------------------
+const unsigned CONV_1_IN_PE = CONV_0_OCH_PF;
 stream<ap_uint<CONV_1_IN_PE * CONV_1_IN_BIT> > &conv_1_in = conv_0_layer_out;
 const unsigned CONV_1_M_BIT = CONV_1_IN_BIT + CONV_1_W_BIT + 8;
 const unsigned CONV_1_SIMD_BIT = 6;
@@ -209,6 +210,7 @@ print_mavu_DSPopt_stream_through<CONV_1_IN_H / 2, CONV_1_IN_W / 2,
 /********************************************************************************Convolution 2********************************************************************************/
 
 //--------------------Conv 2: Parameters--------------------
+const unsigned CONV_2_IN_PE = CONV_1_OCH_PF;
 stream<ap_uint<CONV_2_IN_PE * CONV_2_IN_BIT> > &conv_2_in = conv_1_layer_out;
 const unsigned CONV_2_M_BIT = CONV_2_IN_BIT + CONV_2_W_BIT + 9;
 const unsigned CONV_2_SIMD_BIT = 6;
@@ -269,13 +271,15 @@ print_mavu_DSPopt_stream_through<CONV_2_IN_H / 2, CONV_2_IN_W / 2,
 /********************************************************************************Convolution 3********************************************************************************/
 
 //--------------------Conv 3: Parameters--------------------
+const unsigned CONV_3_IN_PE = CONV_2_OCH_PF;
 stream<ap_uint<CONV_3_IN_PE * CONV_3_IN_BIT> > &conv_3_in = conv_2_layer_out;
 const unsigned CONV_3_M_BIT = CONV_3_IN_BIT + CONV_3_W_BIT + 10;
-const unsigned CONV_3_SIMD_BIT = 5;
+const unsigned CONV_3_SIMD_BIT = 4;
 const unsigned CONV_3_CASCADE = 1;
 const unsigned CONV_3_ROW_LEN = (CONV_3_IN_W + CONV_3_K - 1 - 1) / CONV_3_Np + 1;
 const unsigned CONV_3_adW_BIT = 1;
-const unsigned CONV_3_OCH_PF = CONV_3_PE;
+const bool CONV_3_PatternFlag = false;
+const unsigned CONV_3_OCH_PF = CONV_3_PE * CONV_3_Kp;
 const unsigned CONV_3_DEC_BW_NUM = CONV_3_IN_H * (CONV_3_OUT_CH / CONV_3_OCH_PF) * CONV_3_ROW_LEN;
 const unsigned CONV_3_INC_BW_NUM = CONV_3_IN_H * (CONV_3_OUT_CH / CONV_3_OCH_PF) * CONV_3_IN_W * (CONV_3_OCH_PF / CONV_3_ACTP);
 const unsigned CONV_3_W_Sep = 1;
@@ -290,11 +294,11 @@ reshape_buffer_SIMD_INPE_S2P<CONV_3_K, CONV_3_IN_H, CONV_3_IN_W, CONV_3_IN_CH, C
     
 //--------------------Conv 3: Computing Array--------------------
 stream<ap_uint<CONV_3_Np * CONV_3_OCH_PF * CONV_3_M_BIT> > conv_3_array_out("conv_3_array_out");
-FP_Array<CONV_3_K, CONV_3_ROW_LEN, CONV_3_IN_H, CONV_3_IN_CH, CONV_3_OUT_CH,
+KP_Array<CONV_3_K, CONV_3_ROW_LEN, CONV_3_IN_H, CONV_3_IN_CH, CONV_3_OUT_CH,
          CONV_3_IN_BIT, CONV_3_W_BIT, CONV_3_SIMD * CONV_3_KPF, CONV_3_PE, CONV_3_Kp,
          CONV_3_Np, CONV_3_CASCADE, CONV_3_GUARD_BIT, CONV_3_M_BIT, 
-         CONV_3_SIMD_BIT, CONV_3_adW_BIT, CONV_3_W_Sep, CONV_3_A_Sep,
-         1, 4, 2, 8>(conv_3_padding_out, conv_3_w, conv_3_array_out, reps);
+         CONV_3_SIMD_BIT, CONV_3_adW_BIT, CONV_3_W_Sep, CONV_3_A_Sep, CONV_3_PatternFlag,
+         2, 6, 9>(conv_3_padding_out, conv_3_w, conv_3_array_out, reps);
     
 //--------------------Conv 3: Decrease Bit-width--------------------
 stream<ap_uint<CONV_3_ACTP * CONV_3_M_BIT> > conv_3_dec_bw_out("conv_3_dec_bw_out");
@@ -306,7 +310,7 @@ stream<ap_uint<CONV_3_ACTP * CONV_3_OUT_BIT> > conv_3_act_out("conv_3_act_out");
 Activation_Trim<CONV_3_K, CONV_3_IN_W, CONV_3_ROW_LEN, CONV_3_IN_H, CONV_3_OUT_CH,
 CONV_3_IN_BIT, CONV_3_OUT_BIT, CONV_3_W_BIT, CONV_3_INC_BIT, CONV_3_BIAS_BIT,
 CONV_3_L_SHIFT, CONV_3_OCH_PF, CONV_3_ACTP, CONV_3_Np, CONV_3_M_BIT,
-3, 6, 7>(conv_3_dec_bw_out, conv_3_inc, conv_3_bias, conv_3_act_out, reps);
+4, 6, 7>(conv_3_dec_bw_out, conv_3_inc, conv_3_bias, conv_3_act_out, reps);
     
 //--------------------Conv 3: Increase Bit-width--------------------
 stream<ap_uint<2 * CONV_3_OCH_PF * CONV_3_OUT_BIT> > conv_3_conv_out("conv_3_conv_out");
@@ -335,6 +339,7 @@ print_mavu_DSPopt_stream_through<CONV_3_IN_H / 2, CONV_3_IN_W / 2,
 /********************************************************************************Convolution 4********************************************************************************/
 
 //--------------------Conv 4: Parameters--------------------
+const unsigned CONV_4_IN_PE = CONV_3_OCH_PF;
 stream<ap_uint<CONV_4_IN_PE * CONV_4_IN_BIT> > &conv_4_in = conv_3_layer_out;
 const unsigned CONV_4_M_BIT = CONV_4_IN_BIT + CONV_4_W_BIT + 10;
 const unsigned CONV_4_SIMD_BIT = 3;
@@ -349,10 +354,9 @@ const unsigned CONV_4_A_Sep = 2;
     
 //--------------------Conv 4: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_4_Np * CONV_4_SIMD * CONV_4_IN_BIT> > conv_4_padding_out("conv_4_padding_out");
-reshape_buffer_SIMD_INPE_S2P<CONV_4_K, CONV_4_IN_H, CONV_4_IN_W, CONV_4_IN_CH, CONV_4_OUT_CH / CONV_4_OCH_PF,
+reshape_buffer_INPE_SIMD_S2P<CONV_4_K, CONV_4_IN_H, CONV_4_IN_W, CONV_4_IN_CH, CONV_4_OUT_CH / CONV_4_OCH_PF,
                              CONV_4_Np, CONV_4_IN_BIT, CONV_4_IN_PE, CONV_4_SIMD, 3,
-                             5, 2, 1, 5, 8,
-                             2, 5>(conv_4_in, conv_4_padding_out, reps);
+                             5, 2, 7, 2, 4, 2>(conv_4_in, conv_4_padding_out, reps);
     
 //--------------------Conv 4: Computing Array--------------------
 stream<ap_uint<CONV_4_Np * CONV_4_OCH_PF * CONV_4_M_BIT> > conv_4_array_out("conv_4_array_out");
@@ -389,6 +393,7 @@ print_mavu_DSPopt_stream_through<CONV_4_IN_H, CONV_4_IN_W, CONV_4_OUT_CH, CONV_4
 /********************************************************************************Convolution 5********************************************************************************/
 
 //--------------------Conv 5: Parameters--------------------
+const unsigned CONV_5_IN_PE = CONV_4_OCH_PF;
 stream<ap_uint<CONV_5_IN_PE * CONV_5_IN_BIT> > &conv_5_in = conv_4_layer_out;
 const unsigned CONV_5_M_BIT = CONV_5_IN_BIT + CONV_5_W_BIT + 10;
 const unsigned CONV_5_SIMD_BIT = 3;
@@ -443,13 +448,15 @@ print_mavu_DSPopt_stream_through<CONV_5_IN_H, CONV_5_IN_W, CONV_5_OUT_CH, CONV_5
 /********************************************************************************Convolution 6********************************************************************************/
 
 //--------------------Conv 6: Parameters--------------------
+const unsigned CONV_6_IN_PE = CONV_5_OCH_PF;
 stream<ap_uint<CONV_6_IN_PE * CONV_6_IN_BIT> > &conv_6_in = conv_5_layer_out;
 const unsigned CONV_6_M_BIT = CONV_6_IN_BIT + CONV_6_W_BIT + 10;
-const unsigned CONV_6_SIMD_BIT = 3;
+const unsigned CONV_6_SIMD_BIT = 2;
 const unsigned CONV_6_CASCADE = 1;
 const unsigned CONV_6_ROW_LEN = (CONV_6_IN_W + CONV_6_K - 1 - 1) / CONV_6_Np + 1;
 const unsigned CONV_6_adW_BIT = 1;
-const unsigned CONV_6_OCH_PF = CONV_6_PE;
+const bool CONV_6_PatternFlag = false;
+const unsigned CONV_6_OCH_PF = CONV_6_PE * CONV_6_Kp;
 const unsigned CONV_6_DEC_BW_NUM = CONV_6_IN_H * (CONV_6_OUT_CH / CONV_6_OCH_PF) * CONV_6_ROW_LEN;
 const unsigned CONV_6_INC_BW_NUM = CONV_6_IN_H * (CONV_6_OUT_CH / CONV_6_OCH_PF) * CONV_6_IN_W * (CONV_6_OCH_PF / CONV_6_ACTP);
 const unsigned CONV_6_W_Sep = 1;
@@ -464,11 +471,11 @@ reshape_buffer_SIMD_INPE_S2P<CONV_6_K, CONV_6_IN_H, CONV_6_IN_W, CONV_6_IN_CH, C
     
 //--------------------Conv 6: Computing Array--------------------
 stream<ap_uint<CONV_6_Np * CONV_6_OCH_PF * CONV_6_M_BIT> > conv_6_array_out("conv_6_array_out");
-FP_Array<CONV_6_K, CONV_6_ROW_LEN, CONV_6_IN_H, CONV_6_IN_CH, CONV_6_OUT_CH,
+KP_Array<CONV_6_K, CONV_6_ROW_LEN, CONV_6_IN_H, CONV_6_IN_CH, CONV_6_OUT_CH,
          CONV_6_IN_BIT, CONV_6_W_BIT, CONV_6_SIMD * CONV_6_KPF, CONV_6_PE, CONV_6_Kp,
          CONV_6_Np, CONV_6_CASCADE, CONV_6_GUARD_BIT, CONV_6_M_BIT, 
-         CONV_6_SIMD_BIT, CONV_6_adW_BIT, CONV_6_W_Sep, CONV_6_A_Sep,
-         1, 6, 2, 10>(conv_6_padding_out, conv_6_w, conv_6_array_out, reps);
+         CONV_6_SIMD_BIT, CONV_6_adW_BIT, CONV_6_W_Sep, CONV_6_A_Sep, CONV_6_PatternFlag,
+         2, 8, 11>(conv_6_padding_out, conv_6_w, conv_6_array_out, reps);
     
 //--------------------Conv 6: Decrease Bit-width--------------------
 stream<ap_uint<CONV_6_ACTP * CONV_6_M_BIT> > conv_6_dec_bw_out("conv_6_dec_bw_out");
@@ -480,7 +487,7 @@ stream<ap_uint<CONV_6_ACTP * CONV_6_OUT_BIT> > conv_6_act_out("conv_6_act_out");
 Activation_Trim<CONV_6_K, CONV_6_IN_W, CONV_6_ROW_LEN, CONV_6_IN_H, CONV_6_OUT_CH,
 CONV_6_IN_BIT, CONV_6_OUT_BIT, CONV_6_W_BIT, CONV_6_INC_BIT, CONV_6_BIAS_BIT,
 CONV_6_L_SHIFT, CONV_6_OCH_PF, CONV_6_ACTP, CONV_6_Np, CONV_6_M_BIT,
-3, 5, 7>(conv_6_dec_bw_out, conv_6_inc, conv_6_bias, conv_6_act_out, reps);
+4, 5, 7>(conv_6_dec_bw_out, conv_6_inc, conv_6_bias, conv_6_act_out, reps);
     
 //--------------------Conv 6: Increase Bit-width--------------------
 stream<ap_uint<CONV_6_OCH_PF * CONV_6_OUT_BIT> > conv_6_layer_out("conv_6_layer_out");
@@ -497,13 +504,15 @@ print_mavu_DSPopt_stream_through<CONV_6_IN_H, CONV_6_IN_W, CONV_6_OUT_CH, CONV_6
 /********************************************************************************Convolution 7********************************************************************************/
 
 //--------------------Conv 7: Parameters--------------------
+const unsigned CONV_7_IN_PE = CONV_6_OCH_PF;
 stream<ap_uint<CONV_7_IN_PE * CONV_7_IN_BIT> > &conv_7_in = conv_6_layer_out;
 const unsigned CONV_7_M_BIT = CONV_7_IN_BIT + CONV_7_W_BIT + 10;
-const unsigned CONV_7_SIMD_BIT = 3;
+const unsigned CONV_7_SIMD_BIT = 2;
 const unsigned CONV_7_CASCADE = 1;
 const unsigned CONV_7_ROW_LEN = (CONV_7_IN_W + CONV_7_K - 1 - 1) / CONV_7_Np + 1;
 const unsigned CONV_7_adW_BIT = 1;
-const unsigned CONV_7_OCH_PF = CONV_7_PE;
+const bool CONV_7_PatternFlag = false;
+const unsigned CONV_7_OCH_PF = CONV_7_PE * CONV_7_Kp;
 const unsigned CONV_7_DEC_BW_NUM = CONV_7_IN_H * (CONV_7_OUT_CH / CONV_7_OCH_PF) * CONV_7_ROW_LEN;
 const unsigned CONV_7_INC_BW_NUM = CONV_7_IN_H * (CONV_7_OUT_CH / CONV_7_OCH_PF) * CONV_7_IN_W * (CONV_7_OCH_PF / CONV_7_ACTP);
 const unsigned CONV_7_W_Sep = 1;
@@ -511,18 +520,17 @@ const unsigned CONV_7_A_Sep = 1;
     
 //--------------------Conv 7: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_7_Np * CONV_7_SIMD * CONV_7_IN_BIT> > conv_7_padding_out("conv_7_padding_out");
-reshape_buffer_SIMD_INPE_S2P<CONV_7_K, CONV_7_IN_H, CONV_7_IN_W, CONV_7_IN_CH, CONV_7_OUT_CH / CONV_7_OCH_PF,
+reshape_buffer_INPE_SIMD_S2P<CONV_7_K, CONV_7_IN_H, CONV_7_IN_W, CONV_7_IN_CH, CONV_7_OUT_CH / CONV_7_OCH_PF,
                              CONV_7_Np, CONV_7_IN_BIT, CONV_7_IN_PE, CONV_7_SIMD, 3,
-                             5, 2, 1, 5, 8,
-                             2, 5>(conv_7_in, conv_7_padding_out, reps);
+                             5, 2, 7, 2, 4, 2>(conv_7_in, conv_7_padding_out, reps);
     
 //--------------------Conv 7: Computing Array--------------------
 stream<ap_uint<CONV_7_Np * CONV_7_OCH_PF * CONV_7_M_BIT> > conv_7_array_out("conv_7_array_out");
-FP_Array<CONV_7_K, CONV_7_ROW_LEN, CONV_7_IN_H, CONV_7_IN_CH, CONV_7_OUT_CH,
+KP_Array<CONV_7_K, CONV_7_ROW_LEN, CONV_7_IN_H, CONV_7_IN_CH, CONV_7_OUT_CH,
          CONV_7_IN_BIT, CONV_7_W_BIT, CONV_7_SIMD * CONV_7_KPF, CONV_7_PE, CONV_7_Kp,
          CONV_7_Np, CONV_7_CASCADE, CONV_7_GUARD_BIT, CONV_7_M_BIT, 
-         CONV_7_SIMD_BIT, CONV_7_adW_BIT, CONV_7_W_Sep, CONV_7_A_Sep,
-         1, 6, 2, 10>(conv_7_padding_out, conv_7_w, conv_7_array_out, reps);
+         CONV_7_SIMD_BIT, CONV_7_adW_BIT, CONV_7_W_Sep, CONV_7_A_Sep, CONV_7_PatternFlag,
+         2, 8, 11>(conv_7_padding_out, conv_7_w, conv_7_array_out, reps);
     
 //--------------------Conv 7: Decrease Bit-width--------------------
 stream<ap_uint<CONV_7_ACTP * CONV_7_M_BIT> > conv_7_dec_bw_out("conv_7_dec_bw_out");
@@ -534,7 +542,7 @@ stream<ap_uint<CONV_7_ACTP * CONV_7_OUT_BIT> > conv_7_act_out("conv_7_act_out");
 Activation_Trim<CONV_7_K, CONV_7_IN_W, CONV_7_ROW_LEN, CONV_7_IN_H, CONV_7_OUT_CH,
 CONV_7_IN_BIT, CONV_7_OUT_BIT, CONV_7_W_BIT, CONV_7_INC_BIT, CONV_7_BIAS_BIT,
 CONV_7_L_SHIFT, CONV_7_OCH_PF, CONV_7_ACTP, CONV_7_Np, CONV_7_M_BIT,
-3, 5, 7>(conv_7_dec_bw_out, conv_7_inc, conv_7_bias, conv_7_act_out, reps);
+4, 5, 7>(conv_7_dec_bw_out, conv_7_inc, conv_7_bias, conv_7_act_out, reps);
     
 //--------------------Conv 7: Increase Bit-width--------------------
 stream<ap_uint<CONV_7_OCH_PF * CONV_7_OUT_BIT> > conv_7_layer_out("conv_7_layer_out");
@@ -551,13 +559,14 @@ print_mavu_DSPopt_stream_through<CONV_7_IN_H, CONV_7_IN_W, CONV_7_OUT_CH, CONV_7
 /********************************************************************************Convolution 8********************************************************************************/
 
 //--------------------Conv 8: Parameters--------------------
+const unsigned CONV_8_IN_PE = CONV_7_OCH_PF;
 stream<ap_uint<CONV_8_IN_PE * CONV_8_IN_BIT> > &conv_8_in = conv_7_layer_out;
 const unsigned CONV_8_M_BIT = 32;
 const unsigned CONV_8_SIMD_BIT = 2;
 const unsigned CONV_8_CASCADE = 4;
 const unsigned CONV_8_ROW_LEN = (CONV_8_IN_W + CONV_8_K - 1 - 1) / CONV_8_Np + 1;
 const unsigned CONV_8_adW_BIT = 1;
-const bool CONV_8_PatternFlag = false;
+const bool CONV_8_PatternFlag = true;
 const unsigned CONV_8_OCH_PF = CONV_8_PE * CONV_8_Kp;
 const unsigned CONV_8_DEC_BW_NUM = CONV_8_IN_H * (CONV_8_OUT_CH / CONV_8_OCH_PF) * CONV_8_ROW_LEN;
 const unsigned CONV_8_INC_BW_NUM = CONV_8_IN_H * (CONV_8_OUT_CH / CONV_8_OCH_PF) * CONV_8_IN_W * (CONV_8_OCH_PF / CONV_8_ACTP);
@@ -566,10 +575,9 @@ const unsigned CONV_8_A_Sep = 1;
     
 //--------------------Conv 8: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_8_Np * CONV_8_SIMD * CONV_8_IN_BIT> > conv_8_padding_out("conv_8_padding_out");
-reshape_buffer_SIMD_INPE_S2P<CONV_8_K, CONV_8_IN_H, CONV_8_IN_W, CONV_8_IN_CH, CONV_8_OUT_CH / CONV_8_OCH_PF,
+reshape_buffer_INPE_SIMD_S2P<CONV_8_K, CONV_8_IN_H, CONV_8_IN_W, CONV_8_IN_CH, CONV_8_OUT_CH / CONV_8_OCH_PF,
                              CONV_8_Np, CONV_8_IN_BIT, CONV_8_IN_PE, CONV_8_SIMD, 2,
-                             5, 2, 1, 5, 8,
-                             1, 5>(conv_8_in, conv_8_padding_out, reps);
+                             5, 2, 7, 1, 4, 2>(conv_8_in, conv_8_padding_out, reps);
     
 //--------------------Conv 8: Computing Array--------------------
 stream<ap_uint<CONV_8_Np * CONV_8_OCH_PF * CONV_8_M_BIT> > conv_8_array_out("conv_8_array_out");
@@ -646,7 +654,6 @@ void ultra_net(stream<my_ap_axis> &in, stream<my_ap_axis> &out,
 #pragma HLS ARRAY_PARTITION variable = conv_7_bias complete dim = 1
 
 #pragma HLS ARRAY_PARTITION variable = conv_8_w complete dim = 1
-#pragma HLS ARRAY_PARTITION variable = conv_8_inc complete dim = 1
 #pragma HLS ARRAY_PARTITION variable = conv_8_bias complete dim = 1
 
 

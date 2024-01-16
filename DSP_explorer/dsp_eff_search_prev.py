@@ -72,7 +72,7 @@ class DSP_Config_Search:
         return Kp, Np, gb, T_mul
 
 
-    def Kernel_Packing(self, wb=4, ab=4, overlap=0, och=None):
+    def Kernel_Packing(self, wb=4, ab=4, overlap=0):
         # assume there are two ports E and D, and PortE >= PortD
         PortE = max(self.PortA, self.PortB)
         PortD = min(self.PortA, self.PortB)
@@ -103,13 +103,6 @@ class DSP_Config_Search:
 
             for Epi in range(1, Epmax + 1):
                 for Dpi in range(1, Dpmax + 1):
-                    # suppose och % kp == 0
-                    if och is not None:
-                        if pflag == 0 and (och % Epi != 0):
-                            continue
-                        if pflag == 1 and (och % Dpi != 0):
-                            continue
-
                     gbi_min = -overlap   # the minimum guard bits requirement 
 
                     # calculating the upper-bound of guard bits
@@ -136,13 +129,9 @@ class DSP_Config_Search:
                             gb = gbi
                             T_mul = Dpi * Epi
 
-        pack_flag = bool(pack_flag)
-        Kp = Dp if pack_flag else Ep
-        Np = Ep if pack_flag else Dp
+        return pack_flag, Ep, Dp, gb, T_mul
 
-        return pack_flag, Kp, Np, gb, T_mul
-
-    def Packing_Exploration(self, K=3, overlap=0, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, och=None):
+    def Packing_Exploration(self, K=3, overlap=0, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True):
         DSP_Config_Lookup = {}
         for wb in range(wbmin, wbmax + 1):
             for ab in range(abmin, abmax + 1):
@@ -151,8 +140,6 @@ class DSP_Config_Search:
                 if Filter_Packing_EN:
                     for wsep in [1, 2]:
                         for asep in [1, 2]:
-                            if wsep == 2 and asep == 2:
-                                continue
                             wb_sep = math.ceil(wb / wsep)
                             ab_sep = math.ceil(ab / asep)
 
@@ -162,23 +149,20 @@ class DSP_Config_Search:
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])
 
                             if C1 or C2:
-                                DSP_Config_Dic = {'Packing_Type': 'Filter_Packing', 'w_sep': wsep, 'a_sep': asep, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
+                                DSP_Config_Dic = {'Packing_Type': 'Filter_Packing', 'wsep': wsep, 'asep': asep, 'Kp': Kp, 'Np': Np, 'T_mul': T_mul, 'gb': gb}
 
                 if Kernel_Packing_EN:
                     for wsep in [1, 2]:
                         for asep in [1, 2]:
-                            if wsep == 2 and asep == 2:
-                                continue
                             wb_sep = math.ceil(wb / wsep)
                             ab_sep = math.ceil(ab / asep)
 
-                            pack_flag, Kp, Np, gb, T_mul = self.Kernel_Packing(wb_sep, ab_sep, overlap, och=och)
+                            pack_flag, Ep, Dp, gb, T_mul = self.Kernel_Packing(wb_sep, ab_sep, overlap)
                             T_mul /= (wsep * asep)
                             C1 = T_mul > DSP_Config_Dic['T_mul']
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])
-
                             if C1 or C2:
-                                DSP_Config_Dic = {'Packing_Type': 'Kernel_Packing', 'Pack_Flag': pack_flag, 'w_sep': wsep, 'a_sep': asep, 'kp': Kp, 'np': Np, 'T_mul': T_mul, 'gb': gb}
+                                DSP_Config_Dic = {'Packing_Type': 'Kernel_Packing', 'Pack_Flag': pack_flag, 'wsep': wsep, 'asep': asep, 'Ep': Ep, 'Dp': Dp, 'T_mul': T_mul, 'gb': gb}
 
                 precision_str = 'w'+str(int(wb))+'a'+str(int(ab))
                 DSP_Config_Lookup[precision_str] = DSP_Config_Dic
@@ -193,14 +177,13 @@ class DSP_Config_Search:
             "Lookup" : DSP_Config_Lookup
         }
 
-        with open(f'./DSP_Lookup/Lookup_K{K}.json', 'w', encoding='utf-8') as f:
+        with open('./Lookup.json', 'w', encoding='utf-8') as f:
             json.dump(save_data, f, indent=4)
         return
 
 
 
 if __name__ == '__main__':
-    K = 1
-    DSP_Explorer = DSP_Config_Search(27, 18, 8)
-    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=K, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True)
-    DSP_Explorer.Save_Lookup_Table(DSP_Config_Lookup, K=K, overlap=1)
+    DSP_Explorer = DSP_Config_Search(27, 18, 3)
+    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=1, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True)
+    DSP_Explorer.Save_Lookup_Table(DSP_Config_Lookup, K=3, overlap=0)

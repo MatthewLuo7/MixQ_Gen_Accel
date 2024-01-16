@@ -1,3 +1,8 @@
+/********************************************************************************
+* Filename: tb.cpp
+* Date: Mon Jan 15 12:12:22 2024
+* Description: reference testbench for accelerator
+********************************************************************************/
 #include <stdint.h>
 #include <ap_int.h>
 #include <iostream>
@@ -7,7 +12,16 @@
 #include "config.h"
 using namespace std;
 
-string opath = "E:/Projects/DeepBurning_MixQ/Accel_test_2_4w4a/5_gen_2/debug_output/";
+#define grid_row 10
+#define grid_col 20
+#define org_row 360
+#define org_col 640
+#define inp_row 160
+#define inp_col 320
+#define div 1297.776528460163
+
+
+string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/3_ultranet_mixed1/debug_path/";
 
 void ultra_net(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
 
@@ -37,7 +51,7 @@ int main(int argc, char const *argv[])
 {
     unsigned char img[inp_row][inp_col][3];
 
-    load_data("E:/Projects/DeepBurning_MixQ/Accel_test_2_4w4a/test_data/0.bin", (char *) img, sizeof(img));
+    load_data("E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/test_data/0.bin", (char *) img, sizeof(img));
 
     unsigned char * data = (unsigned char *) img;
     const int data_points_per_line = 8;        // ch * 10
@@ -63,47 +77,24 @@ int main(int argc, char const *argv[])
     cout << "output size :" << output_stream.size() << endl;
     
     for (unsigned ir = 0; ir < img_repeat; ir++){
-        ap_int<32> conv_8_out [grid_row*grid_col][6][6];
+        ap_int<32> conv_last_out [grid_row*grid_col][6][6];
 
         for(unsigned r = 0; r < grid_row; r++)
             for(unsigned ofi = 0; ofi < 18; ofi++)
                 for(unsigned c = 0; c < grid_col; c++){
                     my_ap_axis output = output_stream.read();
                     ap_uint<64> out_data = output.data;
-                    conv_8_out[c + r*grid_col][ofi / 3][(ofi % 3)*2]     = out_data(31,0);
-                    conv_8_out[c + r*grid_col][ofi / 3][(ofi % 3)*2 + 1] = out_data(63,32);
+                    conv_last_out[c + r*grid_col][ofi / 3][(ofi % 3)*2]     = out_data(31,0);
+                    conv_last_out[c + r*grid_col][ofi / 3][(ofi % 3)*2 + 1] = out_data(63,32);
                 }
-
-
-
-        ofstream f(opath+"conv_8_out_test.txt");
-        for(int i=0;i<(grid_row*grid_col);i++)
-        {
-            f << "conv_8_out[" <<dec<<i << "]" << "[][] ="<< endl;
-            for(int j=0;j<6;j++)
-            {
-                for(int k=0;k<6;k++)
-                {
-                    long long int res = 0;
-                    res = conv_8_out[i][j][k];
-                    f<< dec << res << ", ";
-                }
-                f << endl;
-            }
-            f <<endl;
-            f << endl;
-        }
-
 
         int conf [grid_row*grid_col] = {0};
         for(unsigned int i = 0; i< (grid_row*grid_col); i++)
             for(unsigned int j = 0; j<6; j++){
-                conf[i] += conv_8_out[i][j][4];
+                conf[i] += conv_last_out[i][j][4];
             }
-
-
-        
-        unsigned int max_index;
+  
+        unsigned int max_index = 0;
 
         int max = -9999999;
         for(unsigned int i = 0; i< (grid_row*grid_col); i++)
@@ -123,7 +114,7 @@ int main(int argc, char const *argv[])
         float boxs[6][4];
         for(unsigned int i = 0; i<6; i++)
             for(unsigned int j = 0; j<4; j++){
-                boxs[i][j] = float(conv_8_out[max_index][i][j]) / div;
+                boxs[i][j] = float(conv_last_out[max_index][i][j]) / div;
             }
 
         float x = 0, y = 0, w = 0, h = 0;

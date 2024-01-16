@@ -9,16 +9,17 @@ import math
 
 import sys
 sys.path.append('..')
-sys.path.append('../operators')
-sys.path.append('../operators/ConvOpt_KP')
-sys.path.append('../operators/ConvOpt_KP/predictors')
-sys.path.append('../operators/ConvOpt_KP_LUT')
-sys.path.append('../operators/ConvOpt_FP')
-sys.path.append('../operators/ConvOpt_FP/predictors')
-sys.path.append('../operators/ConvOpt_FP_LUT')
-sys.path.append('../operators/ConvOpt_FP_DW')
-sys.path.append('../operators/ConvOpt_FP_DW_LUT')
-sys.path.append('../operators/ConvOpt_1x1')
+sys.path.append('../../DSP_explorer/')
+sys.path.append('../../Opt_Definition')
+sys.path.append('../../Opt_Definition/ConvOpt_KP')
+sys.path.append('../../Opt_Definition/ConvOpt_KP/predictors')
+sys.path.append('../../Opt_Definition/ConvOpt_KP_LUT')
+sys.path.append('../../Opt_Definition/ConvOpt_FP')
+sys.path.append('../../Opt_Definition/ConvOpt_FP/predictors')
+sys.path.append('../../Opt_Definition/ConvOpt_FP_LUT')
+sys.path.append('../../Opt_Definition/ConvOpt_FP_DW')
+sys.path.append('../../Opt_Definition/ConvOpt_FP_DW_LUT')
+sys.path.append('../../Opt_Definition/ConvOpt_1x1')
 import mymodel
 from utils.view_pt import select_weight_file
 from quant_dorefa import activation_quantize_fn
@@ -219,14 +220,22 @@ def gen_opts(model_param, array_config):
         conv.pe = extra_para[1]
         conv.actp = extra_para[2]
         conv.kpf = extra_para[3]
+        LUT = bool(extra_para[4])
         conv.max_pool = conv.max_pool
 
-        if idx == (len(model_param) - 1):
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True, och=conv.och)
-        elif conv.w.shape[1] == 1:        # depth-wise conv
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=False, och=conv.och)
+        if conv.w.shape[1] == 1 and conv.ich != 1:   # depth-width
+            acc_num = conv.k
+            DW = True
         else:
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, och=conv.och)
+            acc_num = conv.k * conv.ich
+            DW = False
+
+        if idx == (len(model_param) - 1):
+            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
+        elif conv.w.shape[1] == 1:        # depth-wise conv
+            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=False, acc_num=acc_num, och=conv.och)
+        else:
+            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
 
         conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
         conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
@@ -240,18 +249,20 @@ def gen_opts(model_param, array_config):
             conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
             model_opt.append(Conv1x1_Opt_Templates(conv))
         elif packing_type == 'Filter_Packing':
-            if conv.w.shape[1] == 1:
-                model_opt.append(FP_DW_Opt_Templates(conv))
-                # model_opt.append(FP_DW_LUT_Opt_Templates(conv))    # LUT-replaced
+            if DW:
+                opt = FP_DW_LUT_Opt_Templates(conv) if LUT else FP_DW_Opt_Templates(conv)
+                model_opt.append(opt)
             else:
-                model_opt.append(FP_Opt_Templates(conv))
+                opt = FP_LUT_Opt_Templates(conv) if LUT else FP_Opt_Templates(conv)
+                model_opt.append(opt)
         elif packing_type == 'Kernel_Packing':
             conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
 
-            if conv.w.shape[1] == 1:
+            if DW:
                 raise TypeError(f"Kernel_Packing operator cannot be used for Depth-wise Convolution!")
             else:
-                model_opt.append(KP_Opt_Templates(conv))
+                opt = KP_LUT_Opt_Templates(conv) if LUT else KP_Opt_Templates(conv)
+                model_opt.append(opt)
         else:
             raise TypeError(f"Operator {str(opt_type)} is not defined!")
 

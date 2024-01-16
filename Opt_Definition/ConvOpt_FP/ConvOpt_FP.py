@@ -153,11 +153,19 @@ class FP_Opt_Templates:
     def __init__(self, conv):
         self.conv = conv
 
-    def get_opf(self):
-        if hasattr(self.conv, 'pe'):
+    def get_opf_(self):
+        if hasattr(self.conv, 'pe') and self.conv.pe is not None:
             return self.conv.pe
         else:
             return None
+
+    def get_factors(self, m):
+        factors = []
+        for i in range(1, m + 1):
+            if m % i == 0:
+                factors.append(i)
+
+        return factors
 
     ################################################ Search ################################################
     def dsp_operations(self):
@@ -176,34 +184,85 @@ class FP_Opt_Templates:
         OUT_PF = self.conv.np * pe
         min_actp = OUT_PF // (KNUM * INFOLD)
 
-        valid_flag = False
-        best_actp = OUT_PF
+        if pe < min_actp:
+            return None
 
-        actp_p_max = math.floor(math.log2(pe))
-        for actp_p in range(0, actp_p_max + 1):
-            actp = 2 ** actp_p
+        best_actp = pe
+        for actp in self.get_factors(pe):
             if actp >= min_actp:
-                valid_flag = True
                 best_actp = actp
                 break
 
-        return valid_flag, best_actp
+        return best_actp
 
-    def reshape_buffer_constraints(self, inpe, simd, pe, kpf):
-        if kpf * simd >= inpe:
-            flag = (kpf * simd % inpe == 0)
-            flag = flag and (self.conv.ich * self.conv.k % (kpf * simd) == 0)
+    def get_actp_(self):
+        C1 = hasattr(self.conv, 'simd') and self.conv.simd is not None
+        C2 = hasattr(self.conv, 'pe') and self.conv.pe is not None
+        C3 = hasattr(self.conv, 'kpf') and self.conv.kpf is not None
+
+        if C1 and C2 and C3:
+            return self.get_actp(self.conv.simd, self.conv.pe, self.conv.kpf)
         else:
-            flag = (inpe % (kpf * simd) == 0)
-            flag = flag and (self.conv.ich * self.conv.k % inpe == 0)
+            raise TypeError(f'Parallelism factors are not all instantiated!')
+            return False
+
+    def reshape_buffer_constraints(self, inpe, simd, kpf):
+        C1 = (inpe <= self.conv.ich) and (self.conv.ich % inpe == 0)
+        C2 = (kpf == 1) or (kpf == self.conv.k)
+        C3 = self.conv.ich % simd == 0
+        C4 = (simd % inpe == 0) if (simd >= inpe) else (inpe % simd == 0)
+
+        C5 = (inpe * self.conv.abit) <= 1024
+        C6 = (kpf * simd * self.conv.abit * self.conv.np) <= 1024
+        C7 = (inpe * self.conv.abit * self.conv.np <= 1024) if (simd >= inpe) else (simd * self.conv.abit * self.conv.np <= 1024)
+
+        flag = C1 and C2 and C3 and C4 and C5 and C6 and C7
 
         return flag
 
-    def check_constraints(self, inpe, simd, pe, kpf):
-        flag = self.reshape_buffer_constraints(inpe=inpe, simd=simd, pe=pe, kpf=kpf)
-        flag = flag and (self.conv.och % pe == 0)
+    def ACT_constraints(self, opf, actp):
+        C1 = (opf <= self.conv.och) and (self.conv.och % opf == 0)
+        C2 = (actp <= opf) and (opf % actp == 0)
+        C3 = actp * self.conv.incbit <= 1024
+        C4 = actp * self.conv.biasbit <= 1024
+
+        flag = C1 and C2 and C3 and C4
 
         return flag
+
+    def opt_constraints(self, inpe, simd, kpf, pe, actp):
+        opf = pe
+        M_BIT = self.conv.abit + self.conv.wbit + math.ceil(math.log2(self.conv.k * self.conv.k * self.conv.ich))
+
+        C1 = self.reshape_buffer_constraints(inpe, simd, kpf)
+        C2 = self.ACT_constraints(opf, actp)
+
+        C3 = (self.conv.k * kpf * simd * self.conv.wbit) <= 1024    # weight width
+        C4 = (self.conv.np * opf * M_BIT) <= 1024
+        C5 = (2 * opf * self.conv.obit <= 1024) if self.conv.max_pool else (opf * self.conv.obit <= 1024)
+
+        flag = C1 and C2 and C3 and C4 and C5
+
+        return flag
+
+    def opt_constraints_(self):
+        C1 = hasattr(self.conv, 'simd') and self.conv.simd is not None
+        C2 = hasattr(self.conv, 'pe') and self.conv.pe is not None
+        C3 = hasattr(self.conv, 'kpf') and self.conv.kpf is not None
+        C4 = hasattr(self.conv, 'actp') and self.conv.actp is not None
+        C5 = hasattr(self.conv, 'inpe') and self.conv.inpe is not None
+
+        if C1 and C2 and C3 and C4 and C5:
+            return self.opt_constraints(inpe=self.conv.inpe, simd=self.conv.simd, kpf=self.conv.kpf, pe=self.conv.pe, actp=self.conv.actp)
+        else:
+            raise TypeError(f'Parallelism factors are not all instantiated!')
+            return False
+
+    # def check_constraints(self, inpe, simd, pe, kpf):
+    #     flag = self.reshape_buffer_constraints(inpe=inpe, simd=simd, pe=pe, kpf=kpf)
+    #     flag = flag and (self.conv.och % pe == 0)
+
+    #     return flag
 
     def get_feature(self, simd, pe, actp, kpf):
         features_list = [simd, pe, actp, kpf]
