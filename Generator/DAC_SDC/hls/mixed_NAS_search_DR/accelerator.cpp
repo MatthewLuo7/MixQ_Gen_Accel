@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: weights.hpp
-* Date: $Mon Jan 15 12:12:22 2024
+* Date: $Sat Jan 20 14:21:04 2024
 * Description: accelerator main function
 ********************************************************************************/
 //#define DEBUG
@@ -314,7 +314,7 @@ CONV_3_L_SHIFT, CONV_3_OCH_PF, CONV_3_ACTP, CONV_3_Np, CONV_3_M_BIT,
     
 //--------------------Conv 3: Increase Bit-width--------------------
 stream<ap_uint<2 * CONV_3_OCH_PF * CONV_3_OUT_BIT> > conv_3_conv_out("conv_3_conv_out");
-#pragma HLS STREAM variable = conv_3_conv_out depth = 640
+#pragma HLS STREAM variable = conv_3_conv_out depth = 320
 StreamingDataWidthConverter_Batch<CONV_3_ACTP * CONV_3_OUT_BIT, 2 * CONV_3_OCH_PF * CONV_3_OUT_BIT,
 CONV_3_INC_BW_NUM>(conv_3_act_out, conv_3_conv_out, reps);
 
@@ -491,7 +491,7 @@ CONV_6_L_SHIFT, CONV_6_OCH_PF, CONV_6_ACTP, CONV_6_Np, CONV_6_M_BIT,
     
 //--------------------Conv 6: Increase Bit-width--------------------
 stream<ap_uint<CONV_6_OCH_PF * CONV_6_OUT_BIT> > conv_6_layer_out("conv_6_layer_out");
-#pragma HLS STREAM variable = conv_6_layer_out depth = 320
+#pragma HLS STREAM variable = conv_6_layer_out depth = 160
 StreamingDataWidthConverter_Batch<CONV_6_ACTP * CONV_6_OUT_BIT, CONV_6_OCH_PF * CONV_6_OUT_BIT, CONV_6_INC_BW_NUM>(conv_6_act_out, conv_6_layer_out, reps);
 
 #ifdef DEBUG
@@ -546,7 +546,7 @@ CONV_7_L_SHIFT, CONV_7_OCH_PF, CONV_7_ACTP, CONV_7_Np, CONV_7_M_BIT,
     
 //--------------------Conv 7: Increase Bit-width--------------------
 stream<ap_uint<CONV_7_OCH_PF * CONV_7_OUT_BIT> > conv_7_layer_out("conv_7_layer_out");
-#pragma HLS STREAM variable = conv_7_layer_out depth = 320
+#pragma HLS STREAM variable = conv_7_layer_out depth = 160
 StreamingDataWidthConverter_Batch<CONV_7_ACTP * CONV_7_OUT_BIT, CONV_7_OCH_PF * CONV_7_OUT_BIT, CONV_7_INC_BW_NUM>(conv_7_act_out, conv_7_layer_out, reps);
 
 #ifdef DEBUG

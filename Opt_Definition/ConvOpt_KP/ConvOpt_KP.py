@@ -1,5 +1,5 @@
 from string import Template
-from ConvOpt_FP import FP_Opt_Templates, act_trim_temp
+from ConvOpt_FP import FP_Opt_Templates, act_trim_temp, inc_bw_temp_1_assignout, inc_bw_temp_2_assignout, inc_bw_temp_1, inc_bw_temp_2
 import math
 import pickle
 import numpy as np
@@ -118,10 +118,10 @@ class KP_Opt_Templates(FP_Opt_Templates):
         C2 = hasattr(self.conv, 'pe') and self.conv.pe is not None
         C3 = hasattr(self.conv, 'kpf') and self.conv.kpf is not None
         C4 = hasattr(self.conv, 'actp') and self.conv.actp is not None
-        C5 = hasattr(self.conv, 'inpe') and self.conv.inpe is not None
+        C5 = hasattr(self.conv, 'in_pe') and self.conv.in_pe is not None
 
         if C1 and C2 and C3 and C4 and C5:
-            return self.opt_constraints(inpe=self.conv.inpe, simd=self.conv.simd, kpf=self.conv.kpf, pe=self.conv.pe, actp=self.conv.actp)
+            return self.opt_constraints(inpe=self.conv.in_pe, simd=self.conv.simd, kpf=self.conv.kpf, pe=self.conv.pe, actp=self.conv.actp)
         else:
             raise TypeError(f'Parallelism factors are not all instantiated!')
             return False
@@ -155,30 +155,45 @@ class KP_Opt_Templates(FP_Opt_Templates):
 
     ################################################ Processing ################################################
     def weight_reorder(self):
-        if self.conv.kpf == 1:
-            w = self.conv.w    # [och, ich, kr, kc]
-            assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
-            assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
+        w = self.conv.w    # [och, ich, kr, kc]
+        assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
+        assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
 
-            w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr, kc]
-            w = w.transpose(1, 0, 5, 3, 6, 4, 2)            # [pe, och/(kp*pe), kr, ich/simd, kc, simd, kp]
-            w = w[:, :, :, :, ::-1, :, :]
-            w = w.reshape(self.conv.pe, -1, self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * kr * ich/simd * kc, simd * kp]
-            self.conv.w = w
+        w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k // self.conv.kpf, self.conv.kpf, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr/kpf, kpf, kc]
+        w = w.transpose(1, 0, 5, 3, 7, 6, 4, 2)            # [pe, och/(kp*pe), kr/kpf, ich/simd, kc, kpf, simd, kp]
+        w = w[:, :, :, :, ::-1, :, :, :]
+        w = w.reshape(self.conv.pe, -1, self.conv.kpf*self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * kr/kpf * ich/simd * kc, kpf * simd * kp]
+        self.conv.w = w
 
-            return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
-        else:
-            w = self.conv.w    # [och, ich, kr, kc]
-            assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
-            assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
+        return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.kpf * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
-            w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr, kc]
-            w = w.transpose(1, 0, 3, 6, 5, 4, 2)            # [pe, och/(kp*pe), ich/simd, kc, kr, simd, kp]
-            w = w[:, :, :, ::-1, :, :, :]
-            w = w.reshape(self.conv.pe, -1, self.conv.k*self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * ich/simd * kc, kr * simd * kp]
-            self.conv.w = w
+        def weight_shape(self):
+            return (self.conv.pe, (self.conv.och // (self.conv.pe * self.conv.kp)) * (self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)) * self.conv.k, self.conv.kp * self.conv.kpf * self.conv.simd)
 
-            return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd * self.conv.k}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
+        # if self.conv.kpf == 1:
+        #     w = self.conv.w    # [och, ich, kr, kc]
+        #     assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
+        #     assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
+
+        #     w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr, kc]
+        #     w = w.transpose(1, 0, 5, 3, 6, 4, 2)            # [pe, och/(kp*pe), kr, ich/simd, kc, simd, kp]
+        #     w = w[:, :, :, :, ::-1, :, :]
+        #     w = w.reshape(self.conv.pe, -1, self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * kr * ich/simd * kc, simd * kp]
+        #     self.conv.w = w
+
+        #     return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
+        # else:
+        #     w = self.conv.w    # [och, ich, kr, kc]
+        #     assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
+        #     assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
+
+        #     w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr, kc]
+        #     w = w.transpose(1, 0, 3, 6, 5, 4, 2)            # [pe, och/(kp*pe), ich/simd, kc, kr, simd, kp]
+        #     w = w[:, :, :, ::-1, :, :, :]
+        #     w = w.reshape(self.conv.pe, -1, self.conv.k*self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * ich/simd * kc, kr * simd * kp]
+        #     self.conv.w = w
+
+        #     return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd * self.conv.k}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
     ################################################ HLS Template ################################################
     def find_CASCADE(self):
@@ -194,7 +209,7 @@ class KP_Opt_Templates(FP_Opt_Templates):
     def gen_conv_para(self):
         if self.conv.n == 0:
             in_assign = 'conv0_in'
-            IN_PE = '3'
+            IN_PE = str(self.conv.in_pe) if hasattr(self.conv, 'in_pe') else '3'
         else:
             in_assign = f'conv_{self.conv.n-1}_layer_out'
             IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'
@@ -227,3 +242,17 @@ class KP_Opt_Templates(FP_Opt_Templates):
 
         return act_trim_temp.substitute(No=str(self.conv.n), ACTP_NUM_counter_bw=str(ACTP_NUM_counter_bw),
                                         w_counter_bw=str(w_counter_bw), add_offset_bw=str(add_offset_bw))
+
+    def gen_increase_bw(self):
+        if self.conv.max_pool:
+            return inc_bw_temp_1.substitute(No=str(self.conv.n), No_lat=str(self.conv.n+1), CONV_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / (self.conv.pe * self.conv.kp))),
+                                            POOL_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / (self.conv.pe * 2))))
+        else:
+            return inc_bw_temp_2.substitute(No=str(self.conv.n), No_lat=str(self.conv.n+1), CONV_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / (self.conv.pe * self.conv.kp))))
+
+    def gen_increase_bw_for_sampling(self):
+        if self.conv.max_pool:
+            return inc_bw_temp_1_assignout.substitute(No=str(self.conv.n), No_lat=str(self.conv.n+1), CONV_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / (self.conv.pe * self.conv.kp))),
+                                            POOL_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / (self.conv.pe * 2))))
+        else:
+            return inc_bw_temp_2_assignout.substitute(No=str(self.conv.n), No_lat=str(self.conv.n+1), CONV_DEPTH=str(math.ceil(self.conv.icol * self.conv.och / (self.conv.pe * self.conv.kp))))

@@ -29,7 +29,7 @@ class FP_LUT_Opt_Templates(FP_Opt_Templates):
     def gen_conv_para(self):
         if self.conv.n == 0:
                 in_assign = 'conv0_in'
-                IN_PE = '3'
+                IN_PE = str(self.conv.in_pe) if hasattr(self.conv, 'in_pe') else '3'
         else:
                 in_assign = f'conv_{self.conv.n-1}_layer_out'
                 IN_PE = f'CONV_{self.conv.n-1}_OCH_PF'

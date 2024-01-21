@@ -312,7 +312,7 @@ if __name__=='__main__':
     parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
     parser.add_argument('-dp', '--debug-path', default='./debug_path/', help = 'path for debug outpt')
     parser.add_argument('-ip', '--input-path', default='./test/0.bin', help = '.bin file for testing')
-    parser.add_argument('--GenTB', default=True)
+    parser.add_argument('--GenTB', action='store_true')
     opt = parser.parse_args()
     model_name = opt.model
     weight = opt.weight

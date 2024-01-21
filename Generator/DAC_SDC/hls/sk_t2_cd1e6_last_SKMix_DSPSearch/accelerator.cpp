@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: weights.hpp
-* Date: $Mon Jan 15 12:04:28 2024
+* Date: $Sat Jan 20 14:25:05 2024
 * Description: accelerator main function
 ********************************************************************************/
 //#define DEBUG
@@ -29,7 +29,7 @@ using namespace std;
 
 
 
-string output_path = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/2_skynet_mixed2/debug_path/";
+string output_path = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/2_skynet_mixed3/debug_path/";
 
 template <unsigned IN_BIT, unsigned IN_CH, unsigned OUT_BIT, unsigned IN_NUM>
 void input_quant(hls::stream<ap_uint<IN_BIT * IN_CH> > &in,
@@ -300,7 +300,7 @@ CONV_3_L_SHIFT, CONV_3_OCH_PF, CONV_3_ACTP, CONV_3_Np, CONV_3_M_BIT,
     
 //--------------------Conv 3: Increase Bit-width--------------------
 stream<ap_uint<2 * CONV_3_OCH_PF * CONV_3_OUT_BIT> > conv_3_conv_out("conv_3_conv_out");
-#pragma HLS STREAM variable = conv_3_conv_out depth = 7680
+#pragma HLS STREAM variable = conv_3_conv_out depth = 3840
 StreamingDataWidthConverter_Batch<CONV_3_ACTP * CONV_3_OUT_BIT, 2 * CONV_3_OCH_PF * CONV_3_OUT_BIT,
 CONV_3_INC_BW_NUM>(conv_3_act_out, conv_3_conv_out, reps);
 
@@ -543,7 +543,7 @@ CONV_7_L_SHIFT, CONV_7_OCH_PF, CONV_7_ACTP, CONV_7_Np, CONV_7_M_BIT,
     
 //--------------------Conv 7: Increase Bit-width--------------------
 stream<ap_uint<CONV_7_OCH_PF * CONV_7_OUT_BIT> > conv_7_layer_out("conv_7_layer_out");
-#pragma HLS STREAM variable = conv_7_layer_out depth = 5120
+#pragma HLS STREAM variable = conv_7_layer_out depth = 2560
 StreamingDataWidthConverter_Batch<CONV_7_ACTP * CONV_7_OUT_BIT, CONV_7_OCH_PF * CONV_7_OUT_BIT, CONV_7_INC_BW_NUM>(conv_7_act_out, conv_7_layer_out, reps);
 
 #ifdef DEBUG
@@ -653,7 +653,7 @@ CONV_9_L_SHIFT, CONV_9_OCH_PF, CONV_9_ACTP, CONV_9_Np, CONV_9_M_BIT,
     
 //--------------------Conv 9: Increase Bit-width--------------------
 stream<ap_uint<CONV_9_OCH_PF * CONV_9_OUT_BIT> > conv_9_layer_out("conv_9_layer_out");
-#pragma HLS STREAM variable = conv_9_layer_out depth = 5120
+#pragma HLS STREAM variable = conv_9_layer_out depth = 2560
 StreamingDataWidthConverter_Batch<CONV_9_ACTP * CONV_9_OUT_BIT, CONV_9_OCH_PF * CONV_9_OUT_BIT, CONV_9_INC_BW_NUM>(conv_9_act_out, conv_9_layer_out, reps);
 
 #ifdef DEBUG

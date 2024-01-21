@@ -20,24 +20,30 @@ from ConvOpt_FP_DW_LUT import FP_DW_LUT_Opt_Templates
 from ConvOpt_KP import KP_Opt_Templates
 from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 
+candidate_latency = [10.0, 6.667, 4.667, 4.0, 3.333, 2.667]     # lacency (ns)
+
 candidate_K = [1, 3, 5, 7]
 candidate_W = list(np.arange(8, 640 + 1, 2))
-candidate_CH = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 36, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]
+candidate_CH = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 36, 48, 64, 96, 128, 192, 256, 384, 512]   # 768 and 1024 seem too large
 candidate_BIT = list(np.arange(2, 8 + 1, 1))
 candidate_POOL = [True, False]
 candidate_lshift = list(np.arange(4, 16 + 1, 1))
 candidate_Packing = ['FP', 'KP']
-candidate_LUT = [False, True]
+# candidate_LUT = [False, True]
+candidate_LUT = [False] * 15 + [True] * 5
+candidate_DW = [False] * 6 + [True] * 4
 DSP_Explorer = DSP_Config_Search(27, 18, 8)
 
 attr_names = ['k', 'icol', 'irow', 'ich', 'och', 'max_pool', 'abit', 'wbit', 'obit', 'kp',
-			 'np', 'gb', 'w_sep', 'a_sep', 'simd', 'pe', 'actp', 'kpf', 'lshift', 'incbit',
-			 'biasbit', 'pack_flag']
+			 'np', 'gb', 'w_sep', 'a_sep', 'simd', 'pe', 'actp', 'kpf', 'in_pe', 'lshift',
+			 'incbit', 'biasbit', 'pack_flag']
 
-def attr_to_tuple(conv):
+def attr_to_tuple(conv, latency):
 	attr_list = []
-	for elem in attr_names[:18]:                     # lshift, incbit, biasbit are not important
+	for elem in attr_names[:19]:                     # lshift, incbit, biasbit are not important
 		attr_list.append(getattr(conv, elem))
+
+	attr_list.append(latency)
 
 	return tuple(attr_list)
 
@@ -59,7 +65,8 @@ def Random_Opt():
     # packing
     Packing = sample_from_list(candidate_Packing)
     if Packing == 'FP':
-        DW = sample_from_list([True, False])
+        # DW = sample_from_list([True, False])
+        DW = sample_from_list(candidate_DW)
     else:
         DW = False
     LUT = sample_from_list(candidate_LUT)
@@ -80,10 +87,10 @@ def Random_Opt():
 
     conv.lshift = sample_from_list(candidate_lshift)
     T = conv.abit + conv.wbit + conv.lshift - 1
-    skew = min(12, T - 2)
-    inc_bias_skew = list(np.arange(skew, skew + 1))
-    conv.incbit = sample_from_list(inc_bias_skew)
-    conv.biasbit = sample_from_list(inc_bias_skew)
+    skew = min(8, T - 2)
+    inc_bias_skew = list(np.arange(-skew, skew + 1) + T)
+    conv.incbit = min(sample_from_list(inc_bias_skew), 27)
+    conv.biasbit = min(sample_from_list(inc_bias_skew), 40)
 
     # dsp search
     if Packing == 'FP':
@@ -110,21 +117,35 @@ def Random_Opt():
     conv.actp = sample_from_list(candidate_ACTP)
     conv.kpf = sample_from_list([conv.k, 1])
     candidate_INPE = get_factors(conv.och) if DW else get_factors(conv.ich)
-    conv.inpe = sample_from_list(candidate_INPE)
+    conv.in_pe = sample_from_list(candidate_INPE)
+
+    # latency (or frequency)
+    latency = sample_from_list(candidate_latency)
+
+    # constraints for parallelism factor
+    pf_constraints = (conv.w_sep * conv.a_sep) * conv.simd * conv.kpf * conv.pe <= 150
+
+    # constraints for on-chip buffer storage
+    s2p_buffer = ((conv.k + 1) * conv.icol * conv.och * conv.abit / (8 * 1024)) if DW else ((conv.k + 1) * conv.icol * conv.ich * conv.abit / (8 * 1024))
+    weight_rom = conv.k * conv.k * conv.ich * conv.och * conv.wbit / (8 * 1024)
+    para_rom = (conv.biasbit + conv.incbit) * conv.och / (8 * 1024)
+    storage_constraints = (s2p_buffer + weight_rom + para_rom) < 600
 
     if Packing == 'FP':
     	if DW:
     		opt = FP_DW_LUT_Opt_Templates(conv) if LUT else FP_DW_Opt_Templates(conv)
     	else:
     		opt = FP_LUT_Opt_Templates(conv) if LUT else FP_Opt_Templates(conv)
-    elif 'KP':
+    else:
     	conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
     	opt = KP_LUT_Opt_Templates(conv) if LUT else KP_Opt_Templates(conv)
 
-    constraint_flag = opt.opt_constraints_()
-    attr_vec = attr_to_tuple(conv)
+    dim_constraints = max(max(opt.weight_shape()), max(opt.S2P_buffer_shape()), conv.och // conv.actp) <= 8192
 
-    return constraint_flag, conv, Packing, DW, LUT, attr_vec
+    constraint_flag =  pf_constraints and storage_constraints and opt.opt_constraints_() and dim_constraints
+    attr_vec = attr_to_tuple(conv, latency)
+
+    return constraint_flag, conv, Packing, DW, LUT, attr_vec, latency
 
 
 class Opt_Sampling:
@@ -138,7 +159,7 @@ class Opt_Sampling:
 
 	def Sampling(self):
 		for i in range(attempt_num):
-			constraint_flag, conv, Packing, DW, LUT, attr_vec = Random_Opt()
+			constraint_flag, conv, Packing, DW, LUT, attr_vec, latency = Random_Opt()
 
 			C1 = constraint_flag
 			C2 = not attr_vec in self.sample_tuple
@@ -148,7 +169,7 @@ class Opt_Sampling:
 				temp_list.append(attr_vec)
 				self.sample_tuple = tuple(temp_list)
 
-				dict_elem = {'Type': {'Packing': Packing, 'LUT': LUT, 'DW': DW}}
+				dict_elem = {'Type': {'Packing': Packing, 'LUT': LUT, 'DW': DW, 'Latency': latency}}
 				Config = {}
 				for attr in attr_names:
 					if hasattr(conv, attr):
@@ -169,15 +190,16 @@ class Opt_Sampling:
 		if (self.find_num == self.require_num):
 			if not sample_dir.is_dir():
 				sample_dir.mkdir()
-			with open(self.sample_dir / 'opt_samples.json', 'w', encoding='utf-8') as f:
+			with open(self.sample_dir / file_name, 'w', encoding='utf-8') as f:
 				json.dump(self.sample_dict, f, indent=4)
 		else:
 			print(f"Failed to collect required samples within {self.attempt_num} attempts, only collected {self.find_num} samples. Sorry!")
 
 
 if __name__ == '__main__':
-	attempt_num = 2000     # 50000
-	require_num = 500       #5000
+	attempt_num = 30000     # 50000
+	require_num = 10000       #5000
+	file_name = 'opt_10000.json'
 	sample_dir = pathlib.Path('./Samples')
 	opt_samp = Opt_Sampling(sample_dir=sample_dir, require_num=require_num, attempt_num=attempt_num)
 	opt_samp.Sampling()
