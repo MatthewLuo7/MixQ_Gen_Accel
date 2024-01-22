@@ -167,8 +167,8 @@ class KP_Opt_Templates(FP_Opt_Templates):
 
         return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.kpf * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
-        def weight_shape(self):
-            return (self.conv.pe, (self.conv.och // (self.conv.pe * self.conv.kp)) * (self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)) * self.conv.k, self.conv.kp * self.conv.kpf * self.conv.simd)
+    def weight_shape(self):
+        return (self.conv.pe, (self.conv.och // (self.conv.pe * self.conv.kp)) * (self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)) * self.conv.k, self.conv.kp * self.conv.kpf * self.conv.simd)
 
         # if self.conv.kpf == 1:
         #     w = self.conv.w    # [och, ich, kr, kc]
