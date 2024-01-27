@@ -29,7 +29,7 @@ def check_opt(sample_dict):
     Packing = opt_type['Packing']
     opt = conv_to_opt(conv, opt_type)
     # debug
-    if max(opt.weight_shape()) > 8192:
+    if max(opt.weight_shape()) > 4096:
         flag = True
     else:
         flag = False
@@ -62,6 +62,8 @@ if __name__ == '__main__':
     sample_tuple = ()
     problem_list = []
     for idx, (k, v) in enumerate(opt_dicts.items()):
+        if idx < 1896:
+            continue
         flag, conv, latency = check_opt(v)
 
         attr_vec = attr_to_tuple(conv, latency)
@@ -73,6 +75,7 @@ if __name__ == '__main__':
             problem_list.append(k)
 
     print(problem_list)
+    print(len(problem_list))
 
     for key in problem_list:
         for i in range(100):
@@ -103,10 +106,10 @@ if __name__ == '__main__':
 
     print(f"Finished fixing {len(problem_list)} samples!")
 
-    with open('./Samples/opt_10000_fixed.json', 'w', encoding='utf-8') as f:
+    with open('./Samples/opt_10000_fixed2.json', 'w', encoding='utf-8') as f:
         json.dump(opt_dicts, f, indent=4)
 
-    with open('problem_list.json', 'w', encoding='utf-8') as f:
+    with open('./Samples/problem_list2.json', 'w', encoding='utf-8') as f:
         json.dump(problem_list, f)
 
 

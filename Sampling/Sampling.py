@@ -140,7 +140,7 @@ def Random_Opt():
     	conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
     	opt = KP_LUT_Opt_Templates(conv) if LUT else KP_Opt_Templates(conv)
 
-    dim_constraints = max(max(opt.weight_shape()), max(opt.S2P_buffer_shape()), conv.och // conv.actp) <= 8192
+    dim_constraints = max(max(opt.weight_shape()), max(opt.S2P_buffer_shape()), conv.och // conv.actp) <= 4096     # 8192
 
     constraint_flag =  pf_constraints and storage_constraints and opt.opt_constraints_() and dim_constraints
     attr_vec = attr_to_tuple(conv, latency)
