@@ -232,7 +232,7 @@ def write_hls_weights(model_opt, path):
 ''', file=f)
 
     for opt in model_opt:
-        print(f"Write conv_{opt.conv.n} weight, pe {opt.conv.pe}, simd {opt.conv.simd}, wbit {opt.conv.wbit}")
+        print(f"Write conv_{opt.conv.n} weight, simd {opt.conv.simd}, pe {opt.conv.pe}, kpf {opt.conv.kpf}, actp {opt.conv.actp}, wbit {opt.conv.wbit}")
         content = opt.write_weights()
         print(content, file=f, end='')
     

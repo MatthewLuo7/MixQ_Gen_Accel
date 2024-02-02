@@ -27,6 +27,7 @@ from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
 
 from dsp_eff_search import DSP_Config_Search
+from Pipeline_DP import Pipeline_Allocation
 
 class ConvParam: ...
 
@@ -204,15 +205,12 @@ def adjust_weight(model_param):
             print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
             conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
 
-def gen_opts(model_param, array_config):
+def gen_opts_DP(model_param, DSP_max, LUT_max, BRAM_max, DSP_step, LUT_step, BRAM_step):
     DSP_Explorer = DSP_Config_Search(27, 18, 8)
     model_opt = []
-    for idx, (conv, extra_para) in enumerate(zip(model_param, array_config)):
-        conv.simd = extra_para[0]
-        conv.pe = extra_para[1]
-        conv.actp = extra_para[2]
-        conv.kpf = extra_para[3]
-        LUT = bool(extra_para[4])
+    for idx, conv in enumerate(model_param):
+
+        LUT = False
 
         if conv.w.shape[1] == 1 and conv.ich != 1:   # depth-width
             acc_num = conv.k
@@ -257,40 +255,35 @@ def gen_opts(model_param, array_config):
         else:
             raise TypeError(f"Operator {str(opt_type)} is not defined!")
 
-    # for conv, extra_para in zip(model_param, array_config[:, :10]):
-    #     conv.simd = extra_para[0]
-    #     conv.pe = extra_para[1]
-    #     conv.actp = extra_para[2]
-    #     conv.kp = extra_para[3] 
-    #     conv.np = extra_para[4]
-    #     conv.gb = extra_para[5]  
-    #     conv.kpf = extra_para[6]
-    #     conv.max_pool = extra_para[7]
-    #     conv.w_sep = extra_para[8]
-    #     conv.a_sep = extra_para[9]
+    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 5, DSP_max=DSP_max, LUT_max=LUT_max, BRAM_max=BRAM_max, DSP_step=DSP_step, LUT_step=LUT_step, BRAM_step=BRAM_step)
+    print('Begin searching parallelism!')
+    t1 = time.time()
+    Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
+    t2 = time.time()
 
-    # model_opt = []
-    # for conv, opt_type in zip(model_param, array_config[:, 10]):
-    #     pack_flag = False        # to be modified
+    # debug
+    print(Lat)
+    print(SIMD_list)
+    print(PE_list)
+    print(ACTP_list)
+    print(KPF_list)
 
+    print(f'Finished searching within {t2 - t1} seconds! Overall latency is {Lat}')
+    print('SIMD, PE, ACTP, KPF, Latency:')
+    for i in range(len(model_opt[:-1])):
+        model_opt[i].conv.simd = SIMD_list[i]
+        model_opt[i].conv.pe = PE_list[i]
+        model_opt[i].conv.actp = ACTP_list[i]
+        model_opt[i].conv.kpf = KPF_list[i]
 
-    #     if opt_type == 0:
-    #         conv.pack_flag = pack_flag        # to be modified
-    #         model_opt.append(KP_Opt_Templates(conv))
-    #     elif opt_type == 1:
-    #         conv.pack_flag = pack_flag        # to be modified
-    #         model_opt.append(KP_LUT_Opt_Templates(conv))
-    #     elif opt_type == 2:
-    #         model_opt.append(FP_Opt_Templates(conv))
-    #     elif opt_type == 3:
-    #         model_opt.append(FP_LUT_Opt_Templates(conv))
-    #     elif opt_type == 4:
-    #         conv.pack_flag = pack_flag        # to be modified
-    #         model_opt.append(Conv1x1_Opt_Templates(conv))
-    #     elif opt_type == 5:
-    #         model_opt.append(FP_DW_Opt_Templates(conv))
-    #     else:
-    #         raise ValueError(f"Operator {str(opt_type)} is not defined!")
+        cur_Lat = model_opt[i].dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
+        print(f'{SIMD_list[i]}, {PE_list[i]}, {ACTP_list[i]}, {KPF_list[i]}, {cur_Lat}')
+
+    model_opt[-1].conv.simd = 4
+    model_opt[-1].conv.pe = 2
+    model_opt[-1].conv.actp = 2
+    model_opt[-1].conv.kpf = 1
+    model_opt[-1].conv.pack_flag = 0
 
     return model_opt
 
@@ -300,18 +293,18 @@ if __name__=='__main__':
     parser.add_argument('-n', '--name', help='name for the NN accelerator')
     parser.add_argument('-w', '--weight', default='fixed', help='.pt file name in ./weights/')
     parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart  SkyNet_FixQ
-    parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
+    # parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
     parser.add_argument('-dp', '--debug-path', default='./debug_path/', help = 'path for debug outpt')
     parser.add_argument('-ip', '--input-path', default='./test/0.bin', help = '.bin file for testing')
     parser.add_argument('--GenTB', action='store_true')
     opt = parser.parse_args()
     model_name = opt.model
     weight = opt.weight
-    config_simd_pe = opt.config_simd_pe
+    # config_simd_pe = opt.config_simd_pe
     name = str(opt.name)
 
-    array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
-    dir_output = 'hls/' + weight + '_' + config_simd_pe + '/'
+    # array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
+    dir_output = 'hls/' + weight + '_DP/'
     if not os.path.exists(dir_output): os.makedirs(dir_output)
 
     # load model and state_dict
@@ -323,7 +316,7 @@ if __name__=='__main__':
     model_param = extract_model([1, 160, 320])
     adjust_weight(model_param)
     process_batchnorm(model_param) # get bn param before write hls config
-    model_opt = gen_opts(model_param, array_config)
+    model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=50000, BRAM_max=400, DSP_step=30, LUT_step=5000, BRAM_step=100)
     torch.save(model_param, dir_output + 'model_param.pkl')
     
     write_hls_config(model_opt, dir_output)
