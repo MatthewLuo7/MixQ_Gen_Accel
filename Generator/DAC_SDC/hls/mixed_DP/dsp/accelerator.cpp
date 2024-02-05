@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: weights.hpp
-* Date: $Thu Feb  1 22:44:46 2024
+* Date: $Thu Feb  1 22:01:14 2024
 * Description: accelerator main function
 ********************************************************************************/
 //#define DEBUG
@@ -85,7 +85,7 @@ void compute_pipeline(stream<my_ap_axis> &in, stream<my_ap_axis> &out,
 const unsigned CONV_0_IN_PE = 3;
 stream<ap_uint<CONV_0_IN_PE * CONV_0_IN_BIT> > &conv_0_in = conv0_in;
 const unsigned CONV_0_M_BIT = CONV_0_IN_BIT + CONV_0_W_BIT + 5;
-const unsigned CONV_0_SIMD_BIT = 1;
+const unsigned CONV_0_SIMD_BIT = 3;
 const unsigned CONV_0_CASCADE = 1;
 const unsigned CONV_0_ROW_LEN = (CONV_0_IN_W + CONV_0_K - 1 - 1) / CONV_0_Np + 1;
 const unsigned CONV_0_adW_BIT = 1;
@@ -97,9 +97,10 @@ const unsigned CONV_0_A_Sep = 2;
     
 //--------------------Conv 0: Reshape and Padding Buffer--------------------
 stream<ap_uint<CONV_0_Np * CONV_0_SIMD * CONV_0_IN_BIT> > conv_0_padding_out("conv_0_padding_out");
-reshape_buffer_INPE_SIMD_S2P<CONV_0_K, CONV_0_IN_H, CONV_0_IN_W, CONV_0_IN_CH, CONV_0_OUT_CH / CONV_0_OCH_PF,
+reshape_buffer_SIMD_INPE_S2P<CONV_0_K, CONV_0_IN_H, CONV_0_IN_W, CONV_0_IN_CH, CONV_0_OUT_CH / CONV_0_OCH_PF,
                              CONV_0_Np, CONV_0_IN_BIT, CONV_0_IN_PE, CONV_0_SIMD, 3,
-                             9, 2, 8, 2, 1, 2>(conv_0_in, conv_0_padding_out, reps);
+                             9, 2, 1, 1, 8,
+                             2, 1>(conv_0_in, conv_0_padding_out, reps);
     
 //--------------------Conv 0: Computing Array--------------------
 stream<ap_uint<CONV_0_Np * CONV_0_OCH_PF * CONV_0_M_BIT> > conv_0_array_out("conv_0_array_out");
@@ -107,7 +108,7 @@ FP_Array<CONV_0_K, CONV_0_ROW_LEN, CONV_0_IN_H, CONV_0_IN_CH, CONV_0_OUT_CH,
          CONV_0_IN_BIT, CONV_0_W_BIT, CONV_0_SIMD * CONV_0_KPF, CONV_0_PE, CONV_0_Kp,
          CONV_0_Np, CONV_0_CASCADE, CONV_0_GUARD_BIT, CONV_0_M_BIT, 
          CONV_0_SIMD_BIT, CONV_0_adW_BIT, CONV_0_W_Sep, CONV_0_A_Sep,
-         1, 4, 2, 4>(conv_0_padding_out, conv_0_w, conv_0_array_out, reps);
+         1, 2, 2, 3>(conv_0_padding_out, conv_0_w, conv_0_array_out, reps);
     
 //--------------------Conv 0: Decrease Bit-width--------------------
 stream<ap_uint<CONV_0_ACTP * CONV_0_M_BIT> > conv_0_dec_bw_out("conv_0_dec_bw_out");
@@ -119,11 +120,11 @@ stream<ap_uint<CONV_0_ACTP * CONV_0_OUT_BIT> > conv_0_act_out("conv_0_act_out");
 Activation_Trim<CONV_0_K, CONV_0_IN_W, CONV_0_ROW_LEN, CONV_0_IN_H, CONV_0_OUT_CH,
 CONV_0_IN_BIT, CONV_0_OUT_BIT, CONV_0_W_BIT, CONV_0_INC_BIT, CONV_0_BIAS_BIT,
 CONV_0_L_SHIFT, CONV_0_OCH_PF, CONV_0_ACTP, CONV_0_Np, CONV_0_M_BIT,
-3, 9, 3>(conv_0_dec_bw_out, conv_0_inc, conv_0_bias, conv_0_act_out, reps);
+1, 9, 2>(conv_0_dec_bw_out, conv_0_inc, conv_0_bias, conv_0_act_out, reps);
     
 //--------------------Conv 0: Increase Bit-width--------------------
 stream<ap_uint<2 * CONV_0_OCH_PF * CONV_0_OUT_BIT> > conv_0_conv_out("conv_0_conv_out");
-#pragma HLS STREAM variable = conv_0_conv_out depth = 320
+#pragma HLS STREAM variable = conv_0_conv_out depth = 640
 StreamingDataWidthConverter_Batch<CONV_0_ACTP * CONV_0_OUT_BIT, 2 * CONV_0_OCH_PF * CONV_0_OUT_BIT,
 CONV_0_INC_BW_NUM>(conv_0_act_out, conv_0_conv_out, reps);
 
@@ -135,7 +136,7 @@ print_mavu_DSPopt_stream_through_a2<CONV_0_IN_H, CONV_0_IN_W, CONV_0_OUT_CH, CON
 
 //--------------------Pooling--------------------
 stream<ap_uint<CONV_0_OCH_PF * CONV_0_OUT_BIT> > conv_0_layer_out("conv_0_layer_out");
-#pragma HLS STREAM variable = conv_0_layer_out depth = 160
+#pragma HLS STREAM variable = conv_0_layer_out depth = 320
 max_pool2x2<CONV_0_IN_H, CONV_0_IN_W, CONV_0_OUT_CH, CONV_0_OUT_BIT,
             CONV_0_OCH_PF>(conv_0_conv_out, conv_0_layer_out, reps);
 #ifdef DEBUG
@@ -165,7 +166,7 @@ const unsigned CONV_1_A_Sep = 1;
 stream<ap_uint<CONV_1_Np * CONV_1_K * CONV_1_SIMD * CONV_1_IN_BIT> > conv_1_padding_out("conv_1_padding_out");
 reshape_buffer_INPE_SIMD_FPT<CONV_1_K, CONV_1_IN_H, CONV_1_IN_W, CONV_1_IN_CH, CONV_1_OUT_CH / CONV_1_OCH_PF,
                              CONV_1_Np, CONV_1_IN_BIT, CONV_1_IN_PE, CONV_1_SIMD, 3,
-                             8, 3, 6, 1, 3>(conv_1_in, conv_1_padding_out, reps);
+                             8, 3, 7, 2, 2>(conv_1_in, conv_1_padding_out, reps);
     
 //--------------------Conv 1: Computing Array--------------------
 stream<ap_uint<CONV_1_Np * CONV_1_OCH_PF * CONV_1_M_BIT> > conv_1_array_out("conv_1_array_out");
@@ -173,7 +174,7 @@ FP_Array<CONV_1_K, CONV_1_ROW_LEN, CONV_1_IN_H, CONV_1_IN_CH, CONV_1_OUT_CH,
          CONV_1_IN_BIT, CONV_1_W_BIT, CONV_1_SIMD * CONV_1_KPF, CONV_1_PE, CONV_1_Kp,
          CONV_1_Np, CONV_1_CASCADE, CONV_1_GUARD_BIT, CONV_1_M_BIT, 
          CONV_1_SIMD_BIT, CONV_1_adW_BIT, CONV_1_W_Sep, CONV_1_A_Sep,
-         1, 3, 2, 7>(conv_1_padding_out, conv_1_w, conv_1_array_out, reps);
+         1, 3, 2, 6>(conv_1_padding_out, conv_1_w, conv_1_array_out, reps);
     
 //--------------------Conv 1: Decrease Bit-width--------------------
 stream<ap_uint<CONV_1_ACTP * CONV_1_M_BIT> > conv_1_dec_bw_out("conv_1_dec_bw_out");
@@ -185,11 +186,11 @@ stream<ap_uint<CONV_1_ACTP * CONV_1_OUT_BIT> > conv_1_act_out("conv_1_act_out");
 Activation_Trim<CONV_1_K, CONV_1_IN_W, CONV_1_ROW_LEN, CONV_1_IN_H, CONV_1_OUT_CH,
 CONV_1_IN_BIT, CONV_1_OUT_BIT, CONV_1_W_BIT, CONV_1_INC_BIT, CONV_1_BIAS_BIT,
 CONV_1_L_SHIFT, CONV_1_OCH_PF, CONV_1_ACTP, CONV_1_Np, CONV_1_M_BIT,
-1, 8, 5>(conv_1_dec_bw_out, conv_1_inc, conv_1_bias, conv_1_act_out, reps);
+1, 8, 4>(conv_1_dec_bw_out, conv_1_inc, conv_1_bias, conv_1_act_out, reps);
     
 //--------------------Conv 1: Increase Bit-width--------------------
 stream<ap_uint<2 * CONV_1_OCH_PF * CONV_1_OUT_BIT> > conv_1_conv_out("conv_1_conv_out");
-#pragma HLS STREAM variable = conv_1_conv_out depth = 2560
+#pragma HLS STREAM variable = conv_1_conv_out depth = 1280
 StreamingDataWidthConverter_Batch<CONV_1_ACTP * CONV_1_OUT_BIT, 2 * CONV_1_OCH_PF * CONV_1_OUT_BIT,
 CONV_1_INC_BW_NUM>(conv_1_act_out, conv_1_conv_out, reps);
 
@@ -201,7 +202,7 @@ print_mavu_DSPopt_stream_through_a2<CONV_1_IN_H, CONV_1_IN_W, CONV_1_OUT_CH, CON
 
 //--------------------Pooling--------------------
 stream<ap_uint<CONV_1_OCH_PF * CONV_1_OUT_BIT> > conv_1_layer_out("conv_1_layer_out");
-#pragma HLS STREAM variable = conv_1_layer_out depth = 1280
+#pragma HLS STREAM variable = conv_1_layer_out depth = 640
 max_pool2x2<CONV_1_IN_H, CONV_1_IN_W, CONV_1_OUT_CH, CONV_1_OUT_BIT,
             CONV_1_OCH_PF>(conv_1_conv_out, conv_1_layer_out, reps);
 #ifdef DEBUG
@@ -228,10 +229,11 @@ const unsigned CONV_2_W_Sep = 1;
 const unsigned CONV_2_A_Sep = 1;
     
 //--------------------Conv 2: Reshape and Padding Buffer--------------------
-stream<ap_uint<CONV_2_Np * CONV_2_K * CONV_2_SIMD * CONV_2_IN_BIT> > conv_2_padding_out("conv_2_padding_out");
-reshape_buffer_SIMD_INPE_FPT<CONV_2_K, CONV_2_IN_H, CONV_2_IN_W, CONV_2_IN_CH, CONV_2_OUT_CH / CONV_2_OCH_PF,
+stream<ap_uint<CONV_2_Np * CONV_2_SIMD * CONV_2_IN_BIT> > conv_2_padding_out("conv_2_padding_out");
+reshape_buffer_SIMD_INPE_S2P<CONV_2_K, CONV_2_IN_H, CONV_2_IN_W, CONV_2_IN_CH, CONV_2_OUT_CH / CONV_2_OCH_PF,
                              CONV_2_Np, CONV_2_IN_BIT, CONV_2_IN_PE, CONV_2_SIMD, 3,
-                             7, 3, 3, 3, 7, 3>(conv_2_in, conv_2_padding_out, reps);
+                             7, 3, 4, 1, 5,
+                             2, 1>(conv_2_in, conv_2_padding_out, reps);
     
 //--------------------Conv 2: Computing Array--------------------
 stream<ap_uint<CONV_2_Np * CONV_2_OCH_PF * CONV_2_M_BIT> > conv_2_array_out("conv_2_array_out");
@@ -239,7 +241,7 @@ FP_Array<CONV_2_K, CONV_2_ROW_LEN, CONV_2_IN_H, CONV_2_IN_CH, CONV_2_OUT_CH,
          CONV_2_IN_BIT, CONV_2_W_BIT, CONV_2_SIMD * CONV_2_KPF, CONV_2_PE, CONV_2_Kp,
          CONV_2_Np, CONV_2_CASCADE, CONV_2_GUARD_BIT, CONV_2_M_BIT, 
          CONV_2_SIMD_BIT, CONV_2_adW_BIT, CONV_2_W_Sep, CONV_2_A_Sep,
-         1, 3, 2, 9>(conv_2_padding_out, conv_2_w, conv_2_array_out, reps);
+         1, 2, 2, 7>(conv_2_padding_out, conv_2_w, conv_2_array_out, reps);
     
 //--------------------Conv 2: Decrease Bit-width--------------------
 stream<ap_uint<CONV_2_ACTP * CONV_2_M_BIT> > conv_2_dec_bw_out("conv_2_dec_bw_out");
@@ -251,11 +253,11 @@ stream<ap_uint<CONV_2_ACTP * CONV_2_OUT_BIT> > conv_2_act_out("conv_2_act_out");
 Activation_Trim<CONV_2_K, CONV_2_IN_W, CONV_2_ROW_LEN, CONV_2_IN_H, CONV_2_OUT_CH,
 CONV_2_IN_BIT, CONV_2_OUT_BIT, CONV_2_W_BIT, CONV_2_INC_BIT, CONV_2_BIAS_BIT,
 CONV_2_L_SHIFT, CONV_2_OCH_PF, CONV_2_ACTP, CONV_2_Np, CONV_2_M_BIT,
-1, 7, 7>(conv_2_dec_bw_out, conv_2_inc, conv_2_bias, conv_2_act_out, reps);
+1, 7, 6>(conv_2_dec_bw_out, conv_2_inc, conv_2_bias, conv_2_act_out, reps);
     
 //--------------------Conv 2: Increase Bit-width--------------------
 stream<ap_uint<2 * CONV_2_OCH_PF * CONV_2_OUT_BIT> > conv_2_conv_out("conv_2_conv_out");
-#pragma HLS STREAM variable = conv_2_conv_out depth = 5120
+#pragma HLS STREAM variable = conv_2_conv_out depth = 2560
 StreamingDataWidthConverter_Batch<CONV_2_ACTP * CONV_2_OUT_BIT, 2 * CONV_2_OCH_PF * CONV_2_OUT_BIT,
 CONV_2_INC_BW_NUM>(conv_2_act_out, conv_2_conv_out, reps);
 
@@ -267,7 +269,7 @@ print_mavu_DSPopt_stream_through_a2<CONV_2_IN_H, CONV_2_IN_W, CONV_2_OUT_CH, CON
 
 //--------------------Pooling--------------------
 stream<ap_uint<CONV_2_OCH_PF * CONV_2_OUT_BIT> > conv_2_layer_out("conv_2_layer_out");
-#pragma HLS STREAM variable = conv_2_layer_out depth = 2560
+#pragma HLS STREAM variable = conv_2_layer_out depth = 1280
 max_pool2x2<CONV_2_IN_H, CONV_2_IN_W, CONV_2_OUT_CH, CONV_2_OUT_BIT,
             CONV_2_OCH_PF>(conv_2_conv_out, conv_2_layer_out, reps);
 #ifdef DEBUG
@@ -298,7 +300,7 @@ const unsigned CONV_3_A_Sep = 1;
 stream<ap_uint<CONV_3_Np * CONV_3_SIMD * CONV_3_IN_BIT> > conv_3_padding_out("conv_3_padding_out");
 reshape_buffer_SIMD_INPE_S2P<CONV_3_K, CONV_3_IN_H, CONV_3_IN_W, CONV_3_IN_CH, CONV_3_OUT_CH / CONV_3_OCH_PF,
                              CONV_3_Np, CONV_3_IN_BIT, CONV_3_IN_PE, CONV_3_SIMD, 3,
-                             6, 2, 7, 1, 5,
+                             6, 2, 6, 1, 5,
                              2, 1>(conv_3_in, conv_3_padding_out, reps);
     
 //--------------------Conv 3: Computing Array--------------------
@@ -351,7 +353,7 @@ print_mavu_DSPopt_stream_through<CONV_3_IN_H / 2, CONV_3_IN_W / 2,
 const unsigned CONV_4_IN_PE = CONV_3_OCH_PF;
 stream<ap_uint<CONV_4_IN_PE * CONV_4_IN_BIT> > &conv_4_in = conv_3_layer_out;
 const unsigned CONV_4_M_BIT = CONV_4_IN_BIT + CONV_4_W_BIT + 10;
-const unsigned CONV_4_SIMD_BIT = 4;
+const unsigned CONV_4_SIMD_BIT = 5;
 const unsigned CONV_4_CASCADE = 1;
 const unsigned CONV_4_ROW_LEN = (CONV_4_IN_W + CONV_4_K - 1 - 1) / CONV_4_Np + 1;
 const unsigned CONV_4_adW_BIT = 1;
@@ -365,8 +367,8 @@ const unsigned CONV_4_A_Sep = 2;
 stream<ap_uint<CONV_4_Np * CONV_4_SIMD * CONV_4_IN_BIT> > conv_4_padding_out("conv_4_padding_out");
 reshape_buffer_SIMD_INPE_S2P<CONV_4_K, CONV_4_IN_H, CONV_4_IN_W, CONV_4_IN_CH, CONV_4_OUT_CH / CONV_4_OCH_PF,
                              CONV_4_Np, CONV_4_IN_BIT, CONV_4_IN_PE, CONV_4_SIMD, 3,
-                             5, 2, 3, 4, 7,
-                             2, 4>(conv_4_in, conv_4_padding_out, reps);
+                             5, 2, 4, 3, 6,
+                             2, 3>(conv_4_in, conv_4_padding_out, reps);
     
 //--------------------Conv 4: Computing Array--------------------
 stream<ap_uint<CONV_4_Np * CONV_4_OCH_PF * CONV_4_M_BIT> > conv_4_array_out("conv_4_array_out");
@@ -374,7 +376,7 @@ FP_Array<CONV_4_K, CONV_4_ROW_LEN, CONV_4_IN_H, CONV_4_IN_CH, CONV_4_OUT_CH,
          CONV_4_IN_BIT, CONV_4_W_BIT, CONV_4_SIMD * CONV_4_KPF, CONV_4_PE, CONV_4_Kp,
          CONV_4_Np, CONV_4_CASCADE, CONV_4_GUARD_BIT, CONV_4_M_BIT, 
          CONV_4_SIMD_BIT, CONV_4_adW_BIT, CONV_4_W_Sep, CONV_4_A_Sep,
-         1, 5, 2, 11>(conv_4_padding_out, conv_4_w, conv_4_array_out, reps);
+         1, 4, 2, 10>(conv_4_padding_out, conv_4_w, conv_4_array_out, reps);
     
 //--------------------Conv 4: Decrease Bit-width--------------------
 stream<ap_uint<CONV_4_ACTP * CONV_4_M_BIT> > conv_4_dec_bw_out("conv_4_dec_bw_out");
@@ -406,7 +408,7 @@ print_mavu_DSPopt_stream_through<CONV_4_IN_H, CONV_4_IN_W, CONV_4_OUT_CH, CONV_4
 const unsigned CONV_5_IN_PE = CONV_4_OCH_PF;
 stream<ap_uint<CONV_5_IN_PE * CONV_5_IN_BIT> > &conv_5_in = conv_4_layer_out;
 const unsigned CONV_5_M_BIT = CONV_5_IN_BIT + CONV_5_W_BIT + 10;
-const unsigned CONV_5_SIMD_BIT = 4;
+const unsigned CONV_5_SIMD_BIT = 5;
 const unsigned CONV_5_CASCADE = 1;
 const unsigned CONV_5_ROW_LEN = (CONV_5_IN_W + CONV_5_K - 1 - 1) / CONV_5_Np + 1;
 const unsigned CONV_5_adW_BIT = 1;
@@ -420,8 +422,8 @@ const unsigned CONV_5_A_Sep = 2;
 stream<ap_uint<CONV_5_Np * CONV_5_SIMD * CONV_5_IN_BIT> > conv_5_padding_out("conv_5_padding_out");
 reshape_buffer_SIMD_INPE_S2P<CONV_5_K, CONV_5_IN_H, CONV_5_IN_W, CONV_5_IN_CH, CONV_5_OUT_CH / CONV_5_OCH_PF,
                              CONV_5_Np, CONV_5_IN_BIT, CONV_5_IN_PE, CONV_5_SIMD, 3,
-                             5, 2, 4, 4, 7,
-                             2, 4>(conv_5_in, conv_5_padding_out, reps);
+                             5, 2, 5, 3, 6,
+                             2, 3>(conv_5_in, conv_5_padding_out, reps);
     
 //--------------------Conv 5: Computing Array--------------------
 stream<ap_uint<CONV_5_Np * CONV_5_OCH_PF * CONV_5_M_BIT> > conv_5_array_out("conv_5_array_out");
@@ -429,7 +431,7 @@ FP_Array<CONV_5_K, CONV_5_ROW_LEN, CONV_5_IN_H, CONV_5_IN_CH, CONV_5_OUT_CH,
          CONV_5_IN_BIT, CONV_5_W_BIT, CONV_5_SIMD * CONV_5_KPF, CONV_5_PE, CONV_5_Kp,
          CONV_5_Np, CONV_5_CASCADE, CONV_5_GUARD_BIT, CONV_5_M_BIT, 
          CONV_5_SIMD_BIT, CONV_5_adW_BIT, CONV_5_W_Sep, CONV_5_A_Sep,
-         1, 5, 2, 11>(conv_5_padding_out, conv_5_w, conv_5_array_out, reps);
+         1, 4, 2, 10>(conv_5_padding_out, conv_5_w, conv_5_array_out, reps);
     
 //--------------------Conv 5: Decrease Bit-width--------------------
 stream<ap_uint<CONV_5_ACTP * CONV_5_M_BIT> > conv_5_dec_bw_out("conv_5_dec_bw_out");

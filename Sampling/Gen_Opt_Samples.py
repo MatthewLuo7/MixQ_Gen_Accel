@@ -7,12 +7,7 @@ import pathlib
 from string import Template
 import sys
 sys.path.append('../DSP_Explorer/')
-sys.path.append('../Opt_Definition/ConvOpt_FP/')
-sys.path.append('../Opt_Definition/ConvOpt_FP_DW/')
-sys.path.append('../Opt_Definition/ConvOpt_FP_DW_LUT/')
-sys.path.append('../Opt_Definition/ConvOpt_FP_LUT/')
-sys.path.append('../Opt_Definition/ConvOpt_KP/')
-sys.path.append('../Opt_Definition/ConvOpt_KP_LUT/')
+sys.path.append('../Opt_Definition/')
 
 from ConvOpt_FP import FP_Opt_Templates
 from ConvOpt_FP_LUT import FP_LUT_Opt_Templates

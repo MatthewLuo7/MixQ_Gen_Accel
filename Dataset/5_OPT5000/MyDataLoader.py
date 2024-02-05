@@ -69,11 +69,28 @@ def load_dataset(dataset_path, Packing, LUT, DW, Include_II_violation=False):
                 T_WNS.append([opt_val['Syn_Res']['timing']['AchievedClockPeriod']])
                 II_flag.append([int(opt_val['Syn_Res']['timing']['PipelineII']) == 1])
 
-                # # debug
-                # opt_config = opt_val['Config']
-                # est = opt_config['w_sep'] * opt_config['a_sep'] * opt_config['simd'] * opt_config['pe'] * opt_config['kpf'] + opt_config['actp']
-                # if int(opt_val['Syn_Res']['resources']['DSP']) == 73 and est == 37:
-                #     print(opt_name)
+                # debug
+                # if ((R_DSP[-1][-1] / features[-1][-1]) > 2) and (features[-1][-1] >= 45):
+                if ((R_DSP[-1][-1] / features[-1][-1]) < 1.0) and (features[-1][-1] >= 45):
+                    gb = opt_val['Config']['gb']
+                    kp = opt_val['Config']['kp']
+                    np = opt_val['Config']['np']
+                    cascade = opt_val['Config']['simd'] * opt_val['Config']['kpf']
+                    pe = opt_val['Config']['pe']
+                    flag = (2 ** gb) < min(kp, np)
+
+                    if True:
+                        ratio = round((R_DSP[-1][-1] / features[-1][-1]) * 1000) / 1000.0
+
+                        abit = opt_val['Config']['abit']
+                        wbit = opt_val['Config']['wbit']
+                        prod_bit = abit + wbit + gb
+                        wp_len = prod_bit * (kp - 1) + wbit + 1
+                        ap_len = prod_bit * (np - 1) + abit
+                        min_plen = min(ap_len, wp_len)
+
+                        print(f'Opt: {opt_name}, Est DSP: {features[-1][-1]}, DSP: {R_DSP[-1][-1]}, flag: {flag}, min Plen: {min_plen}, ratio: {ratio}')
+                        # print(f'Opt: {opt_name}, Est DSP: {features[-1][-1]}, DSP: {R_DSP[-1][-1]}, flag: {flag}, cascade: {cascade}, pe: {pe}, ratio: {cascade / pe}')
 
     return features, R_DSP, R_LUT, R_BRM, T_WNS, II_flag
 
@@ -92,6 +109,7 @@ class HLS_Dataloader:
         Y = np.concatenate((y_dsp, y_lut, y_brm, y_wns, y_IIf), axis=1)
 
         self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(X, Y, test_size=test_size, random_state=42)
+
 
     def get_datasets(self):
         return self.X_train, self.Y_train, self.X_test, self.Y_test

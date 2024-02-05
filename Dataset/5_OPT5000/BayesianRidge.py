@@ -61,7 +61,9 @@ if __name__ == '__main__':
 	# est = X_train[:, 12] * X_train[:, 13] * X_train[:, 14] * X_train[:, 15] * X_train[:, 17] + X_train[:, 16]
 	# print(np.concatenate((kft, est.reshape(-1, 1), Y_train[:, 0].reshape(-1, 1)), axis=1))
 	# print(kft.shape)
-	# print(np.concatenate((est.reshape(-1, 1), Y_train[:, 0].reshape(-1, 1), Y_train[:, 0].reshape(-1, 1) / est.reshape(-1, 1)), axis=1))
+	# check = np.concatenate((est.reshape(-1, 1), Y_train[:, 0].reshape(-1, 1), Y_train[:, 0].reshape(-1, 1) / est.reshape(-1, 1)), axis=1)
+	# print(check.shape)
+	# print(check[check[:, -1] > 2])
 
 	# # II
 	# HLS_Data = HLS_Dataloader(dataset_path, test_size, Packing, LUT, DW, True)

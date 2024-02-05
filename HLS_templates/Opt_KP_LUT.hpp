@@ -47,9 +47,6 @@ void KP_Comp_SIMD_LUT(ap_uint<IN_BIT> ipacks[SIMD][Np],
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 2
 
   ap_int<ACC_BIT> res[Kp][Np];
-#pragma HLS ARRAY_PARTITION variable = res complete dim = 1
-#pragma HLS ARRAY_PARTITION variable = res complete dim = 1
-
   for(unsigned k = 0; k < Kp; k++){
   	for(unsigned n = 0; n < Np; n++){
   	  res[k][n] = 0;
@@ -59,11 +56,10 @@ void KP_Comp_SIMD_LUT(ap_uint<IN_BIT> ipacks[SIMD][Np],
   for(unsigned i = 0; i < SIMD; i++){
   	for(unsigned k = 0; k < Kp; k++){
   	  for(unsigned n = 0; n < Np; n++){
-  	    ap_int<W_BIT + IN_BIT> mul_temp = wpacks[i][k] * ipacks[i][n];
-
+  	    ap_int<W_BIT + IN_BIT> mul_temp;
 #pragma HLS RESOURCE variable=mul_temp core=Mul_LUT
         mul_temp = wpacks[i][k] * ipacks[i][n];
-        
+#pragma HLS RESOURCE variable=res core=AddSubnS      
   	    res[k][n] += mul_temp;
   	  }
   	}

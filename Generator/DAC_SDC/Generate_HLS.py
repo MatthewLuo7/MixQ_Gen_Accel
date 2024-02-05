@@ -196,16 +196,20 @@ def print_ndarray_recursion(arr, str_func=str, file=sys.stdout, stop=0):
     print(ends+'}', file=file, end='')
 
 def adjust_weight(model_param):
-    # special_wa_bit = ((4,2),(5,3),(5,4),(5,5),(5,6),(5,7),(5,8),(7,2),(7,3)) 
-    special_wa_bit = []
-    # These packing can't quantize to -2**(wbit-1)
+    # # special_wa_bit = ((4,2),(5,3),(5,4),(5,5),(5,6),(5,7),(5,8),(7,2),(7,3)) 
+    # special_wa_bit = []
+    # # These packing can't quantize to -2**(wbit-1)
+    # for conv in model_param:
+    #     if (conv.wbit, conv.abit) in special_wa_bit:
+    #         print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
+    #         conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
+
     for conv in model_param:
-        if (conv.wbit, conv.abit) in special_wa_bit:
-            print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
-            conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
+        print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
+        conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
 
 def gen_opts(model_param, array_config):
-    DSP_Explorer = DSP_Config_Search(27, 18, 8)
+    DSP_Explorer = DSP_Config_Search(27, 18, 0)
     model_opt = []
     for idx, (conv, extra_para) in enumerate(zip(model_param, array_config)):
         conv.simd = extra_para[0]
@@ -256,41 +260,6 @@ def gen_opts(model_param, array_config):
                 model_opt.append(opt)
         else:
             raise TypeError(f"Operator {str(opt_type)} is not defined!")
-
-    # for conv, extra_para in zip(model_param, array_config[:, :10]):
-    #     conv.simd = extra_para[0]
-    #     conv.pe = extra_para[1]
-    #     conv.actp = extra_para[2]
-    #     conv.kp = extra_para[3] 
-    #     conv.np = extra_para[4]
-    #     conv.gb = extra_para[5]  
-    #     conv.kpf = extra_para[6]
-    #     conv.max_pool = extra_para[7]
-    #     conv.w_sep = extra_para[8]
-    #     conv.a_sep = extra_para[9]
-
-    # model_opt = []
-    # for conv, opt_type in zip(model_param, array_config[:, 10]):
-    #     pack_flag = False        # to be modified
-
-
-    #     if opt_type == 0:
-    #         conv.pack_flag = pack_flag        # to be modified
-    #         model_opt.append(KP_Opt_Templates(conv))
-    #     elif opt_type == 1:
-    #         conv.pack_flag = pack_flag        # to be modified
-    #         model_opt.append(KP_LUT_Opt_Templates(conv))
-    #     elif opt_type == 2:
-    #         model_opt.append(FP_Opt_Templates(conv))
-    #     elif opt_type == 3:
-    #         model_opt.append(FP_LUT_Opt_Templates(conv))
-    #     elif opt_type == 4:
-    #         conv.pack_flag = pack_flag        # to be modified
-    #         model_opt.append(Conv1x1_Opt_Templates(conv))
-    #     elif opt_type == 5:
-    #         model_opt.append(FP_DW_Opt_Templates(conv))
-    #     else:
-    #         raise ValueError(f"Operator {str(opt_type)} is not defined!")
 
     return model_opt
 

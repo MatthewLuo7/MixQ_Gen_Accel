@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: tb.cpp
-* Date: Sat Jan 20 14:21:04 2024
+* Date: Sun Feb  4 17:29:52 2024
 * Description: reference testbench for accelerator
 ********************************************************************************/
 #include <stdint.h>
@@ -21,7 +21,7 @@ using namespace std;
 #define div 1297.776528460163
 
 
-string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/3_ultranet_mixed1/debug_path/";
+string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/5_ultranet_mDR/debug_path/";
 
 void ultra_net(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
 

@@ -179,18 +179,18 @@ class Pipeline_Allocation:
 						bram_const = cur_bram
 						best_Lat = cur_Lat
 
-		#debug
-		import json
-		debug_dict = {}
-		for layer in range(0, self.n_layers):
-			for cur_dsp in range(0, self.DSP_max_step + 1):
-				for cur_lut in range(0, self.LUT_max_step + 1):
-					for cur_bram in range(0, self.BRAM_max_step + 1):
-						cur_Node = self.DPT[self.n_layers - 1][cur_bram][cur_lut][cur_dsp]
-						debug_dict[f'{layer}_{cur_bram}_{cur_lut}_{cur_dsp}'] = {'Lat': cur_Node.Lat, 'SIMD': cur_Node.SIMD, 'PE': cur_Node.PE, 'ACTP': cur_Node.ACTP, 'KPF': cur_Node.KPF}
+		# #debug
+		# import json
+		# debug_dict = {}
+		# for layer in range(0, self.n_layers):
+		# 	for cur_dsp in range(0, self.DSP_max_step + 1):
+		# 		for cur_lut in range(0, self.LUT_max_step + 1):
+		# 			for cur_bram in range(0, self.BRAM_max_step + 1):
+		# 				cur_Node = self.DPT[self.n_layers - 1][cur_bram][cur_lut][cur_dsp]
+		# 				debug_dict[f'{layer}_{cur_bram}_{cur_lut}_{cur_dsp}'] = {'Lat': cur_Node.Lat, 'SIMD': cur_Node.SIMD, 'PE': cur_Node.PE, 'ACTP': cur_Node.ACTP, 'KPF': cur_Node.KPF}
 
-		with open('./dp_table.json', 'w', encoding='utf-8') as f:
-			json.dump(debug_dict, f, indent=4)
+		# with open('./dp_table.json', 'w', encoding='utf-8') as f:
+		# 	json.dump(debug_dict, f, indent=4)
 
 		best_Node = self.DPT[self.n_layers - 1][bram_const][lut_const][dsp_const]
 		SIMD_list = best_Node.SIMD

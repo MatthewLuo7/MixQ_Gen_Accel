@@ -9,7 +9,6 @@ const unsigned CONV_${No}_M_BIT = 32;
 const unsigned CONV_${No}_SIMD_BIT = ${SIMD_BIT};
 const unsigned CONV_${No}_CASCADE = ${CASCADE};
 const unsigned CONV_${No}_ROW_LEN = (CONV_${No}_IN_W + CONV_${No}_K - 1 - 1) / CONV_${No}_Np + 1;
-const unsigned CONV_${No}_adW_BIT = 1;
 const bool CONV_${No}_PatternFlag = ${PatternFlag};
 const unsigned CONV_${No}_OCH_PF = CONV_${No}_PE * CONV_${No}_Kp;
 const unsigned CONV_${No}_DEC_BW_NUM = CONV_${No}_IN_H * (CONV_${No}_OUT_CH / CONV_${No}_OCH_PF) * CONV_${No}_ROW_LEN;

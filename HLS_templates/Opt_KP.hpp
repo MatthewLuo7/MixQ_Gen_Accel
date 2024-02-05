@@ -72,8 +72,6 @@ void KP_Comp_SIMD_cascade(ap_uint<IPACK_BIT> ipacks[SIMD],
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 2
 
   ap_int<ACC_BIT + 1> res[Kp * Np];
-#pragma HLS ARRAY_PARTITION variable = res complete dim = 1
-
   for (unsigned t = 0; t < (Kp * Np); t++){
     res[t] = 0;
   }
@@ -81,22 +79,28 @@ void KP_Comp_SIMD_cascade(ap_uint<IPACK_BIT> ipacks[SIMD],
   for (unsigned i = 0; i < SIMD; i += CASCADE){
     ap_int<PROD_BIT * Np * Kp> DSP_Res = 0;
     for (unsigned j = 0; j < CASCADE; j++){           //cascade through DSP's accumulator
-      DSP_Res += ipacks[i+j] * wpacks[i+j];
+      ap_int<PROD_BIT * Np * Kp> DSP;
+#pragma HLS RESOURCE variable=DSP core=DSP48
+      DSP = ipacks[i+j] * wpacks[i+j];
+      DSP_Res += DSP;
     }
 
     if(Is_Signed){
       ap_int<PROD_BIT> res0_temp = DSP_Res(PROD_BIT - 1, 0);
+#pragma HLS RESOURCE variable=res core=AddSubnS
       res[0] += res0_temp;
       for (unsigned k = 1; k < (Kp * Np); k++){
         ap_int<PROD_BIT> res_temp = DSP_Res(k*PROD_BIT + PROD_BIT - 1, k*PROD_BIT);
-        ap_int<PROD_BIT> acc_res_temp = res_temp + DSP_Res[k*PROD_BIT - 1];
+        ap_int<PROD_BIT> acc_res_temp;
+#pragma HLS RESOURCE variable=acc_res_temp core=AddSubnS
+        acc_res_temp = res_temp + DSP_Res[k*PROD_BIT - 1];
+#pragma HLS RESOURCE variable=res core=AddSubnS
         res[k] += acc_res_temp;
       }
     }else{
-      ap_uint<PROD_BIT> res0_temp = DSP_Res(PROD_BIT - 1, 0);
-      res[0] += res0_temp;
-      for (unsigned k = 1; k < (Kp * Np); k++){
+      for (unsigned k = 0; k < (Kp * Np); k++){
         ap_uint<PROD_BIT> res_temp = DSP_Res(k*PROD_BIT + PROD_BIT - 1, k*PROD_BIT);
+#pragma HLS RESOURCE variable=res core=AddSubnS
         res[k] += res_temp;
       }
     }
@@ -133,8 +137,6 @@ void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete dim = 2
 
   ap_int<ACC_BIT> res[Kp * Np];           //Initialize accumulation variables
-#pragma HLS ARRAY_PARTITION variable = res complete dim = 1
-
   for (unsigned t = 0; t < (Kp * Np); t++){
     res[t] = 0;
   }
@@ -155,7 +157,9 @@ void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
       }
     }
 
-    ap_int<PROD_BIT * Np * Kp + 1> DSP_Res = ipacks[i] * wpacks[i];                 //DSP packing multiplication
+    ap_int<PROD_BIT * Np * Kp + 1> DSP_Res;
+    #pragma HLS RESOURCE variable=DSP_Res core=DSP48
+    DSP_Res = ipacks[i] * wpacks[i];                 //DSP packing multiplication
 
     if(Is_Signed){
       ap_int<PROD_BIT + 1> rfix[Np*Kp];
@@ -169,7 +173,10 @@ void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
   
       for (unsigned k = 0; k < Np*Kp; k++){
         ap_int<PROD_BIT + 1> res_temp = DSP_Res((k+1)*PROD_BIT, k*PROD_BIT);
-        ap_int<PROD_BIT + 1> acc_res_temp = res_temp + rfix[k];
+        ap_int<PROD_BIT + 1> acc_res_temp;
+#pragma HLS RESOURCE variable=acc_res_temp core=AddSubnS
+        acc_res_temp = res_temp + rfix[k];
+#pragma HLS RESOURCE variable=res core=AddSubnS
         res[k] += acc_res_temp;
       }
     }else{
@@ -177,7 +184,6 @@ void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
 #pragma HLS ARRAY_PARTITION variable = rfix complete
   
       rfix[0] = (fixsig[1], (ap_uint<PROD_BIT>) 0);
-      // rfix[Np*Kp - 1] = ((ap_uint<PROD_BIT>) 0, fixsig[Np*Kp - 1]^DSP_Res[(Np*Kp - 1)*PROD_BIT]);
       rfix[Np*Kp - 1] = (fixsig[Np*Kp - 1] == DSP_Res[(Np*Kp - 1)*PROD_BIT]) ? ~0:0;
       for (unsigned j = 1; j < (Np*Kp - 1); j++){
         ap_uint<PROD_BIT + 1> rfix_temp = fixsig[j]^DSP_Res[j*PROD_BIT];
@@ -187,7 +193,10 @@ void KP_Comp_SIMD_overlap(ap_uint<IPACK_BIT> ipacks[SIMD],
   
       for (unsigned k = 0; k < Np*Kp; k++){
         ap_uint<PROD_BIT + 1> res_temp = DSP_Res((k+1)*PROD_BIT, k*PROD_BIT);
-        ap_uint<PROD_BIT + 1> acc_res_temp = res_temp + rfix[k];
+        ap_uint<PROD_BIT + 1> acc_res_temp;
+#pragma HLS RESOURCE variable=acc_res_temp core=AddSubnS
+        acc_res_temp = res_temp + rfix[k];
+#pragma HLS RESOURCE variable=res core=AddSubnS
         res[k] += acc_res_temp;
       }
     }
@@ -243,7 +252,7 @@ void KP_Comp_SIMD(ap_uint<SIMD * Kp * W_BIT> weights,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, bool Pattern_Flag, unsigned kc_counter_bw, unsigned kich_counter_bw, unsigned och_offset_bw>
+          bool Pattern_Flag, unsigned kc_counter_bw, unsigned kich_counter_bw, unsigned och_offset_bw>
 void KP_Array_bas(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
                   const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
                   stream<ap_uint<Np * PE * Kp * M_BIT> > &out,
@@ -254,7 +263,7 @@ void KP_Array_bas(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
   const unsigned WITV_BIT = Pattern_Flag ? PROD_BIT : (Np * PROD_BIT);
   const unsigned AITV_BIT = Pattern_Flag ? (Kp * PROD_BIT) : PROD_BIT;
   const unsigned IPACK_BIT = (Np - 1) * AITV_BIT + IN_BIT;
-  const unsigned WPACK_BIT = (Kp - 1) * WITV_BIT + W_BIT + adW_BIT;
+  const unsigned WPACK_BIT = (Kp - 1) * WITV_BIT + W_BIT;
   const unsigned OUTPENUM = OUT_CH / (PE * Kp);
   const unsigned INFOLD = K * IN_CH / SIMD;
   const bool Overlap_Flag = (GUARD_BIT < 0);
@@ -475,7 +484,7 @@ void KP_Comp_SIMD_sep(ap_uint<SIMD * Kp * W_BIT> weights,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag, unsigned kc_counter_bw,
+          unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag, unsigned kc_counter_bw,
           unsigned kich_counter_bw, unsigned och_offset_bw>
 void KP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
                   const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],      // dim2: Kc --> Kr * IN_CH / SIMD --> OUT_CH / (Kp * PE)
@@ -495,7 +504,7 @@ void KP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
   const unsigned WITV_BIT = Pattern_Flag ? PROD_BIT : (Np * PROD_BIT);
   const unsigned AITV_BIT = Pattern_Flag ? (Kp * PROD_BIT) : PROD_BIT;
   const unsigned IPACK_BIT = (Sep_Flag) ? ((Np - 1) * AITV_BIT + IN_BIT_H):((Np - 1) * AITV_BIT + IN_BIT);
-  const unsigned WPACK_BIT = (Sep_Flag) ? ((Kp - 1) * WITV_BIT + W_BIT + adW_BIT):((Kp - 1) * WITV_BIT + W_BIT_H + adW_BIT);
+  const unsigned WPACK_BIT = (Sep_Flag) ? ((Kp - 1) * WITV_BIT + W_BIT):((Kp - 1) * WITV_BIT + W_BIT_H);
   const unsigned ACC_Left_Shift = (Sep_Flag) ? IN_BIT_L:W_BIT_L;
   const unsigned ACC_BIT = (Sep_Flag) ? (W_BIT + IN_BIT_H + SIMD_BIT):(W_BIT_H + IN_BIT + SIMD_BIT);
 
@@ -606,7 +615,7 @@ void KP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned IN_CH, unsigned OUT_CH,
           unsigned IN_BIT, unsigned W_BIT, unsigned SIMD, unsigned PE, unsigned Kp,
           unsigned Np, unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned SIMD_BIT,
-          unsigned adW_BIT, unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag, unsigned kc_counter_bw,
+          unsigned W_Sep, unsigned A_Sep, bool Pattern_Flag, unsigned kc_counter_bw,
           unsigned kich_counter_bw, unsigned och_offset_bw>
 void KP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
               const ap_uint<SIMD * Kp * W_BIT> weights[PE][K * (K * IN_CH / SIMD) * (OUT_CH / (Kp * PE))],
@@ -616,11 +625,11 @@ void KP_Array(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
 
   if(SEL == 1){
     KP_Array_bas<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
-                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, Pattern_Flag,
+                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, Pattern_Flag,
                  kc_counter_bw, kich_counter_bw, och_offset_bw>(in, weights, out, reps);
   }else{
     KP_Array_sep<K, ROW_LEN, IN_H, IN_CH, OUT_CH, IN_BIT, W_BIT, SIMD, PE, Kp, Np,
-                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, adW_BIT, W_Sep, A_Sep, Pattern_Flag,
+                 CASCADE, GUARD_BIT, M_BIT, SIMD_BIT, W_Sep, A_Sep, Pattern_Flag,
                  kc_counter_bw, kich_counter_bw, och_offset_bw>(in, weights, out, reps);
   }
 }

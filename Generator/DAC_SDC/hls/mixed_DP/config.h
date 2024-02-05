@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: config.h
-* Date: $Thu Feb  1 22:01:14 2024
+* Date: $Thu Feb  1 22:44:46 2024
 * Description: configuration file for the generated accelerator
 ********************************************************************************/
 
@@ -18,10 +18,10 @@
 #define CONV_0_INC_BIT 14
 #define CONV_0_BIAS_BIT 23
 #define CONV_0_OUT_BIT 3
-#define CONV_0_SIMD 3
-#define CONV_0_PE 8
+#define CONV_0_SIMD 1
+#define CONV_0_PE 16
 #define CONV_0_L_SHIFT 8
-#define CONV_0_ACTP 8
+#define CONV_0_ACTP 4
 #define CONV_0_Kp 3
 #define CONV_0_Np 2
 #define CONV_0_GUARD_BIT 1
@@ -39,9 +39,9 @@
 #define CONV_1_BIAS_BIT 18
 #define CONV_1_OUT_BIT 3
 #define CONV_1_SIMD 4
-#define CONV_1_PE 4
+#define CONV_1_PE 2
 #define CONV_1_L_SHIFT 8
-#define CONV_1_ACTP 4
+#define CONV_1_ACTP 2
 #define CONV_1_Kp 3
 #define CONV_1_Np 4
 #define CONV_1_GUARD_BIT 1
@@ -58,14 +58,14 @@
 #define CONV_2_INC_BIT 13
 #define CONV_2_BIAS_BIT 19
 #define CONV_2_OUT_BIT 6
-#define CONV_2_SIMD 32
-#define CONV_2_PE 2
+#define CONV_2_SIMD 8
+#define CONV_2_PE 1
 #define CONV_2_L_SHIFT 8
-#define CONV_2_ACTP 2
+#define CONV_2_ACTP 1
 #define CONV_2_Kp 3
 #define CONV_2_Np 4
 #define CONV_2_GUARD_BIT 2
-#define CONV_2_KPF 1
+#define CONV_2_KPF 3
 
 // conv_3
 #define CONV_3_K 3
@@ -98,7 +98,7 @@
 #define CONV_4_INC_BIT 14
 #define CONV_4_BIAS_BIT 26
 #define CONV_4_OUT_BIT 7
-#define CONV_4_SIMD 16
+#define CONV_4_SIMD 8
 #define CONV_4_PE 1
 #define CONV_4_L_SHIFT 8
 #define CONV_4_ACTP 1
@@ -118,7 +118,7 @@
 #define CONV_5_INC_BIT 14
 #define CONV_5_BIAS_BIT 25
 #define CONV_5_OUT_BIT 6
-#define CONV_5_SIMD 16
+#define CONV_5_SIMD 8
 #define CONV_5_PE 1
 #define CONV_5_L_SHIFT 8
 #define CONV_5_ACTP 1

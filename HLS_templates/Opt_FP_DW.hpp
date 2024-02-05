@@ -14,8 +14,8 @@ using namespace hls;
 //-------------------------------------------------------- Basic FP --------------------------------------------------------
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH, unsigned IN_BIT,
           unsigned W_BIT, unsigned KPF, unsigned PE, unsigned Kp, unsigned Np,
-          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned adW_BIT,
-          unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
+          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned k_counter_bw,
+          unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array_bas_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
                      const ap_uint<K * KPF * W_BIT> weights[PE][(K / KPF) * (OUT_CH / PE)],
                      stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -23,12 +23,12 @@ void FP_Array_bas_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
 #pragma HLS ARRAY_PARTITION variable = weights complete dim = 1
 
   const unsigned PROD_BIT = W_BIT + IN_BIT + GUARD_BIT;
-  const unsigned WPACK_BIT = PROD_BIT * (Kp - 1) + W_BIT + adW_BIT;
+  const unsigned WPACK_BIT = PROD_BIT * (Kp - 1) + W_BIT;
   const unsigned IPACK_BIT = PROD_BIT * (Np - 1) + IN_BIT;
   const unsigned PENUM = OUT_CH / PE;
   const unsigned INFOLD = K / KPF;
   const unsigned KNUM = (K - 1) / Kp + 1;        //ceil(K / Kp) 
-  const bool Overlap_Flag = ((1 << GUARD_BIT) < Kp) && ((1 << GUARD_BIT) < Np);
+  const bool Overlap_Flag = (GUARD_BIT < 0) || (((1 << GUARD_BIT) < Kp) && ((1 << GUARD_BIT) < Np));
 
   ap_uint<IPACK_BIT> ipacks[PE][KPF];
 #pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
@@ -133,9 +133,8 @@ void FP_Array_bas_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
 //-------------------------------------------------------- Operand Seperation FP --------------------------------------------------------
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH, unsigned IN_BIT,
           unsigned W_BIT, unsigned KPF, unsigned PE, unsigned Kp, unsigned Np,
-          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned adW_BIT,
-          unsigned W_Sep, unsigned A_Sep, unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw,
-          unsigned add_offset_bw>
+          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned W_Sep,
+          unsigned A_Sep, unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array_sep_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
                      const ap_uint<K * KPF * W_BIT> weights[PE][(K / KPF) * (OUT_CH  / PE)],
                      stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -151,7 +150,7 @@ void FP_Array_sep_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
 
   const unsigned M_BIT_Sep = (Sep_Flag) ? (M_BIT - IN_BIT + IN_BIT_H):(M_BIT - W_BIT + W_BIT_H);
   const unsigned PROD_BIT =(Sep_Flag) ? (W_BIT + IN_BIT_H + GUARD_BIT):(W_BIT_H + IN_BIT + GUARD_BIT);
-  const unsigned WPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Kp - 1) + W_BIT + adW_BIT):(PROD_BIT * (Kp - 1) + W_BIT_H + adW_BIT);
+  const unsigned WPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Kp - 1) + W_BIT):(PROD_BIT * (Kp - 1) + W_BIT_H);
   const unsigned IPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Np - 1) + IN_BIT_H):(PROD_BIT * (Np - 1) + IN_BIT);
   const unsigned ACC_Left_Shift = (Sep_Flag) ? IN_BIT_L:W_BIT_L;
   const unsigned ACC_BIT = (Sep_Flag) ? (W_BIT + IN_BIT_H + KPF_BIT):(W_BIT_H + IN_BIT + KPF_BIT);
@@ -159,7 +158,7 @@ void FP_Array_sep_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
   const unsigned PENUM = OUT_CH / PE;
   const unsigned INFOLD = K / KPF;
   const unsigned KNUM = (K - 1) / Kp + 1;        //ceil(K / Kp) 
-  const bool Overlap_Flag = ((1 << GUARD_BIT) < Kp) && ((1 << GUARD_BIT) < Np);
+  const bool Overlap_Flag = (GUARD_BIT < 0) || (((1 << GUARD_BIT) < Kp) && ((1 << GUARD_BIT) < Np));
 
   ap_uint<IPACK_BIT> ipacks[PE][A_Sep][KPF];
 #pragma HLS ARRAY_PARTITION variable = ipacks complete dim = 1
@@ -277,9 +276,8 @@ void FP_Array_sep_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
 //-------------------------------------------------------- Unified FP Wrapper --------------------------------------------------------
 template <unsigned K, unsigned ROW_LEN, unsigned IN_H, unsigned OUT_CH, unsigned IN_BIT,
           unsigned W_BIT, unsigned KPF, unsigned PE, unsigned Kp, unsigned Np,
-          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned adW_BIT,
-          unsigned W_Sep, unsigned A_Sep, unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw,
-          unsigned add_offset_bw>
+          unsigned CASCADE, int GUARD_BIT, unsigned M_BIT, unsigned KPF_BIT, unsigned W_Sep,
+          unsigned A_Sep, unsigned k_counter_bw, unsigned infold_counter_bw, unsigned res_offset_bw, unsigned add_offset_bw>
 void FP_Array_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
                  const ap_uint<K * KPF * W_BIT> weights[PE][(K / KPF) * (OUT_CH / PE)],
                  stream<ap_uint<Np * PE * M_BIT> > &out,
@@ -288,11 +286,11 @@ void FP_Array_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
 
   if(SEL == 1){
     FP_Array_bas_DW<K, ROW_LEN, IN_H, OUT_CH, IN_BIT, W_BIT, KPF, PE,
-                    Kp, Np, CASCADE, GUARD_BIT, M_BIT, KPF_BIT, adW_BIT,
+                    Kp, Np, CASCADE, GUARD_BIT, M_BIT, KPF_BIT,
                     k_counter_bw, infold_counter_bw, res_offset_bw, add_offset_bw>(in, weights, out, reps);
   }else{                                                                                            // SEL == 2
     FP_Array_sep_DW<K, ROW_LEN, IN_H, OUT_CH, IN_BIT, W_BIT, KPF, PE,
-                    Kp, Np, CASCADE, GUARD_BIT, M_BIT, KPF_BIT, adW_BIT, W_Sep, A_Sep,
+                    Kp, Np, CASCADE, GUARD_BIT, M_BIT, KPF_BIT, W_Sep, A_Sep,
                     k_counter_bw, infold_counter_bw, res_offset_bw, add_offset_bw>(in, weights, out, reps);
   }
 }
