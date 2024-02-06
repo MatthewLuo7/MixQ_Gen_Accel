@@ -1,0 +1,492 @@
+{
+    "K": 1,
+    "overlap": 1,
+    "filter_packing": true,
+    "kernel_packing": true,
+    "acc_num": null,
+    "och": null,
+    "Lookup": {
+        "w2a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 6,
+            "T_mul": 12.0,
+            "gb": -1
+        },
+        "w2a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 5,
+            "np": 2,
+            "T_mul": 10.0,
+            "gb": -1
+        },
+        "w2a4": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 4,
+            "np": 2,
+            "T_mul": 8.0,
+            "gb": -1
+        },
+        "w2a5": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 3,
+            "np": 2,
+            "T_mul": 6.0,
+            "gb": 0
+        },
+        "w2a6": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 3,
+            "np": 2,
+            "T_mul": 6.0,
+            "gb": -1
+        },
+        "w2a7": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 2
+        },
+        "w2a8": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 0
+        },
+        "w3a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 5,
+            "T_mul": 10.0,
+            "gb": -1
+        },
+        "w3a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 4,
+            "T_mul": 8.0,
+            "gb": -1
+        },
+        "w3a4": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 3,
+            "T_mul": 6.0,
+            "gb": 0
+        },
+        "w3a5": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 3,
+            "np": 2,
+            "T_mul": 6.0,
+            "gb": -1
+        },
+        "w3a6": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 3
+        },
+        "w3a7": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 1
+        },
+        "w3a8": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": -1
+        },
+        "w4a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 4,
+            "T_mul": 8.0,
+            "gb": -1
+        },
+        "w4a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 3,
+            "T_mul": 6.0,
+            "gb": 0
+        },
+        "w4a4": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 3,
+            "T_mul": 6.0,
+            "gb": -1
+        },
+        "w4a5": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 2
+        },
+        "w4a6": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 1
+        },
+        "w4a7": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 0
+        },
+        "w4a8": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 3,
+            "np": 1,
+            "T_mul": 3.0,
+            "gb": -1
+        },
+        "w5a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 3,
+            "T_mul": 6.0,
+            "gb": 0
+        },
+        "w5a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 3,
+            "T_mul": 6.0,
+            "gb": -1
+        },
+        "w5a4": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 2
+        },
+        "w5a5": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 1
+        },
+        "w5a6": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 0
+        },
+        "w5a7": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": -1
+        },
+        "w5a8": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 1,
+            "T_mul": 2.0,
+            "gb": 9
+        },
+        "w6a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 3,
+            "T_mul": 6.0,
+            "gb": -1
+        },
+        "w6a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 3
+        },
+        "w6a4": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 1
+        },
+        "w6a5": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 0
+        },
+        "w6a6": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 9
+        },
+        "w6a7": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 1,
+            "T_mul": 2.0,
+            "gb": 8
+        },
+        "w6a8": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 1,
+            "T_mul": 2.0,
+            "gb": 7
+        },
+        "w7a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 2
+        },
+        "w7a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 1
+        },
+        "w7a4": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 0
+        },
+        "w7a5": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": -1
+        },
+        "w7a6": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 8
+        },
+        "w7a7": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 6
+        },
+        "w7a8": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": false,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 1,
+            "T_mul": 2.0,
+            "gb": 5
+        },
+        "w8a2": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": 0
+        },
+        "w8a3": {
+            "Packing_Type": "Kernel_Packing",
+            "Pack_Flag": true,
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 2,
+            "np": 2,
+            "T_mul": 4.0,
+            "gb": -1
+        },
+        "w8a4": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 3,
+            "T_mul": 3.0,
+            "gb": -1
+        },
+        "w8a5": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 9
+        },
+        "w8a6": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 7
+        },
+        "w8a7": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 5
+        },
+        "w8a8": {
+            "Packing_Type": "Filter_Packing",
+            "w_sep": 1,
+            "a_sep": 1,
+            "kp": 1,
+            "np": 2,
+            "T_mul": 2.0,
+            "gb": 3
+        }
+    }
+}
