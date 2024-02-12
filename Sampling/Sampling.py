@@ -1,3 +1,4 @@
+import argparse
 from random import choice, sample
 import json
 import pathlib
@@ -5,13 +6,9 @@ import math
 import numpy as np
 import sys
 sys.path.append('../DSP_Explorer/')
-sys.path.append('../Opt_Definition/ConvOpt_FP/')
-sys.path.append('../Opt_Definition/ConvOpt_FP_DW/')
-sys.path.append('../Opt_Definition/ConvOpt_FP_DW_LUT/')
-sys.path.append('../Opt_Definition/ConvOpt_FP_LUT/')
-sys.path.append('../Opt_Definition/ConvOpt_KP/')
-sys.path.append('../Opt_Definition/ConvOpt_KP_LUT/')
+sys.path.append('../Opt_Definition/')
 from dsp_eff_search import DSP_Config_Search
+import time
 
 from ConvOpt_FP import FP_Opt_Templates
 from ConvOpt_FP_LUT import FP_LUT_Opt_Templates
@@ -23,7 +20,8 @@ from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 candidate_latency = [10.0, 6.667, 4.667, 4.0, 3.333, 2.667]     # lacency (ns)
 
 candidate_K = [1, 3, 5, 7]
-candidate_W = list(np.arange(8, 640 + 1, 2))
+# candidate_W = list(np.arange(8, 640 + 1, 2))
+candidate_W = [8, 16, 32, 64, 128, 256, 512, 10, 20, 40, 80, 160, 320, 640, 14, 28, 56, 112, 224, 448]
 candidate_CH = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 36, 48, 64, 96, 128, 192, 256, 384, 512]   # 768 and 1024 seem too large
 candidate_BIT = list(np.arange(2, 8 + 1, 1))
 candidate_POOL = [True, False]
@@ -32,7 +30,7 @@ candidate_Packing = ['FP', 'KP']
 # candidate_LUT = [False, True]
 candidate_LUT = [False] * 15 + [True] * 5
 candidate_DW = [False] * 6 + [True] * 4
-DSP_Explorer = DSP_Config_Search(27, 18, 8)
+DSP_Explorer = DSP_Config_Search(27, 18)
 
 attr_names = ['k', 'icol', 'irow', 'ich', 'och', 'max_pool', 'abit', 'wbit', 'obit', 'kp',
 			 'np', 'gb', 'w_sep', 'a_sep', 'simd', 'pe', 'actp', 'kpf', 'in_pe', 'lshift',
@@ -74,9 +72,19 @@ def Random_Opt():
     # sample architecture
     conv.k = sample_from_list(candidate_K)
     conv.icol = sample_from_list(candidate_W)
-    conv.irow = sample_from_list(candidate_W)
-    conv.ich = 1 if DW else sample_from_list(candidate_CH)
+    # conv.irow = sample_from_list(candidate_W)
+    irow_list = []
+    for irow in candidate_W:
+        if ((conv.icol / irow) >= (1.0 / 2.5) and ((conv.icol / irow) <= 2.5)):
+            irow_list.append(irow)
+    conv.irow = sample_from_list(irow_list)
+    # conv.ich = 1 if DW else sample_from_list(candidate_CH)
     conv.och = sample_from_list(candidate_CH)
+    ich_list = []
+    for ich in candidate_CH:
+        if ((conv.och / ich) >= (1.0 / 8.0) and ((conv.och / ich) <= 8.0)):
+            ich_list.append(ich)
+    conv.ich = 1 if DW else sample_from_list(ich_list)
     conv.max_pool = sample_from_list(candidate_POOL)
     acc_num = conv.k if DW else conv.k * conv.ich
 
@@ -149,15 +157,14 @@ def Random_Opt():
 
 
 class Opt_Sampling:
-	def __init__(self, sample_dir, require_num, attempt_num):
+	def __init__(self, require_num, attempt_num):
 		self.sample_tuple = ()
 		self.find_num = 0
 		self.sample_dict = {}
-		self.sample_dir = sample_dir
 		self.require_num = require_num
 		self.attempt_num = attempt_num
 
-	def Sampling(self):
+	def Sampling(self, save_path):
 		for i in range(attempt_num):
 			constraint_flag, conv, Packing, DW, LUT, attr_vec, latency = Random_Opt()
 
@@ -188,18 +195,31 @@ class Opt_Sampling:
 					break
 
 		if (self.find_num == self.require_num):
-			if not sample_dir.is_dir():
-				sample_dir.mkdir()
-			with open(self.sample_dir / file_name, 'w', encoding='utf-8') as f:
+			with open(save_path, 'w', encoding='utf-8') as f:
 				json.dump(self.sample_dict, f, indent=4)
 		else:
 			print(f"Failed to collect required samples within {self.attempt_num} attempts, only collected {self.find_num} samples. Sorry!")
 
 
 if __name__ == '__main__':
-	attempt_num = 30000     # 50000
-	require_num = 10000       #5000
-	file_name = 'opt_10000.json'
-	sample_dir = pathlib.Path('./Samples')
-	opt_samp = Opt_Sampling(sample_dir=sample_dir, require_num=require_num, attempt_num=attempt_num)
-	opt_samp.Sampling()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-rn', '--require-num', help='required number of samples')
+    parser.add_argument('-an', '--attempt_num', help='number of sampling attenpts')
+    parser.add_argument('-f', '--file-name', help='file name for saving generated samples')
+    opt = parser.parse_args()
+
+    sample_dir = pathlib.Path('./Samples')
+    if not sample_dir.is_dir():
+        sample_dir.mkdir()
+
+    attempt_num = int(opt.attempt_num)
+    require_num = int(opt.require_num)
+    save_path = sample_dir / str(opt.file_name)
+    opt_samp = Opt_Sampling(require_num=require_num, attempt_num=attempt_num)
+
+    print(save_path)
+
+    t1 = time.time()
+    opt_samp.Sampling(save_path)
+    t2 = time.time()
+    print(f'Spent {t2 - t1} seconds in total.')

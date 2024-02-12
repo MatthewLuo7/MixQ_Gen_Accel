@@ -234,7 +234,7 @@ def gen_pseudo_opt(path, template_path, opt_name, sample_dict):
     if not src_dir.is_dir():
         src_dir.mkdir()
 
-    hls_dir =sample_dir / 'hls'
+    hls_dir = sample_dir / 'hls'
     if not hls_dir.is_dir():
         hls_dir.mkdir()
 

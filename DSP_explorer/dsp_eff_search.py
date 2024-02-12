@@ -26,7 +26,7 @@ class DSP_Config_Search:
         self.PortA = PortA
         self.PortB = PortB
 
-    def Filter_Packing(self, K=3, wb=4, ab=4, overlap=0, acc_num=None):
+    def Filter_Packing(self, K=3, wb=4, ab=4, overlap=0, acc_num=None, ADW_BIT=0):
         # initialization
         Kp = 1             # the number of packed weights
         Np = 1             # the number of packed activations
@@ -42,7 +42,8 @@ class DSP_Config_Search:
                 PA = self.PortB
                 PW = self.PortA
 
-            # PA = PA - 1      # leave one bit for the unsigned activation port to emulate signed multiplication
+            PA = PA - 1            # leave one bit for the unsigned activation port to emulate signed multiplication
+            PW = PW - ADW_BIT      # leave one bit for the unsigned activation port to emulate signed multiplication
             Npmax = math.floor((PA - ab) / (wb + ab - overlap)) + 1                                             # upper-bound of Np
             # Kpmax = min(K, math.floor((PW - wb - self.extra_wb(wb)) / (wb + ab - overlap)) + 1)       # upper-bound of Mp
             Kpmax = min(K, math.floor((PW - wb) / (wb + ab - overlap)) + 1)       # upper-bound of Mp
@@ -84,7 +85,7 @@ class DSP_Config_Search:
         return Kp, Np, gb, T_mul
 
 
-    def Kernel_Packing(self, wb=4, ab=4, overlap=0, acc_num=None, och=None):
+    def Kernel_Packing(self, wb=4, ab=4, overlap=0, acc_num=None, och=None, ADW_BIT=0):
         # assume there are two ports E and D, and PortE >= PortD
         PortE = max(self.PortA, self.PortB)
         PortD = min(self.PortA, self.PortB)
@@ -98,9 +99,8 @@ class DSP_Config_Search:
         N_Switch = 1 if PortE == PortD else 2    # if PortE != PortD, switch the two ports for thorough exploration
         for pflag in range(N_Switch):
             if pflag == 0:    # pack weight(s) on Port E and pack activation(s) on Port D
-                PortE = max(self.PortA, self.PortB)
-                # PortD = min(self.PortA, self.PortB) - 1  # leave one bit to emulate signed multiplication
-                PortD = min(self.PortA, self.PortB)
+                PortE = max(self.PortA, self.PortB) - ADW_BIT  # leave one bit to emulate signed multiplication
+                PortD = min(self.PortA, self.PortB) - 1        # leave one bit to emulate signed multiplication
                 # eb_bias = wb + self.extra_wb(wb)
                 eb_bias = wb
                 db_bias = ab
@@ -108,9 +108,8 @@ class DSP_Config_Search:
                 Dpmax = (PortD - db_bias) // (wb + ab - overlap) + 1
                 
             else:    # pack activation(s) on Port E and pack weight(s) on Port D
-                # PortE = max(self.PortA, self.PortB) - 1  # leave one bit to emulate signed multiplication
-                PortE = max(self.PortA, self.PortB)
-                PortD = min(self.PortA, self.PortB)
+                PortE = max(self.PortA, self.PortB) - 1        # leave one bit to emulate signed multiplication
+                PortD = min(self.PortA, self.PortB) - ADW_BIT  # leave one bit to emulate signed multiplication
                 eb_bias = ab
                 # db_bias = wb + self.extra_wb(wb)
                 db_bias = wb
@@ -166,7 +165,7 @@ class DSP_Config_Search:
         DSP_Config_Lookup = {}
         for wb in range(wbmin, wbmax + 1):
             for ab in range(abmin, abmax + 1):
-                DSP_Config_Dic = {'Packing_Type': 'Default', 'T_mul': 1, 'gb': self.PortA + self.PortB - wb - ab}
+                DSP_Config_Dic = {'Packing_Type': None, 'T_mul': 1, 'gb': self.PortA + self.PortB - wb - ab}
 
                 if Filter_Packing_EN:
                     for wsep in [1, 2]:
@@ -175,8 +174,9 @@ class DSP_Config_Search:
                                 continue
                             wb_sep = math.ceil(wb / wsep)
                             ab_sep = math.ceil(ab / asep)
+                            ADW_BIT = 1 if (wsep == 2) and (wb % 2 == 1) else 0
 
-                            Kp, Np, gb, T_mul = self.Filter_Packing(K, wb_sep, ab_sep, overlap, acc_num=acc_num)
+                            Kp, Np, gb, T_mul = self.Filter_Packing(K, wb_sep, ab_sep, overlap, acc_num=acc_num, ADW_BIT=ADW_BIT)
                             T_mul /= (wsep * asep)
                             C1 = T_mul > DSP_Config_Dic['T_mul']
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])
@@ -191,8 +191,9 @@ class DSP_Config_Search:
                                 continue
                             wb_sep = math.ceil(wb / wsep)
                             ab_sep = math.ceil(ab / asep)
+                            ADW_BIT = 1 if (wsep == 2) and (wb % 2 == 1) else 0
 
-                            pack_flag, Kp, Np, gb, T_mul = self.Kernel_Packing(wb_sep, ab_sep, overlap, acc_num=acc_num, och=och)
+                            pack_flag, Kp, Np, gb, T_mul = self.Kernel_Packing(wb_sep, ab_sep, overlap, acc_num=acc_num, och=och, ADW_BIT=ADW_BIT)
                             T_mul /= (wsep * asep)
                             C1 = T_mul > DSP_Config_Dic['T_mul']
                             C2 = (T_mul == DSP_Config_Dic['T_mul']) and (gb > DSP_Config_Dic['gb'])

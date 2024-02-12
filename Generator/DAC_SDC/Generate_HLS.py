@@ -196,20 +196,12 @@ def print_ndarray_recursion(arr, str_func=str, file=sys.stdout, stop=0):
     print(ends+'}', file=file, end='')
 
 def adjust_weight(model_param):
-    # # special_wa_bit = ((4,2),(5,3),(5,4),(5,5),(5,6),(5,7),(5,8),(7,2),(7,3)) 
-    # special_wa_bit = []
-    # # These packing can't quantize to -2**(wbit-1)
-    # for conv in model_param:
-    #     if (conv.wbit, conv.abit) in special_wa_bit:
-    #         print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
-    #         conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
-
     for conv in model_param:
         print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
         conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
 
 def gen_opts(model_param, array_config):
-    DSP_Explorer = DSP_Config_Search(27, 18, 0)
+    DSP_Explorer = DSP_Config_Search(27, 18)
     model_opt = []
     for idx, (conv, extra_para) in enumerate(zip(model_param, array_config)):
         conv.simd = extra_para[0]

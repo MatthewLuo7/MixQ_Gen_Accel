@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: tb.cpp
-* Date: Sun Feb 11 21:35:13 2024
+* Date: Sat Jan 20 14:25:05 2024
 * Description: reference testbench for accelerator
 ********************************************************************************/
 #include <stdint.h>
@@ -12,18 +12,18 @@
 #include "config.h"
 using namespace std;
 
-#define grid_row 10
-#define grid_col 20
+#define grid_row 20
+#define grid_col 40
 #define org_row 360
 #define org_col 640
 #define inp_row 160
 #define inp_col 320
-#define div 1297.776528460163
+#define div 1829.2285204780505
 
 
-string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/5_ultranet_mDR/debug_path/";
+string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/2_skynet_mixed3/debug_path/";
 
-void ultra_net(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
+void sky_net(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
 
 void load_data(const char *path, char *ptr, unsigned int size) {
   std::ifstream f(path, std::ios::in | std::ios::binary);
@@ -72,7 +72,7 @@ int main(int argc, char const *argv[])
     }
 
     hls::stream<my_ap_axis> output_stream("output stream");
-    ultra_net(input_stream, output_stream, img_repeat);
+    sky_net(input_stream, output_stream, img_repeat);
 
     cout << "output size :" << output_stream.size() << endl;
     
@@ -129,8 +129,8 @@ int main(int argc, char const *argv[])
         w = w / 6;
         h = h / 6;
 
-        x = (x + grid_x) * 16;
-        y = (y + grid_y) * 16;
+        x = (x + grid_x) * 8;
+        y = (y + grid_y) * 8;
         w = w*20;
         h = h*20;
 

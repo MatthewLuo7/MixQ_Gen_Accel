@@ -33,12 +33,24 @@ class QConvLayer:
         if self.conv.icol < x.shape[-1]: # maxpool
             assert self.conv.irow*2, self.conv.icol*2 == x.shape[2:]
             x = F.max_pool2d(x.float(), kernel_size = 2, stride = 2).to(dtype=torch.int64)
-
         groups = self.conv.groups if hasattr(self.conv, 'groups') else 1
+
+        # #debug
+        # if self.conv.n == 8:
+        #     w_h = self.w // 16
+        #     temp_x = F.conv2d(x, w_h, bias=None, stride=self.conv.s, padding=self.conv.p, groups=groups) # [N, OCH, OROW, OCOL]
+        #     print(temp_x[0, :4, 0, :8])
+
+        #     w_l = self.w - w_h * 16
+        #     temp_x = F.conv2d(x, w_l, bias=None, stride=self.conv.s, padding=self.conv.p, groups=groups) # [N, OCH, OROW, OCOL]
+        #     print(temp_x[0, :4, 0, :8])
+
+        
         x = F.conv2d(x, self.w, bias=None, stride=self.conv.s, padding=self.conv.p, groups=groups) # [N, OCH, OROW, OCOL]
 
-        if self.conv.n == 10:
-            print(x[0, :8, 0, 0])
+        # #debug
+        # if self.conv.n == 8:
+        #     print(x[0, :4, 0, :8])
 
         och = x.shape[1]
         if True:
@@ -75,8 +87,9 @@ class QConvLayer:
                     # print(','.join(map(hex, xtemp)), file=f)
                     print(','.join(map(str, xtemp)), file=f)
 
-        if self.conv.n == 10:
-            print(x[0, :8, 0, 0])
+        # # debug
+        # if self.conv.n == 8:
+        #     print(x[0, :20, 0, 0])
 
         return x
 

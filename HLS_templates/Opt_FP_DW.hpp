@@ -147,10 +147,11 @@ void FP_Array_sep_DW(stream<ap_uint<PE * Np * KPF * IN_BIT> > &in,
   const unsigned IN_BIT_H = IN_BIT - IN_BIT_L;
   const unsigned W_BIT_L = W_BIT / 2;
   const unsigned W_BIT_H = W_BIT - W_BIT_L;
+  const unsigned ADW_BIT = ((Sep_Flag == false) && (W_BIT_H == W_BIT_L)) ? 1:0;
 
   const unsigned M_BIT_Sep = (Sep_Flag) ? (M_BIT - IN_BIT + IN_BIT_H):(M_BIT - W_BIT + W_BIT_H);
   const unsigned PROD_BIT =(Sep_Flag) ? (W_BIT + IN_BIT_H + GUARD_BIT):(W_BIT_H + IN_BIT + GUARD_BIT);
-  const unsigned WPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Kp - 1) + W_BIT):(PROD_BIT * (Kp - 1) + W_BIT_H);
+  const unsigned WPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Kp - 1) + W_BIT):(PROD_BIT * (Kp - 1) + W_BIT_H + ADW_BIT);
   const unsigned IPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Np - 1) + IN_BIT_H):(PROD_BIT * (Np - 1) + IN_BIT);
   const unsigned ACC_Left_Shift = (Sep_Flag) ? IN_BIT_L:W_BIT_L;
   const unsigned ACC_BIT = (Sep_Flag) ? (W_BIT + IN_BIT_H + KPF_BIT):(W_BIT_H + IN_BIT + KPF_BIT);

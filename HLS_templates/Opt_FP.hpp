@@ -56,29 +56,31 @@ void FP_Pack_W_overlap(ap_uint<Kp * SIMD * W_BIT> in_weights,
 }
 
 template <unsigned Kp, unsigned Np, unsigned ACC_BIT, unsigned PROD_BIT, unsigned SIMD,
-          unsigned CASCADE, unsigned WPACK_BIT, unsigned IPACK_BIT>
+          unsigned CASCADE, unsigned WPACK_BIT, unsigned IPACK_BIT, bool Is_Signed>
 void FP_Comp_SIMD_cascade(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD],
-                          ap_int<ACC_BIT + 1> DSP_PartialRes[Kp + Np - 1],
-                          bool Is_Signed) {
+                          ap_int<ACC_BIT + 1> DSP_PartialRes[Kp + Np - 1]) {
 #pragma HLS ARRAY_PARTITION variable = wpacks complete
 #pragma HLS ARRAY_PARTITION variable = ipacks complete
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
-  
-  ap_int<ACC_BIT + 1> rtemp[Kp + Np - 1];
-  for(unsigned i = 0; i < (Kp + Np - 1); i++){
-    rtemp[i] = 0;
-  }
 
-  for(unsigned i = 0; i < SIMD; i += CASCADE) {
-    ap_int<PROD_BIT * (Kp + Np - 1)> dspres = 0;
-    for(unsigned cs = 0; cs < CASCADE; cs++) {
-      ap_int<PROD_BIT * (Kp + Np - 1)> DSP_Res;
-#pragma HLS RESOURCE variable=DSP_Res core=DSP48
-      DSP_Res = wpacks[i + cs] * ipacks[i + cs];
-      dspres += DSP_Res;
+  if(Is_Signed){
+    // initialize accumulation regs
+    ap_int<ACC_BIT> rtemp[Kp + Np - 1];
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      rtemp[i] = 0;
     }
 
-    if(Is_Signed){
+    for(unsigned i = 0; i < SIMD; i += CASCADE){
+      ap_int<PROD_BIT * (Kp + Np - 1)> dspres = 0;
+      // perform multiplications and accumulations with cascaded DSPs
+      for(unsigned cs = 0; cs < CASCADE; cs++) {
+        ap_int<PROD_BIT * (Kp + Np - 1)> DSP_Res;
+#pragma HLS RESOURCE variable=DSP_Res core=DSP48
+        DSP_Res = wpacks[i + cs] * ipacks[i + cs];
+        dspres += DSP_Res;
+      }
+
+      // split and decode multiplication results in each segment
       ap_int<PROD_BIT> res_seg_0 = dspres(PROD_BIT - 1, 0);
 #pragma HLS RESOURCE variable=rtemp core=AddSubnS
       rtemp[0] += res_seg_0;
@@ -89,57 +91,80 @@ void FP_Comp_SIMD_cascade(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<IPACK_BIT> ipa
 #pragma HLS RESOURCE variable=rtemp core=AddSubnS
         rtemp[j] += res_seg;
       }
-    }else{
+    }
+
+    // accumulate SIMD results
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      DSP_PartialRes[i] = rtemp[i];
+    }
+  }else{
+    // initialize accumulation regs
+    ap_uint<ACC_BIT> rtemp[Kp + Np - 1];
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      rtemp[i] = 0;
+    }
+
+    for(unsigned i = 0; i < SIMD; i += CASCADE){
+      ap_int<PROD_BIT * (Kp + Np - 1)> dspres = 0;
+      // perform multiplications and accumulations with cascaded DSPs
+      for(unsigned cs = 0; cs < CASCADE; cs++) {
+        ap_int<PROD_BIT * (Kp + Np - 1)> DSP_Res;
+#pragma HLS RESOURCE variable=DSP_Res core=DSP48
+        DSP_Res = wpacks[i + cs] * ipacks[i + cs];
+        dspres += DSP_Res;
+      }
+
       for(unsigned j = 0; j < (Kp + Np - 1); j++){
         ap_uint<PROD_BIT> res_seg = dspres(PROD_BIT*j + PROD_BIT - 1, PROD_BIT*j);
 #pragma HLS RESOURCE variable=rtemp core=AddSubnS
         rtemp[j] += res_seg;
       }
     }
-  }
 
-  for(unsigned i = 0; i < (Kp + Np - 1); i++){
-    DSP_PartialRes[i] = rtemp[i];
+    // accumulate SIMD results
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      DSP_PartialRes[i] = rtemp[i];
+    }
   }
 }
 
 template <unsigned Kp, unsigned Np, unsigned ACC_BIT, unsigned PROD_BIT, unsigned SIMD,
-          unsigned WPACK_BIT, unsigned IPACK_BIT>
+          unsigned WPACK_BIT, unsigned IPACK_BIT, bool Is_Signed>
 void FP_Comp_SIMD_overlap(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<Kp> wpfix[SIMD], ap_uint<IPACK_BIT> ipacks[SIMD],
-                          ap_int<ACC_BIT + 1> DSP_PartialRes[Kp + Np - 1],
-                          bool Is_Signed) {
+                          ap_int<ACC_BIT + 1> DSP_PartialRes[Kp + Np - 1]) {
 #pragma HLS ARRAY_PARTITION variable = wpacks complete
+#pragma HLS ARRAY_PARTITION variable = wpfix complete
 #pragma HLS ARRAY_PARTITION variable = ipacks complete
 #pragma HLS ARRAY_PARTITION variable = DSP_PartialRes complete
-  
-  ap_int<ACC_BIT + 1> rtemp[Kp + Np - 1];
-  for(unsigned i = 0; i < (Kp + Np - 1); i++){
-    rtemp[i] = 0;
-  }
 
-  for (unsigned i = 0; i < SIMD; i++){
-    ap_uint<1> fixsig[Np + Kp - 1];
+  if(Is_Signed){
+    // initialize accumulation regs
+    ap_int<ACC_BIT> rtemp[Kp + Np - 1];
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      rtemp[i] = 0;
+    }
+
+    for(unsigned i = 0; i < SIMD; i++){
+      // calculate fix signals
+      ap_uint<1> fixsig[Np + Kp - 1];
 #pragma HLS ARRAY_PARTITION variable = fixsig complete dim = 1
-    for(unsigned t = 0; t < (Np + Kp - 1); t++){
-      fixsig[t] = 0;
-    }
-
-    for (unsigned Kp_i = 0; Kp_i < Kp; Kp_i++){                 //Calculate LSBs
-      for (unsigned Np_i = 0; Np_i < Np; Np_i++){
-        ap_uint<1> i_lsb = ipacks[i][PROD_BIT*Np_i];
-        ap_uint<1> w_lsb = wpfix[i][Kp_i];
-        fixsig[Kp_i + Np_i] ^= i_lsb&w_lsb;
+      for(unsigned t = 0; t < (Np + Kp - 1); t++){
+        fixsig[t] = 0;
       }
-    }
+      for (unsigned Kp_i = 0; Kp_i < Kp; Kp_i++){                 //Calculate LSBs
+        for (unsigned Np_i = 0; Np_i < Np; Np_i++){
+          ap_uint<1> i_lsb = ipacks[i][PROD_BIT*Np_i];
+          ap_uint<1> w_lsb = wpfix[i][Kp_i];
+          fixsig[Kp_i + Np_i] ^= i_lsb&w_lsb;
+        }
+      }
 
-    ap_int<PROD_BIT * (Kp + Np - 1) + 1> DSP_Res;
+      ap_int<PROD_BIT * (Kp + Np - 1) + 1> DSP_Res;
 #pragma HLS RESOURCE variable=DSP_Res core=DSP48
-    DSP_Res = ipacks[i] * wpacks[i];                 //DSP packing multiplication
+      DSP_Res = ipacks[i] * wpacks[i];                 //DSP packing multiplication
 
-    if(Is_Signed){
       ap_int<PROD_BIT + 1> rfix[Np + Kp -1];
 #pragma HLS ARRAY_PARTITION variable = rfix complete
-  
       rfix[0] = (fixsig[1], (ap_uint<PROD_BIT>) 0);
       rfix[(Kp + Np - 1) - 1] = ((ap_uint<PROD_BIT>) 0, fixsig[(Kp + Np - 1) - 1]^DSP_Res[((Kp + Np - 1) - 1)*PROD_BIT]);
       for (unsigned j = 1; j < ((Kp + Np - 1) - 1); j++){
@@ -154,7 +179,37 @@ void FP_Comp_SIMD_overlap(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<Kp> wpfix[SIMD
 #pragma HLS RESOURCE variable=rtemp core=AddSubnS
         rtemp[k] += acc_res_temp;
       }
-    }else{
+    }
+
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      DSP_PartialRes[i] = rtemp[i];
+    }
+  }else{
+    // initialize accumulation regs
+    ap_uint<ACC_BIT> rtemp[Kp + Np - 1];
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      rtemp[i] = 0;
+    }
+
+    for(unsigned i = 0; i < SIMD; i++){
+      // calculate fix signals
+      ap_uint<1> fixsig[Np + Kp - 1];
+#pragma HLS ARRAY_PARTITION variable = fixsig complete dim = 1
+      for(unsigned t = 0; t < (Np + Kp - 1); t++){
+        fixsig[t] = 0;
+      }
+      for (unsigned Kp_i = 0; Kp_i < Kp; Kp_i++){                 //Calculate LSBs
+        for (unsigned Np_i = 0; Np_i < Np; Np_i++){
+          ap_uint<1> i_lsb = ipacks[i][PROD_BIT*Np_i];
+          ap_uint<1> w_lsb = wpfix[i][Kp_i];
+          fixsig[Kp_i + Np_i] ^= i_lsb&w_lsb;
+        }
+      }
+
+      ap_int<PROD_BIT * (Kp + Np - 1) + 1> DSP_Res;
+#pragma HLS RESOURCE variable=DSP_Res core=DSP48
+      DSP_Res = ipacks[i] * wpacks[i];                 //DSP packing multiplication
+
       ap_uint<PROD_BIT + 1> rfix[Np + Kp -1];
 #pragma HLS ARRAY_PARTITION variable = rfix complete
   
@@ -175,10 +230,10 @@ void FP_Comp_SIMD_overlap(ap_int<WPACK_BIT> wpacks[SIMD], ap_uint<Kp> wpfix[SIMD
         rtemp[k] += acc_res_temp;
       }
     }
-  }
 
-  for(unsigned i = 0; i < (Kp + Np - 1); i++){
-    DSP_PartialRes[i] = rtemp[i];
+    for(unsigned i = 0; i < (Kp + Np - 1); i++){
+      DSP_PartialRes[i] = rtemp[i];
+    }
   }
 }
 
@@ -200,14 +255,14 @@ void FP_Comp_SIMD(ap_uint<Kp * SIMD * W_BIT> in_weights,
     FP_Pack_W_overlap<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks, wpfix);
 
     //SIMD computing array
-    FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT>(wpacks, wpfix, ipacks, DSP_PartialRes, true);
+    FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT, true>(wpacks, wpfix, ipacks, DSP_PartialRes);
   }else{
     ap_int<WPACK_BIT> wpacks[SIMD];
 #pragma HLS ARRAY_PARTITION variable = wpacks complete dim = 1
     FP_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks);
 
     //SIMD computing array
-    FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT>(wpacks, ipacks, DSP_PartialRes, true);
+    FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT, true>(wpacks, ipacks, DSP_PartialRes);
   }
 }
 
@@ -421,14 +476,12 @@ void FP_Comp_SIMD_sep(ap_uint<Kp * SIMD * W_BIT> in_weights,
     if(Sep_Flag){
       FP_Pack_W_overlap<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks[0], wpfix[0]);
       for(unsigned i = 0; i < 2; i++){
-        FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT>(wpacks[0], wpfix[0], ipacks[i], DSP_PartialRes[i], true);
+        FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT, true>(wpacks[0], wpfix[0], ipacks[i], DSP_PartialRes[i]);
       }
     }else{
       FP_Pack_W_overlap_sep<W_BIT, W_BIT_H, W_BIT_L, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks, wpfix);
-      for(unsigned i = 0; i < 2; i++){
-        bool Is_Signed = (i == 0) ? false:true;
-        FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT>(wpacks[i], wpfix[i], ipacks[0], DSP_PartialRes[i], Is_Signed);
-      }
+      FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT, false>(wpacks[0], wpfix[0], ipacks[0], DSP_PartialRes[0]);
+      FP_Comp_SIMD_overlap<Kp, Np, ACC_BIT, PROD_BIT, SIMD, WPACK_BIT, IPACK_BIT, true>(wpacks[1], wpfix[1], ipacks[0], DSP_PartialRes[1]);
     }
     
   }else{
@@ -439,14 +492,12 @@ void FP_Comp_SIMD_sep(ap_uint<Kp * SIMD * W_BIT> in_weights,
     if(Sep_Flag){
       FP_Pack_W<W_BIT, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks[0]);
       for(unsigned i = 0; i < 2; i++){
-        FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT>(wpacks[0], ipacks[i], DSP_PartialRes[i], true);
+        FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT, true>(wpacks[0], ipacks[i], DSP_PartialRes[i]);
       }
     }else{
       FP_Pack_W_sep<W_BIT, W_BIT_H, W_BIT_L, SIMD, Kp, PROD_BIT, WPACK_BIT>(in_weights, wpacks);
-      for(unsigned i = 0; i < 2; i++){
-        bool Is_Signed = (i == 0) ? false:true;
-        FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT>(wpacks[i], ipacks[0], DSP_PartialRes[i], Is_Signed);
-      }
+      FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT, false>(wpacks[0], ipacks[0], DSP_PartialRes[0]);
+      FP_Comp_SIMD_cascade<Kp, Np, ACC_BIT, PROD_BIT, SIMD, CASCADE, WPACK_BIT, IPACK_BIT, true>(wpacks[1], ipacks[0], DSP_PartialRes[1]);
     }
   }
 }
@@ -468,10 +519,11 @@ void FP_Array_sep(stream<ap_uint<Np * SIMD * IN_BIT> > &in,
   const unsigned IN_BIT_H = IN_BIT - IN_BIT_L;
   const unsigned W_BIT_L = W_BIT / 2;
   const unsigned W_BIT_H = W_BIT - W_BIT_L;
+  const unsigned ADW_BIT = ((Sep_Flag == false) && (W_BIT_H == W_BIT_L)) ? 1:0;
 
   const unsigned M_BIT_Sep = (Sep_Flag) ? (M_BIT - IN_BIT + IN_BIT_H):(M_BIT - W_BIT + W_BIT_H);
   const unsigned PROD_BIT =(Sep_Flag) ? (W_BIT + IN_BIT_H + GUARD_BIT):(W_BIT_H + IN_BIT + GUARD_BIT);
-  const unsigned WPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Kp - 1) + W_BIT):(PROD_BIT * (Kp - 1) + W_BIT_H);
+  const unsigned WPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Kp - 1) + W_BIT):(PROD_BIT * (Kp - 1) + W_BIT_H + ADW_BIT);
   const unsigned IPACK_BIT = (Sep_Flag) ? (PROD_BIT * (Np - 1) + IN_BIT_H):(PROD_BIT * (Np - 1) + IN_BIT);
   const unsigned ACC_Left_Shift = (Sep_Flag) ? IN_BIT_L:W_BIT_L;
   const unsigned ACC_BIT = (Sep_Flag) ? (W_BIT + IN_BIT_H + SIMD_BIT):(W_BIT_H + IN_BIT + SIMD_BIT);
