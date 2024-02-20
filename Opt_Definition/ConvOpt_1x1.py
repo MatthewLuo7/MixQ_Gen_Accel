@@ -56,6 +56,29 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
     def __init__(self, conv):
         self.conv = conv
         self.conv.obit = 32
+
+    # the computation of the last layer is usually trivial
+    def predict(self, simd, pe, actp, kpf, target):
+        if target == 'dsp':
+            y = float(self.conv.w_sep * self.conv.a_sep * simd * pe * kpf + actp)
+        else:
+            y = 0.0
+
+        return y
+
+    def opt_constraints(self, inpe, simd, kpf, pe, actp):
+        opf = pe * self.conv.kp
+        M_BIT = 32
+
+        C1 = self.reshape_buffer_constraints(inpe, simd, kpf)
+        C2 = (kpf * simd * self.conv.kp * self.conv.wbit) <= 1024    # weight width
+        C3 = (self.conv.np * opf * M_BIT) <= 1024
+        C4 = (2 * opf * self.conv.obit <= 1024) if self.conv.max_pool else (opf * self.conv.obit <= 1024)
+
+        flag = C1 and C2 and C3 and C4
+
+        return flag
+
     ################################################ HLS Template ################################################
     def gen_conv_para(self):
         if self.conv.n == 0:

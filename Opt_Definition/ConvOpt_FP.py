@@ -275,19 +275,10 @@ class FP_Opt_Templates:
             if hasattr(temp_conv, attr) and (getattr(temp_conv, attr) is not None):
                 features_list.append(float(getattr(temp_conv, attr)))
 
+        features_list.append(float(self.conv.cycle))
         features_list.append(float(temp_conv.w_sep * temp_conv.a_sep * simd * pe * kpf + actp))
 
         return features_list
-
-        # for idx, (k, v) in enumerate(name_mapping_FP.items()):
-        #     if idx < 4:
-        #         continue
-        #     features_list.append(getattr(self.conv, k))
-
-        # features_list.append(simd * pe * kpf + actp)
-        # float_features = list(map(float, features_list))
-
-        # return float_features
 
     def Load_Model(self, predictor_path):
         self.pred_models = {}
@@ -301,11 +292,6 @@ class FP_Opt_Templates:
     def predict(self, simd, pe, actp, kpf, target):
         features = self.get_feature(simd, pe, actp, kpf)
         X = np.array(features).reshape(1, -1)
-        # if target == 'dsp':
-        #     y = features[-1] + 7
-        # else:
-        #     y_np = self.pred_models[target].predict(X)
-        #     y = y_np[0]
         y_np = self.pred_models[target].predict(X)
         y = y_np[0]
 

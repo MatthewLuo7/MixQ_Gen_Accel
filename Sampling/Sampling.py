@@ -22,14 +22,15 @@ candidate_latency = [10.0, 6.667, 4.667, 4.0, 3.333, 2.667]     # lacency (ns)
 candidate_K = [1, 3, 5, 7]
 # candidate_W = list(np.arange(8, 640 + 1, 2))
 candidate_W = [8, 16, 32, 64, 128, 256, 512, 10, 20, 40, 80, 160, 320, 640, 14, 28, 56, 112, 224, 448]
-candidate_CH = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 36, 48, 64, 96, 128, 192, 256, 384, 512]   # 768 and 1024 seem too large
+# candidate_CH = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 36, 48, 64, 96, 128, 192, 256, 384, 512]   # 768 and 1024 seem too large
+candidate_CH = [1, 2, 4, 6, 8, 12] + [3, 16, 24, 36, 384, 512] * 16 + [32, 48, 64, 96, 128, 192, 256] * 32
 candidate_BIT = list(np.arange(2, 8 + 1, 1))
 candidate_POOL = [True, False]
 candidate_lshift = list(np.arange(4, 16 + 1, 1))
 candidate_Packing = ['FP', 'KP']
-# candidate_LUT = [False, True]
-candidate_LUT = [False] * 15 + [True] * 5
-candidate_DW = [False] * 6 + [True] * 4
+candidate_overlap = [0, 1]
+candidate_LUT = [False] * 8 + [True] * 2
+candidate_DW = [False] * 8 + [True] * 2
 DSP_Explorer = DSP_Config_Search(27, 18)
 
 attr_names = ['k', 'icol', 'irow', 'ich', 'och', 'max_pool', 'abit', 'wbit', 'obit', 'kp',
@@ -56,6 +57,19 @@ def get_factors(m):
         if m % i == 0:
             factors.append(i)
 
+    return factors
+
+def get_pf(m):
+    low_freq = []
+    high_freq = []
+    for i in range(1, m + 1):
+        if m % i == 0:
+            if(i < 4) or (i >= 64):
+                low_freq.append(i)
+            else:
+                high_freq.append(i)
+
+    factors = low_freq + high_freq * 8
     return factors
 
 def Random_Opt():
@@ -101,6 +115,7 @@ def Random_Opt():
     conv.biasbit = min(sample_from_list(inc_bias_skew), 40)
 
     # dsp search
+    overlap = sample_from_list(candidate_overlap)
     if Packing == 'FP':
         DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8,
                                                              Filter_Packing_EN=True, Kernel_Packing_EN=False, acc_num=acc_num,
@@ -117,14 +132,14 @@ def Random_Opt():
     conv.a_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['a_sep']
 
     # sample parallelism factors
-    candidate_ICH_PF = get_factors(conv.ich)
+    candidate_ICH_PF = get_pf(conv.ich)
     conv.simd = sample_from_list(candidate_ICH_PF)
-    candidate_OCH_PF = get_factors(conv.och // conv.kp) if Packing == 'KP' else get_factors(conv.och)
+    candidate_OCH_PF = get_pf(conv.och // conv.kp) if Packing == 'KP' else get_pf(conv.och)
     conv.pe = sample_from_list(candidate_OCH_PF)
     candidate_ACTP = get_factors(conv.pe * conv.kp) if Packing == 'KP' else get_factors(conv.pe)
     conv.actp = sample_from_list(candidate_ACTP)
     conv.kpf = sample_from_list([conv.k, 1])
-    candidate_INPE = get_factors(conv.och) if DW else get_factors(conv.ich)
+    candidate_INPE = get_pf(conv.och) if DW else get_pf(conv.ich)
     conv.in_pe = sample_from_list(candidate_INPE)
 
     # latency (or frequency)

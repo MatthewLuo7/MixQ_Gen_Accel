@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import os
 import math
+import pathlib
 
 import sys
 sys.path.append('..')
@@ -27,7 +28,7 @@ from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
 
 from dsp_eff_search import DSP_Config_Search
-from Pipeline_DP import Pipeline_Allocation
+from Pipeline_DP import Pipeline_Allocation, resolve_opt
 
 class ConvParam: ...
 
@@ -197,93 +198,36 @@ def print_ndarray_recursion(arr, str_func=str, file=sys.stdout, stop=0):
     print(ends+'}', file=file, end='')
 
 def adjust_weight(model_param):
-    # special_wa_bit = ((4,2),(5,3),(5,4),(5,5),(5,6),(5,7),(5,8),(7,2),(7,3)) 
-    special_wa_bit = []
-    # These packing can't quantize to -2**(wbit-1)
     for conv in model_param:
-        if (conv.wbit, conv.abit) in special_wa_bit:
-            print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
-            conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
+        print(f'Adjust conv_{conv.n} wbit={conv.wbit}')
+        conv.w = np.maximum(conv.w, -2**(conv.wbit-1)+1)
 
-def gen_opts_DP(model_param, DSP_max, LUT_max, BRAM_max, DSP_step, LUT_step, BRAM_step):
-    DSP_Explorer = DSP_Config_Search(27, 18, 8)
-    model_opt = []
-    for idx, conv in enumerate(model_param):
-
-        LUT = False
-
-        if conv.w.shape[1] == 1 and conv.ich != 1:   # depth-width
-            acc_num = conv.k
-            DW = True
-        else:
-            acc_num = conv.k * conv.ich
-            DW = False
-
-        if idx == (len(model_param) - 1):
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
-        elif conv.w.shape[1] == 1:        # depth-wise conv
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=False, acc_num=acc_num, och=conv.och)
-        else:
-            DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
-
-        conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
-        conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
-        conv.gb = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['gb']
-        conv.w_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['w_sep']
-        conv.a_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['a_sep']
-
-        packing_type = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Packing_Type']
-
-        if idx == (len(model_param) - 1):
-            conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
-            model_opt.append(Conv1x1_Opt_Templates(conv))
-        elif packing_type == 'Filter_Packing':
-            if DW:
-                opt = FP_DW_LUT_Opt_Templates(conv) if LUT else FP_DW_Opt_Templates(conv)
-                model_opt.append(opt)
-            else:
-                opt = FP_LUT_Opt_Templates(conv) if LUT else FP_Opt_Templates(conv)
-                model_opt.append(opt)
-        elif packing_type == 'Kernel_Packing':
-            conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
-
-            if DW:
-                raise TypeError(f"Kernel_Packing operator cannot be used for Depth-wise Convolution!")
-            else:
-                opt = KP_LUT_Opt_Templates(conv) if LUT else KP_Opt_Templates(conv)
-                model_opt.append(opt)
-        else:
-            raise TypeError(f"Operator {str(opt_type)} is not defined!")
-
-    pipel_alloc = Pipeline_Allocation(model_opt[:-1], 5, DSP_max=DSP_max, LUT_max=LUT_max, BRAM_max=BRAM_max, DSP_step=DSP_step, LUT_step=LUT_step, BRAM_step=BRAM_step)
+def gen_opts_DP(model_param, DSP_max, LUT_max, BRAM_max, DSP_step, LUT_step, BRAM_step, pred_path, thread_num=8):
+    pipel_alloc = Pipeline_Allocation(model_param, thread_num=thread_num, pred_path=pred_path, DSP_max=DSP_max, LUT_max=LUT_max, BRAM_max=BRAM_max,
+                                      DSP_step=DSP_step, LUT_step=LUT_step, BRAM_step=BRAM_step)
     print('Begin searching parallelism!')
     t1 = time.time()
-    Lat, SIMD_list, PE_list, ACTP_list, KPF_list = pipel_alloc.DP_Search()
+    Lat, Packing_list, DW_list, SIMD_list, PE_list, ACTP_list, KPF_list, LUT_list = pipel_alloc.DP_Search()
     t2 = time.time()
-
-    # debug
-    print(Lat)
-    print(SIMD_list)
-    print(PE_list)
-    print(ACTP_list)
-    print(KPF_list)
 
     print(f'Finished searching within {t2 - t1} seconds! Overall latency is {Lat}')
     print('SIMD, PE, ACTP, KPF, Latency:')
-    for i in range(len(model_opt[:-1])):
-        model_opt[i].conv.simd = SIMD_list[i]
-        model_opt[i].conv.pe = PE_list[i]
-        model_opt[i].conv.actp = ACTP_list[i]
-        model_opt[i].conv.kpf = KPF_list[i]
+    model_opt = []
+    for i, conv in enumerate(model_param):
+        conv.simd = SIMD_list[i]
+        conv.pe = PE_list[i]
+        conv.actp = ACTP_list[i]
+        conv.kpf = KPF_list[i]
 
-        cur_Lat = model_opt[i].dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
-        print(f'{SIMD_list[i]}, {PE_list[i]}, {ACTP_list[i]}, {KPF_list[i]}, {cur_Lat}')
+        Packing = Packing_list[i]
+        DW = DW_list[i]
+        LUT = LUT_list[i]
 
-    model_opt[-1].conv.simd = 4
-    model_opt[-1].conv.pe = 2
-    model_opt[-1].conv.actp = 2
-    model_opt[-1].conv.kpf = 1
-    model_opt[-1].conv.pack_flag = 0
+        opt = resolve_opt(conv, Packing, DW, LUT, last=(i == (len(model_param) - 1)))
+        model_opt.append(opt)
+
+        cur_Lat = opt.dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
+        print(f'Packing: {Packing}, DW: {DW}, LUT: {LUT}, SIMD: {SIMD_list[i]}, PE: {PE_list[i]}, ACTP: {ACTP_list[i]}, KPF: {KPF_list[i]}, Latency: {cur_Lat}')
 
     return model_opt
 
@@ -293,7 +237,6 @@ if __name__=='__main__':
     parser.add_argument('-n', '--name', help='name for the NN accelerator')
     parser.add_argument('-w', '--weight', default='fixed', help='.pt file name in ./weights/')
     parser.add_argument('-m', '--model', default='UltraNet_FixQ', help = 'model class name in mymodel.py')  # UltraNet_FixQ  UltraNet_ismart  SkyNet_FixQ
-    # parser.add_argument('-c', '--config-simd-pe', default='config_simd_pe', help = '.txt file in ./hls/')
     parser.add_argument('-dp', '--debug-path', default='./debug_path/', help = 'path for debug outpt')
     parser.add_argument('-ip', '--input-path', default='./test/0.bin', help = '.bin file for testing')
     parser.add_argument('--GenTB', action='store_true')
@@ -304,7 +247,7 @@ if __name__=='__main__':
     name = str(opt.name)
 
     # array_config = np.loadtxt('hls/'+config_simd_pe+'.txt', dtype=int, skiprows=1)
-    dir_output = 'hls/' + weight + '_DP/'
+    dir_output = 'hls/' + name + '_' + weight + '_DP/'
     if not os.path.exists(dir_output): os.makedirs(dir_output)
 
     # load model and state_dict
@@ -316,7 +259,16 @@ if __name__=='__main__':
     model_param = extract_model([1, 160, 320])
     adjust_weight(model_param)
     process_batchnorm(model_param) # get bn param before write hls config
-    model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=50000, BRAM_max=400, DSP_step=30, LUT_step=5000, BRAM_step=100)
+    # pred_path = pathlib.Path('../../Dataset/6_OPT_5000').absolute()
+    pred_path = pathlib.Path('E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Dataset/6_OPT_5000')
+
+    #ultranet
+    # model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=60000, BRAM_max=800, DSP_step=10, LUT_step=4000, BRAM_step=800,
+    #                         pred_path=pred_path, thread_num=4)
+
+    #skynet
+    model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=60000, BRAM_max=420, DSP_step=30, LUT_step=5000, BRAM_step=30,
+                            pred_path=pred_path, thread_num=8)
     torch.save(model_param, dir_output + 'model_param.pkl')
     
     write_hls_config(model_opt, dir_output)

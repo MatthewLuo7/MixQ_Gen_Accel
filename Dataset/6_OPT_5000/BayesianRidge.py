@@ -9,7 +9,7 @@ import pickle
 import pathlib
 from xgboost import XGBRegressor
 
-test_size = 0.1
+test_size = 0.2
 
 
 if __name__ == '__main__':
@@ -39,9 +39,8 @@ if __name__ == '__main__':
 
 
 	for idx, tar in enumerate(targets):
-		# BRR = make_pipeline(StandardScaler(), BayesianRidge())
-		BRR = make_pipeline(StandardScaler(), XGBRegressor(random_state=42))
-		# BRR = make_pipeline(StandardScaler(), XGBRegressor(learning_rate=0.1, max_depth=8, subsample=0.9, reg_lambda=8.4, n_estimators=191))
+		BRR = make_pipeline(StandardScaler(), BayesianRidge())
+		# BRR = make_pipeline(StandardScaler(), XGBRegressor(learning_rate=0.1, max_depth=8, subsample=0.8, reg_lambda=8.0, n_estimators=200))
 		BRR.fit(X_train, Y_train[:, idx])
 	
 		pkl_filename = opt_path / f"BRR_{tar}.pkl"
@@ -55,18 +54,6 @@ if __name__ == '__main__':
 	
 		print(f"Test MAE: {MAE(y_hat, Y_test[:, idx])}, targets: {tar}")
 
-	# debug
-	# opt_config['w_sep'] * opt_config['a_sep'] * opt_config['simd'] * opt_config['pe'] * opt_config['kpf'] + opt_config['actp']
-	kft = X_train[:, 12:18]
-	est = X_train[:, 12] * X_train[:, 13] * X_train[:, 14] * X_train[:, 15] * X_train[:, 17] + X_train[:, 16]
-	print(np.concatenate((kft, est.reshape(-1, 1), Y_train[:, 0].reshape(-1, 1)), axis=1))
-	print(kft.shape)
-	check = np.concatenate((est.reshape(-1, 1), Y_train[:, 0].reshape(-1, 1), Y_train[:, 0].reshape(-1, 1) / est.reshape(-1, 1)), axis=1)
-	# pos_error = check[check[:, -1] > 1.4]
-	pos_error = check[np.abs(check[:, 0] - check[:, 1]) > 15]
-	print(pos_error)
-	print(check.shape)
-	print(pos_error.shape)
 
 	# # II
 	# HLS_Data = HLS_Dataloader(dataset_path, test_size, Packing, LUT, DW, True)

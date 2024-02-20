@@ -29,6 +29,7 @@ if __name__ == '__main__':
 	LUT_stat = []
 	lat_stat = []
 	attr_stat = []
+	para_factor = []
 	for idx, (k, opt) in enumerate(opt_dicts.items()):
 		if num >= 0 and idx >= num:
 			break
@@ -37,6 +38,7 @@ if __name__ == '__main__':
 		DW_stat.append(opt['Type']['DW'])
 		LUT_stat.append(opt['Type']['LUT'])
 		lat_stat.append(opt['Type']['Latency'])
+		para_factor.append(opt['Config']['w_sep'] * opt['Config']['a_sep'] * opt['Config']['simd'] * opt['Config']['pe'] * opt['Config']['kpf'])
 		if attr_key in opt['Config'].keys():
 			attr_stat.append(opt['Config'][attr_key])
 
@@ -80,6 +82,13 @@ if __name__ == '__main__':
 	plt.title(f'Latency stat, {len(lat_stat)} samples', fontsize=20)             #设置子图标题
 
 	f.add_subplot(2,3,5)
+	sns.distplot(para_factor, kde=False)                 #绘制频数直方图
+	plt.ylabel("para_factor", fontsize=16)
+	plt.xticks(fontsize=16)                    #设置x轴刻度值的字体大小
+	plt.yticks(fontsize=16)                   #设置y轴刻度值的字体大小
+	plt.title(f'PF stat, {len(para_factor)} samples', fontsize=20)             #设置子图标题
+
+	f.add_subplot(2,3,6)
 	sns.distplot(attr_stat, kde=False)                 #绘制频数直方图
 	plt.ylabel("Number of Samples", fontsize=16)
 	plt.xticks(fontsize=16)                    #设置x轴刻度值的字体大小

@@ -128,32 +128,6 @@ class KP_Opt_Templates(FP_Opt_Templates):
             raise TypeError(f'Parallelism factors are not all instantiated!')
             return False
 
-    # def check_constraints(self, inpe, simd, pe, kpf):
-    #     flag = self.reshape_buffer_constraints(inpe=inpe, simd=simd, pe=pe, kpf=kpf)
-    #     flag = flag and (self.conv.och % (pe * self.conv.kp) == 0)
-
-    #     return flag
-
-    # def get_feature(self, simd, pe, actp, kpf):
-    #     features_list = [simd, pe, actp, kpf]
-    #     for idx, (k, v) in enumerate(name_mapping_KP.items()):
-    #         if idx < 4:
-    #             continue
-    #         features_list.append(getattr(self.conv, k))
-
-    #     features_list.append(simd * pe * kpf + actp)
-    #     float_features = list(map(float, features_list))
-
-    #     return float_features
-
-    # def Load_Model(self):
-    #     self.pred_models = {}
-    #     targets = ['wns', 'dsp', 'lut', 'bram', 'II']
-    #     for tar in targets:
-    #         predictor_file = f'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Generator/operators/ConvOpt_KP/predictors/BRR_{tar}.pkl'
-    #         with open(predictor_file, 'rb') as file:
-    #             self.pred_models[tar] = pickle.load(file)
-
 
     ################################################ Processing ################################################
     def weight_reorder(self):
@@ -171,31 +145,6 @@ class KP_Opt_Templates(FP_Opt_Templates):
 
     def weight_shape(self):
         return (self.conv.pe, (self.conv.och // (self.conv.pe * self.conv.kp)) * (self.conv.k * self.conv.ich // (self.conv.simd * self.conv.kpf)) * self.conv.k, self.conv.kp * self.conv.kpf * self.conv.simd)
-
-        # if self.conv.kpf == 1:
-        #     w = self.conv.w    # [och, ich, kr, kc]
-        #     assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
-        #     assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
-
-        #     w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr, kc]
-        #     w = w.transpose(1, 0, 5, 3, 6, 4, 2)            # [pe, och/(kp*pe), kr, ich/simd, kc, simd, kp]
-        #     w = w[:, :, :, :, ::-1, :, :]
-        #     w = w.reshape(self.conv.pe, -1, self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * kr * ich/simd * kc, simd * kp]
-        #     self.conv.w = w
-
-        #     return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
-        # else:
-        #     w = self.conv.w    # [och, ich, kr, kc]
-        #     assert self.conv.och%(self.conv.pe*self.conv.kp) == 0, f"conv_{self.conv.n}, och {self.conv.och}, pe {self.conv.pe}, kp {self.conv.kp}"
-        #     assert self.conv.ich%self.conv.simd == 0, f"conv_{self.conv.n}, ich {self.conv.ich}, k {self.conv.k}, simd {self.conv.simd}"
-
-        #     w = w.reshape(self.conv.och//(self.conv.kp*self.conv.pe), self.conv.pe, self.conv.kp, self.conv.ich//self.conv.simd, self.conv.simd, self.conv.k, self.conv.k)   # [och/(kp*pe), pe, kp, ich/simd, simd, kr, kc]
-        #     w = w.transpose(1, 0, 3, 6, 5, 4, 2)            # [pe, och/(kp*pe), ich/simd, kc, kr, simd, kp]
-        #     w = w[:, :, :, ::-1, :, :, :]
-        #     w = w.reshape(self.conv.pe, -1, self.conv.k*self.conv.simd*self.conv.kp)   # [pe, och/(kp*pe) * ich/simd * kc, kr * simd * kp]
-        #     self.conv.w = w
-
-        #     return f"const ap_uint<{self.conv.wbit * self.conv.kp * self.conv.simd * self.conv.k}> conv_{self.conv.n}_w[{self.conv.pe}][{self.conv.w.shape[1]}]="
 
     ################################################ HLS Template ################################################
     def find_CASCADE(self):

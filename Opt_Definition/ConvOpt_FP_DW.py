@@ -93,7 +93,7 @@ class FP_DW_Opt_Templates(FP_Opt_Templates):
 
         return dsp_operations
 
-    def get_actp(self, pe, kpf):
+    def get_actp(self, simd, pe, kpf):
         KNUM = (self.conv.k - 1) // self.conv.kp + 1
         INFOLD = self.conv.k // kpf
         OUT_PF = self.conv.np * pe
@@ -134,7 +134,7 @@ class FP_DW_Opt_Templates(FP_Opt_Templates):
 
         return flag
 
-    def opt_constraints(self, inpe, kpf, pe, actp):
+    def opt_constraints(self, inpe, simd, kpf, pe, actp):
         opf = pe
         M_BIT = self.conv.abit + self.conv.wbit + math.ceil(math.log2(self.conv.k * self.conv.k))
 
