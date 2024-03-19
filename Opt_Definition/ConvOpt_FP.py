@@ -297,6 +297,15 @@ class FP_Opt_Templates:
 
         return y
 
+    def predict_batch(self, features):
+        targets = ['dsp', 'lut', 'bram', 'wns']
+        Y = np.zeros((features.shape[0], len(targets)))
+        for idx, target in enumerate(targets):
+            Y[:, idx] = self.pred_models[target].predict(features)
+
+        return np.maximum(Y, 0.0)
+
+
     ################################################ Processing ################################################
     def weight_reorder(self):
         w = self.conv.w    # [och, ich, kr, kc]

@@ -206,11 +206,14 @@ def gen_opts_DP(model_param, DSP_max, LUT_max, BRAM_max, DSP_step, LUT_step, BRA
     pipel_alloc = Pipeline_Allocation(model_param, thread_num=thread_num, pred_path=pred_path, DSP_max=DSP_max, LUT_max=LUT_max, BRAM_max=BRAM_max,
                                       DSP_step=DSP_step, LUT_step=LUT_step, BRAM_step=BRAM_step)
     print('Begin searching parallelism!')
-    t1 = time.time()
-    Lat, Packing_list, DW_list, SIMD_list, PE_list, ACTP_list, KPF_list, LUT_list = pipel_alloc.DP_Search()
-    t2 = time.time()
+    # t1 = time.time()
+    # Lat, Packing_list, DW_list, SIMD_list, PE_list, ACTP_list, KPF_list, LUT_list = pipel_alloc.DP_Search()
+    # t2 = time.time()
 
-    print(f'Finished searching within {t2 - t1} seconds! Overall latency is {Lat}')
+    # print(f'Finished searching within {t2 - t1} seconds! Overall latency is {Lat}')
+
+    pipel_alloc.DP_Search()
+    Lat, Packing_list, DW_list, SIMD_list, PE_list, ACTP_list, KPF_list, LUT_list = pipel_alloc.DP_Results(Save=True)
     print('SIMD, PE, ACTP, KPF, Latency:')
     model_opt = []
     for i, conv in enumerate(model_param):
@@ -223,7 +226,7 @@ def gen_opts_DP(model_param, DSP_max, LUT_max, BRAM_max, DSP_step, LUT_step, BRA
         DW = DW_list[i]
         LUT = LUT_list[i]
 
-        opt = resolve_opt(conv, Packing, DW, LUT, last=(i == (len(model_param) - 1)))
+        opt = resolve_opt(conv, Packing, DW, LUT, Last=(i == (len(model_param) - 1)))
         model_opt.append(opt)
 
         cur_Lat = opt.dsp_operations() / (SIMD_list[i] * PE_list[i] * KPF_list[i])
@@ -262,12 +265,12 @@ if __name__=='__main__':
     # pred_path = pathlib.Path('../../Dataset/6_OPT_5000').absolute()
     pred_path = pathlib.Path('E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Dataset/6_OPT_5000')
 
-    #ultranet
-    # model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=60000, BRAM_max=800, DSP_step=10, LUT_step=4000, BRAM_step=800,
+    # # #ultranet
+    # model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=70000, BRAM_max=400, DSP_step=10, LUT_step=4000, BRAM_step=40,
     #                         pred_path=pred_path, thread_num=4)
 
     #skynet
-    model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=60000, BRAM_max=420, DSP_step=30, LUT_step=5000, BRAM_step=30,
+    model_opt = gen_opts_DP(model_param, DSP_max=360, LUT_max=70000, BRAM_max=440, DSP_step=20, LUT_step=2000, BRAM_step=10,
                             pred_path=pred_path, thread_num=8)
     torch.save(model_param, dir_output + 'model_param.pkl')
     

@@ -39,8 +39,8 @@ if __name__ == '__main__':
 
 
 	for idx, tar in enumerate(targets):
-		BRR = make_pipeline(StandardScaler(), BayesianRidge())
-		# BRR = make_pipeline(StandardScaler(), XGBRegressor(learning_rate=0.1, max_depth=8, subsample=0.8, reg_lambda=8.0, n_estimators=200))
+		# BRR = make_pipeline(StandardScaler(), BayesianRidge())
+		BRR = make_pipeline(StandardScaler(), XGBRegressor(learning_rate=0.1, max_depth=8, subsample=0.8, reg_lambda=8.0, n_estimators=200))
 		BRR.fit(X_train, Y_train[:, idx])
 	
 		pkl_filename = opt_path / f"BRR_{tar}.pkl"
@@ -50,7 +50,8 @@ if __name__ == '__main__':
 		# Load from file
 		with open(pkl_filename, 'rb') as file:
 		    pickle_model = pickle.load(file)
-		y_hat = pickle_model.predict(X_test)
+		# y_hat = pickle_model.predict(X_test)
+		y_hat = np.maximum(pickle_model.predict(X_test), 0.0)
 	
 		print(f"Test MAE: {MAE(y_hat, Y_test[:, idx])}, targets: {tar}")
 

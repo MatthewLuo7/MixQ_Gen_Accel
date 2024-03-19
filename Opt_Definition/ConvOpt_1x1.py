@@ -1,6 +1,7 @@
 from string import Template
 from ConvOpt_KP import KP_Opt_Templates
 import math
+import numpy as np
 
 KP_para = Template('''//--------------------Conv ${No}: Parameters--------------------
 const unsigned CONV_${No}_IN_PE = ${IN_PE};
@@ -65,6 +66,13 @@ class Conv1x1_Opt_Templates(KP_Opt_Templates):
             y = 0.0
 
         return y
+
+    def predict_batch(self, features):
+        num = features.shape[0]
+        targets = ['dsp', 'lut', 'bram', 'wns']
+        Y = np.zeros((features.shape[0], len(targets)))
+
+        return Y
 
     def opt_constraints(self, inpe, simd, kpf, pe, actp):
         opf = pe * self.conv.kp

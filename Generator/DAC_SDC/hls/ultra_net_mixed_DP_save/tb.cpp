@@ -1,6 +1,6 @@
 /********************************************************************************
 * Filename: tb.cpp
-* Date: Tue Mar 19 17:19:18 2024
+* Date: Mon Feb 19 10:03:55 2024
 * Description: reference testbench for accelerator
 ********************************************************************************/
 #include <stdint.h>
@@ -21,7 +21,7 @@ using namespace std;
 #define div 1297.776528460163
 
 
-string opath = "./debug_path/";
+string opath = "E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/7_ultranet_DP/debut_path/";
 
 void ultra_net(stream<my_ap_axis >& in, stream<my_ap_axis >& out, const unsigned int reps);
 
@@ -51,7 +51,7 @@ int main(int argc, char const *argv[])
 {
     unsigned char img[inp_row][inp_col][3];
 
-    load_data("./test/0.bin", (char *) img, sizeof(img));
+    load_data("E:/Projects/DeepBurning_MixQ/DAC_SDC_tests/test_data/0.bin", (char *) img, sizeof(img));
 
     unsigned char * data = (unsigned char *) img;
     const int data_points_per_line = 8;        // ch * 10

@@ -12,8 +12,19 @@ from ConvOpt_KP import KP_Opt_Templates
 from ConvOpt_KP_LUT import KP_LUT_Opt_Templates
 from ConvOpt_1x1 import Conv1x1_Opt_Templates
 
-def resolve_opt(conv, Packing, DW=False, LUT=False, last=False):
-    if last:
+import time
+import json
+
+def get_factors(m):
+	factors = []
+	for i in range(1, m + 1):
+		if m % i == 0:
+			factors.append(i)
+
+	return factors
+
+def resolve_opt(conv, Packing, DW=False, LUT=False, Last=False):
+    if Last:
         return Conv1x1_Opt_Templates(conv)
     elif Packing == 'Filter_Packing':
         if DW:
@@ -31,13 +42,57 @@ def resolve_opt(conv, Packing, DW=False, LUT=False, last=False):
     else:
         raise TypeError(f"Operator {str(Packing)} is not defined!")
 
-class DP_node:
+def resolve_packing(conv_org, DSP_Explorer: DSP_Config_Search, Last=False):
+	conv = conv_org
+
+	# check if Depth-wise
+	DW = conv.w.shape[1] == 1 and conv.ich != 1
+	acc_num = conv.k if DW else conv.k * conv.ich
+
+	# DSP-packing search
+	if Last:
+	    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
+	elif conv.w.shape[1] == 1:        # depth-wise conv
+	    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=False, acc_num=acc_num, och=conv.och)
+	else:
+	    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
+
+	# set packing parameters
+	conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
+	conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
+	conv.gb = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['gb']
+	conv.w_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['w_sep']
+	conv.a_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['a_sep']
+	
+	Packing = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Packing_Type']
+	if Packing == 'Kernel_Packing':
+		conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
+
+	simd_aval = [1] if DW else get_factors(conv.ich)
+
+	# special setting for the last layer (need to output)
+	# TO BE OPTIMIZED
+	if Last:
+		conv.kp = 1
+		conv.np = 2
+		conv.gb = 2
+		conv.w_sep = 1
+		conv.a_sep = 1
+		pe_aval = [2]
+	else:
+		pe_aval = get_factors(conv.och)
+
+	return conv, Packing, DW, simd_aval, pe_aval
+
+class DP_node_new:
     def __init__(self, Init_Lat=99999999999):
         self.Lat = Init_Lat
         self.SIMD = []
         self.PE = []
         self.ACTP = []
         self.KPF = []
+        self.Packing = []
+        self.DW = []
         self.LUT = []
 
 
@@ -60,104 +115,109 @@ class Pipeline_Allocation:
 
 		self.cycle = cycle
 		self.Init_Lat = max(tuple(9999999999.0 for l in range(self.n_layers)))
-		self.DPT = [[[[DP_node(self.Init_Lat) for i in range(0, self.DSP_max_step + 1)] for j in range(0, self.LUT_max_step + 1)] for k in range(0, self.BRAM_max_step + 1)] for l in range(self.n_layers)]
+		self.DPT = [[[[DP_node_new(self.Init_Lat) for i in range(0, self.DSP_max_step + 1)] for j in range(0, self.LUT_max_step + 1)] for k in range(0, self.BRAM_max_step + 1)] for l in range(self.n_layers)]
 
 		self.thread_num = thread_num
 		self.pred_path = pred_path
 
-	def get_factors(self, m):
-		factors = []
-		for i in range(1, m + 1):
-			if m % i == 0:
-				factors.append(i)
+		self.DSP_Explorer = DSP_Config_Search(27, 18)
 
-		return factors
-
-	def Traverse_Solutions(self, layer, opt, DSP_aval, LUT_aval, BRAM_aval, simd_aval, pe_aval, LUT=False, Last=False):
-		conv = opt.conv
-
-		for kpf in [1, conv.k]:
+	# return a matrix containing possible features for resource/timing estimation
+	def get_feature_vectors(self, opt, simd_aval, pe_aval, Last=False):
+		kpf_aval = [1, opt.conv.k]
+		feature_list = []
+		PF_config_list = []
+		for kpf in kpf_aval:
 			for pe in pe_aval:
 				for simd in simd_aval:
-					# get best actp, if none skip
 					actp = pe if Last else opt.get_actp(simd=simd, pe=pe, kpf=kpf)
 					if actp is None:
 						continue
+					features = opt.get_feature(simd, pe, actp, kpf)
+					feature_list.append(features)
+					PF_config_list.append([simd, kpf, pe, actp])
 
-					# predict timing
-					# con_II = bool(opt.predict(simd, pe, actp, kpf, 'II'))
-					con_II = True
-					con_wns = max(bool(opt.predict(simd, pe, actp, kpf, 'wns') < self.cycle), 0.0)
-					if not (con_II and con_wns):
-						continue
+		return np.array(feature_list), np.array(PF_config_list)
 
-					# predict resources	
-					# cur_dsp = kpf * simd * pe + actp
-					cur_dsp = max(opt.predict(simd, pe, actp, kpf, 'dsp'), 0.0)
-					cur_lut = max(opt.predict(simd, pe, actp, kpf, 'lut'), 0.0)
-					cur_bram = max(opt.predict(simd, pe, actp, kpf, 'bram'), 0.0)
-					cur_dsp = round(cur_dsp / self.DSP_step)
-					cur_lut = round(cur_lut / self.LUT_step)
-					cur_bram = round(cur_bram / self.BRAM_step)
-					if (cur_dsp > DSP_aval) or (cur_lut > LUT_aval) or (cur_bram > BRAM_aval):
-						continue
 
-					# current latency and DP node
-					cur_Lat = opt.dsp_operations() / (kpf * simd * pe)
-					cur_Node = self.DPT[layer][BRAM_aval][LUT_aval][DSP_aval]
+	def Traverse_Solutions(self, items, layer_idx, opt, DSP_aval, LUT_aval, BRAM_aval, Packing, DW, LUT=False):
+		# current latency and DP node
+		cur_Node = self.DPT[layer_idx][BRAM_aval][LUT_aval][DSP_aval]
 
-					# DP recursion
-					if layer == 0:
-						if not opt.opt_constraints(inpe=3, simd=simd, kpf=kpf, pe=pe, actp=actp):
-							continue
-
-						if cur_Lat < cur_Node.Lat:
-							cur_Node.Lat = cur_Lat
-							cur_Node.SIMD = [simd]
-							cur_Node.PE = [pe]
-							cur_Node.ACTP = [actp]
-							cur_Node.KPF = [kpf]
-							cur_Node.LUT = [LUT]
+		for (cur_Lat, dsp, lut, bram, _, simd, kpf, pe, actp) in items:
+			cur_dsp, cur_lut, cur_bram, simd, kpf, pe, actp = int(dsp), int(lut), int(bram), int(simd), int(kpf), int(pe), int(actp)
+			# DP recursion
+			if layer_idx == 0:
+				if not opt.opt_constraints(inpe=3, simd=simd, kpf=kpf, pe=pe, actp=actp):
+					continue
 	
-					else:
-						# # debug
-						# if layer == 11:
-						# 	C1 = ((layer - 1) < 0) or ((layer - 1) >= self.n_layers)
-						# 	C2 = ((BRAM_aval - cur_bram) < 0) or ((BRAM_aval - cur_bram) > self.BRAM_max_step)
-						# 	C3 = ((LUT_aval - cur_lut) < 0) or ((LUT_aval - cur_lut) > self.LUT_max_step)
-						# 	C4 = ((DSP_aval - cur_dsp) < 0) or ((DSP_aval - cur_dsp) > self.DSP_max_step)
-						# 	if C1 or C2 or C3 or C4:
-						# 		print('error')
-						# 		print(layer - 1, self.n_layers)
-						# 		print(BRAM_aval - cur_bram, BRAM_aval, cur_bram, self.BRAM_max_step)
-						# 		print(LUT_aval - cur_lut, LUT_aval, cur_lut, self.LUT_max_step)
-						# 		print(DSP_aval - cur_dsp, DSP_aval, cur_dsp, self.DSP_max_step)
-						prev_Node = self.DPT[layer - 1][BRAM_aval - cur_bram][LUT_aval - cur_lut][DSP_aval - cur_dsp]
-						if len(prev_Node.PE) == 0:
-							continue
-						inpe = prev_Node.PE[-1]
-
-						if not opt.opt_constraints(inpe=inpe, simd=simd, kpf=kpf, pe=pe, actp=actp):
-							continue
-	
-						new_Lat = max(cur_Lat, prev_Node.Lat)
+				if cur_Lat < cur_Node.Lat:
+					cur_Node.Lat = cur_Lat
+					cur_Node.SIMD = [simd]
+					cur_Node.PE = [pe]
+					cur_Node.ACTP = [actp]
+					cur_Node.KPF = [kpf]
+					cur_Node.Packing = [Packing]
+					cur_Node.DW = [DW]
+					cur_Node.LUT = [LUT]
 		
-						if new_Lat < cur_Node.Lat:
-							cur_Node.Lat = new_Lat
-							cur_Node.SIMD = prev_Node.SIMD.copy()
-							cur_Node.SIMD.extend([simd])
-							cur_Node.PE = prev_Node.PE.copy()
-							cur_Node.PE.extend([pe])
-							cur_Node.ACTP = prev_Node.ACTP.copy()
-							cur_Node.ACTP.extend([actp])
-							cur_Node.KPF = prev_Node.KPF.copy()
-							cur_Node.KPF.extend([kpf])
-							cur_Node.LUT = prev_Node.LUT.copy()
-							cur_Node.LUT.extend([LUT])
+			else:
+				prev_Node = self.DPT[layer_idx - 1][BRAM_aval - cur_bram][LUT_aval - cur_lut][DSP_aval - cur_dsp]
+				if len(prev_Node.PE) == 0:
+					continue
+				inpe = prev_Node.PE[-1]
+	
+				if not opt.opt_constraints(inpe=inpe, simd=simd, kpf=kpf, pe=pe, actp=actp):
+					continue
+		
+				new_Lat = max(cur_Lat, prev_Node.Lat)
+			
+				if new_Lat < cur_Node.Lat:
+					cur_Node.Lat = new_Lat
+					cur_Node.SIMD = prev_Node.SIMD.copy()
+					cur_Node.SIMD.extend([simd])
+					cur_Node.PE = prev_Node.PE.copy()
+					cur_Node.PE.extend([pe])
+					cur_Node.ACTP = prev_Node.ACTP.copy()
+					cur_Node.ACTP.extend([actp])
+					cur_Node.KPF = prev_Node.KPF.copy()
+					cur_Node.KPF.extend([kpf])
+					cur_Node.Packing = prev_Node.Packing.copy()
+					cur_Node.Packing.extend([Packing])
+					cur_Node.DW = prev_Node.DW.copy()
+					cur_Node.DW.extend([DW])
+					cur_Node.LUT = prev_Node.LUT.copy()
+					cur_Node.LUT.extend([LUT])
 
-	def Fuse_Search_Loops(self, conv, Packing, DW, LUT, layer, simd_aval, pe_aval, thread_idx):
-		Last = (layer == (len(self.model_param) - 1))
-		opt = resolve_opt(conv, Packing, DW, LUT, last=Last)
+	def Fuse_Search_Loops(self, opt, layer_idx, Pred_Lookup, thread_idx, Packing, DW, LUT=False):
+		total_iter = (self.BRAM_max_step + 1) * (self.LUT_max_step + 1) * (self.DSP_max_step + 1)
+		for iter_idx in range(0, total_iter, self.thread_num):
+			actual_iter_idx = iter_idx + thread_idx
+			if actual_iter_idx >= total_iter:
+				continue
+
+			# decode DSP_aval, LUT_aval, and BRAM_aval, from iteration index
+			DSP_aval = actual_iter_idx % (self.DSP_max_step + 1)
+			lut_iter = actual_iter_idx // (self.DSP_max_step + 1)
+			LUT_aval = lut_iter % (self.LUT_max_step + 1)
+			bram_iter = lut_iter // (self.LUT_max_step + 1)
+			BRAM_aval = bram_iter % (self.BRAM_max_step + 1)
+
+			# filter out unsatisfied items
+			# [Lat, dsp, lut, bram, wns, simd, kpf, pe, actp]
+			items_sat_wns = Pred_Lookup[Pred_Lookup[:, 4] < self.cycle]
+			items_sat_dsp = items_sat_wns[items_sat_wns[:, 1] < DSP_aval]
+			items_sat_lut = items_sat_dsp[items_sat_dsp[:, 2] < LUT_aval]
+			items_sat_all = items_sat_lut[items_sat_lut[:, 3] < BRAM_aval]
+
+			if items_sat_all is not None:
+				self.Traverse_Solutions(items_sat_all, layer_idx, opt, DSP_aval, LUT_aval, BRAM_aval, Packing, DW, LUT)
+
+
+	def Search_Layer(self, layer_idx, conv, Packing, simd_aval, pe_aval, DW, LUT=False, Last=False):
+		# predict resources/timing with pre-trained predictors in batch mode (expect CUDA acceleration)
+		opt = resolve_opt(conv, Packing, DW, LUT, Last=Last)
+
 		if Packing == 'Filter_Packing':
 			PK = 'FP'
 		elif Packing == 'Kernel_Packing':
@@ -167,117 +227,57 @@ class Pipeline_Allocation:
 		path = self.pred_path / f'{PK}_{DW}_{LUT}'
 		opt.Load_Model(path)
 
-		total_iter = (self.BRAM_max_step + 1) * (self.LUT_max_step + 1) * (self.DSP_max_step + 1)
-		opt.conv.cycle = self.cycle
-		simd_aval_cp = simd_aval.copy()
-		pe_aval_cp = pe_aval.copy()
-		for iter_idx in range(0, total_iter, self.thread_num):
-			actual_iter_idx = iter_idx + thread_idx
-			if actual_iter_idx >= total_iter:
-				continue
+		possible_features, possible_configs = self.get_feature_vectors(opt, simd_aval, pe_aval, Last=Last)
+		pred_res_raw = opt.predict_batch(possible_features)   # [dsp, lut, bram, wns]
+		round_steps = np.array([self.DSP_step, self.LUT_step, self.BRAM_step])
+		pred_res_round = np.round(pred_res_raw[:, :3] / round_steps)
+		pred_res = np.concatenate((pred_res_round, pred_res_raw[:, 3].reshape(-1,1)), axis=1)
 
-			DSP_aval = actual_iter_idx % (self.DSP_max_step + 1)
-			lut_iter = actual_iter_idx // (self.DSP_max_step + 1)
-			LUT_aval = lut_iter % (self.LUT_max_step + 1)
-			bram_iter = lut_iter // (self.LUT_max_step + 1)
-			BRAM_aval = bram_iter % (self.BRAM_max_step + 1)
+		Lats = np.array([opt.dsp_operations()]) / (possible_configs[:, 0] * possible_configs[:, 1] * possible_configs[:, 2]).reshape(-1, 1)
+		Pred_Lookup = np.concatenate((Lats, pred_res, possible_configs), axis=1)    # [Lat, dsp, lut, bram, wns, simd, kpf, pe, actp]
 
-			self.Traverse_Solutions(layer, opt, DSP_aval, LUT_aval, BRAM_aval, simd_aval_cp, pe_aval_cp, LUT, Last)
+		thread_list = []
+		for thread_idx in range(0, self.thread_num):
+			Pred_Lookup_cp = Pred_Lookup.copy()           # do not different thread read the same area of memory, better performance?
+			opt_cp = resolve_opt(conv, Packing, DW, LUT, Last=Last)
+			thrd = Thread(target=self.Fuse_Search_Loops, args=(opt_cp, layer_idx, Pred_Lookup_cp, thread_idx, Packing, DW, LUT), daemon=True)
+			thread_list.append(thrd)
+			thrd.start()
+	
+		for thrd in thread_list:
+				thrd.join()
 
-	# def Fuse_Search_Loops(self, layer, simd_aval, pe_aval, thread_idx):
-	# 	total_iter = (self.BRAM_max_step + 1) * (self.LUT_max_step + 1) * (self.DSP_max_step + 1)
-	# 	batch_size = math.ceil(total_iter / self.thread_num)
-	# 	for iter_idx in range(0, batch_size):
-	# 		actual_iter_idx = iter_idx + thread_idx * batch_size
-	# 		if actual_iter_idx >= total_iter:
-	# 			continue
-
-	# 		DSP_aval = actual_iter_idx % (self.DSP_max_step + 1)
-	# 		lut_iter = actual_iter_idx // (self.DSP_max_step + 1)
-	# 		LUT_aval = lut_iter % (self.LUT_max_step + 1)
-	# 		bram_iter = lut_iter // (self.LUT_max_step + 1)
-	# 		BRAM_aval = bram_iter % (self.BRAM_max_step + 1)
-
-	# 		self.Traverse_Solutions(layer, self.model_opt[layer], DSP_aval, LUT_aval, BRAM_aval, simd_aval, pe_aval)
 
 	def DP_Search(self):
-		DSP_Explorer = DSP_Config_Search(27, 18)
-		Packing_list = []
-		DW_list = []
-		for idx, conv in enumerate(self.model_param):
-			# check depth-wise
-			if conv.w.shape[1] == 1 and conv.ich != 1:   # depth-width
-				acc_num = conv.k
-				DW = True
-			else:
-				acc_num = conv.k * conv.ich
-				DW = False
+		t1 = time.time()
+		for layer_idx, conv_org in enumerate(self.model_param):
+			# check if last layer
+			Last = (layer_idx == (len(self.model_param) - 1))
 
-			# DSP-packing search
-			if idx == (len(self.model_param) - 1):
-			    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=False, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
-			elif conv.w.shape[1] == 1:        # depth-wise conv
-			    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=False, acc_num=acc_num, och=conv.och)
-			else:
-			    DSP_Config_Lookup = DSP_Explorer.Packing_Exploration(K=conv.k, overlap=1, wbmin=2, wbmax=8, abmin=2, abmax=8, Filter_Packing_EN=True, Kernel_Packing_EN=True, acc_num=acc_num, och=conv.och)
+			# resolve DSP packing for current layer
+			conv, Packing, DW, simd_aval, pe_aval = resolve_packing(conv_org, self.DSP_Explorer, Last=Last)
+			conv.cycle = self.cycle
 
-			conv.kp = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['kp']
-			conv.np = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['np']
-			conv.gb = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['gb']
-			conv.w_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['w_sep']
-			conv.a_sep = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['a_sep']
-		
-			Packing = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Packing_Type']
-			if Packing == 'Kernel_Packing':
-				conv.pack_flag = DSP_Config_Lookup[f'w{conv.wbit}a{conv.abit}']['Pack_Flag']
-
-			simd_aval = [1] if DW else self.get_factors(conv.ich)
-			if idx == (len(self.model_param) - 1):
-				conv.kp = 1
-				conv.np = 2
-				conv.gb = 2
-				conv.w_sep = 1
-				conv.a_sep = 1
-				pe_aval = [2]
-			else:
-				pe_aval = self.get_factors(conv.och)
-
-			Packing_list.append(Packing)
-			DW_list.append(DW)
-
+			# try to use LUT-based opt first
 			if (conv.abit <= 4) and (conv.wbit <= 4):
-				print(f'Try to implement LUT-based operators in layer {idx}.')
-				LUT = True
-				thread_list = []
-				for thread_idx in range(0, self.thread_num):
-					thrd = Thread(target=self.Fuse_Search_Loops, args=(conv, Packing, DW, LUT, idx, simd_aval, pe_aval, thread_idx), daemon=True)
-					thread_list.append(thrd)
-					thrd.start()
-	
-				for thrd in thread_list:
-					thrd.join()
-	
-				print(f'Layer {idx} finished (LUT)!')
+				print(f'Try to implement LUT-based operators in layer {layer_idx}.')
+				self.Search_Layer(layer_idx, conv, Packing, simd_aval, pe_aval, DW, LUT=True, Last=Last)
+				print(f'Layer {layer_idx} finished (LUT)!')
 
-			LUT = False
-			thread_list = []
-			for thread_idx in range(0, self.thread_num):
-				thrd = Thread(target=self.Fuse_Search_Loops, args=(conv, Packing, DW, LUT, idx, simd_aval, pe_aval, thread_idx), daemon=True)
-				thread_list.append(thrd)
-				thrd.start()
-	
-			for thrd in thread_list:
-				thrd.join()
-	
-			print(f'Layer {idx} finished!')
+			print(f'Try to implement DSP-based operators in layer {layer_idx}.')
+			self.Search_Layer(layer_idx, conv, Packing, simd_aval, pe_aval, DW, LUT=False, Last=Last)
+			print(f'Layer {layer_idx} finished (DSP)!')
 
+		t2 = time.time()
+		print(f'Finished DP-search! Spent {t2 - t1} seconds in total!')
 
+	def DP_Results(self, Save=False):
 		# search best node
 		dsp_const = 0
 		lut_const = 0
 		bram_const = 0
 		best_Lat = self.Init_Lat
-		print("Init_Lat:", self.Init_Lat)
+
 		for cur_dsp in range(0, self.DSP_max_step + 1):
 			for cur_lut in range(0, self.LUT_max_step + 1):
 				for cur_bram in range(0, self.BRAM_max_step + 1):
@@ -295,63 +295,28 @@ class Pipeline_Allocation:
 		PE_list = best_Node.PE
 		ACTP_list = best_Node.ACTP
 		KPF_list = best_Node.KPF
+		Packing_list = best_Node.Packing
+		DW_list = best_Node.DW
 		LUT_list = best_Node.LUT
 
+		if len(SIMD_list) == 0 or Save:
+			print_dict = {}
+			for l in range(self.n_layers):
+				for k in range(0, self.BRAM_max_step + 1):
+					for j in range(0, self.LUT_max_step + 1):
+						for i in range(0, self.DSP_max_step + 1):
+							cur_Node = self.DPT[l][k][j][i]
+							print_dict[f'{l}_{k}_{j}_{i}'] = {'Lat': cur_Node.Lat, f'SIMD': cur_Node.SIMD, 'PE': cur_Node.PE, 'ACTP': cur_Node.ACTP,
+															  'KPF': cur_Node.KPF, 'Packing': cur_Node.Packing, 'DW': cur_Node.DW, 'LUT': cur_Node.LUT}
+
+			with open('./DP_debug/DP_table.json', 'w', encoding='utf-8') as f:
+				json.dump(print_dict, f, indent=4)
+		
 		if len(SIMD_list) == 0:
-			print(f'Failed to find a solution! Exit!')
+			print(f'Failed to find a solution! Exit!')	
 			exit(0)
 
 		print(bram_const, lut_const, dsp_const)
 
 		return best_Lat, Packing_list, DW_list, SIMD_list, PE_list, ACTP_list, KPF_list, LUT_list
-
-
-	# def DP_Search(self):
-	# 	for layer in range(self.n_layers):
-	# 		Packing = self.model_opt[layer].opt_type()['Packing']
-	# 		DW = self.model_opt[layer].opt_type()['DW']
-	# 		LUT = self.model_opt[layer].opt_type()['LUT']
-
-	# 		simd_aval = [1] if DW else self.get_factors(self.model_opt[layer].conv.ich)
-	# 		pe_aval = self.get_factors(self.model_opt[layer].conv.och)
-	# 		path = pathlib.Path(f'E:/Projects/DeepBurning_MixQ/MixQ_Gen_Accel/Dataset/6_OPT_5000/{Packing}_{DW}_{LUT}/')
-	# 		self.model_opt[layer].Load_Model(path)
-
-	# 		thread_list = []
-	# 		for thread_idx in range(0, self.thread_num):
-	# 			thrd = Thread(target=self.Fuse_Search_Loops, args=(layer, simd_aval, pe_aval, thread_idx), daemon=True)
-	# 			thread_list.append(thrd)
-	# 			thrd.start()
-
-	# 		for thrd in thread_list:
-	# 			thrd.join()
-
-	# 		print(f'layer {layer} finished!')
-
-	# 	# search best node
-	# 	dsp_const = 0
-	# 	lut_const = 0
-	# 	bram_const = 0
-	# 	best_Lat = self.Init_Lat
-	# 	print("Init_Lat:", self.Init_Lat)
-	# 	for cur_dsp in range(0, self.DSP_max_step + 1):
-	# 		for cur_lut in range(0, self.LUT_max_step + 1):
-	# 			for cur_bram in range(0, self.BRAM_max_step + 1):
-	# 				cur_Lat = self.DPT[self.n_layers - 1][cur_bram][cur_lut][cur_dsp].Lat
-	# 				if cur_Lat < best_Lat:
-	# 					dsp_const = cur_dsp
-	# 					lut_const = cur_lut
-	# 					bram_const = cur_bram
-	# 					best_Lat = cur_Lat
-
-	# 	best_Node = self.DPT[self.n_layers - 1][bram_const][lut_const][dsp_const]
-	# 	SIMD_list = best_Node.SIMD
-	# 	PE_list = best_Node.PE
-	# 	ACTP_list = best_Node.ACTP
-	# 	KPF_list = best_Node.KPF
-
-	# 	print(bram_const, lut_const, dsp_const)
-
-	# 	return best_Lat, SIMD_list, PE_list, ACTP_list, KPF_list
-
 
